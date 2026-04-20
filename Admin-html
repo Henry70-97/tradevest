@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BestPay - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, getDocs, collection, query, updateDoc, deleteDoc, addDoc, serverTimestamp, orderBy, where, increment, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyDtGN7KCK0A4fhztLN0CgxsKkGROcO_-vI",
+            authDomain: "bestpay-5b78c.firebaseapp.com",
+            projectId: "bestpay-5b78c",
+            storageBucket: "bestpay-5b78c.firebasestorage.app",
+            messagingSenderId: "583230068716",
+            appId: "1:583230068716:web:3e8d298b4d00b46c8652c9"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        let currentAdmin = null;
+        
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = "registration.html";
+                return;
+            }
+            
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            if (!userDoc.exists() || userDoc.data().role !== "admin") {
+                window.location.href = "dashboard.html";
+                return;
+            }
+            
+            currentAdmin = user;
+            document.getElementById('adminName').innerText = userDoc.data().displayName || user.email;
+            loadUsers();
+        });
+        
+        async function loadUsers() {
+            const usersSnap = await getDocs(collection(db, "users"));
+            let html = '';
+            for (const userDoc of usersSnap.docs) {
+                const u = userDoc.data();
+                if (u.role === 'admin') continue;
+                
+                const walletSnap = await getDoc(doc(db, "wallets", userDoc.id));
+                const wallet = walletSnap.data() || {};
+                
+                html += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-3">${u.email}</td>
+                        <td class="p-3">${u.displayName || '-'}</td>
+                        <td class="p-3"><span class="px-2 py-1 rounded text-xs ${u.kycStatus === 'verified' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${u.kycStatus}</span></td>
+                        <td class="p-3">${u.isSuspended ? '<span class="text-red-600"><i class="fas fa-ban"></i> Yes</span>' : '<span class="text-green-600"><i class="fas fa-check"></i> No</span>'}</td>
+                        <td class="p-3">${u.isFrozen ? '<span class="text-orange-600"><i class="fas fa-snowflake"></i> Yes</span>' : '<span class="text-green-600">No</span>'}</td>
+                        <td class="p-3 font-bold">$${(u.withdrawableBalance || 0).toFixed(2)}</td>
+                        <td class="p-3 space-x-1">
+                            <button onclick="toggleSuspend('${userDoc.id}', ${u.isSuspended})" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs">
+                                ${u.isSuspended ? 'Unsuspend' : 'Suspend'}
+                            </button>
+                            <button onclick="toggleFreeze('${userDoc.id}', ${u.isFrozen})" class="bg-orange-500 hover:bg-orange-600 text-white px-2 py-1 rounded text-xs">
+                                ${u.isFrozen ? 'Unfreeze' : 'Freeze'}
+                            </button>
+                            <button onclick="toggleKYC('${userDoc.id}', '${u.kycStatus}')" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs">
+                                ${u.kycStatus === 'verified' ? 'Unverify' : 'Verify'}
+                            </button>
+                            <button onclick="adjustBalance('${userDoc.id}')" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs">
+                                <i class="fas fa-dollar-sign"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }
+            document.getElementById('usersTableBody').innerHTML = html || '<tr><td colspan="7" class="text-center p-4">No users found</td></tr>';
+            document.getElementById('userCount').innerText = usersSnap.size - 1;
+        }
+        
+        window.toggleSuspend = async (userId, current) => {
+            await updateDoc(doc(db, "users", userId), { isSuspended: !current });
+            await addDoc(collection(db, "admin_logs"), {
+                adminId: currentAdmin.uid, action: "toggle_suspend",
+                targetUserId: userId, details: { newState: !current },
+                timestamp: serverTimestamp()
+            });
+            loadUsers();
+            showNotification(`User suspension toggled`, 'success');
+        };
+        
+        window.toggleFreeze = async (userId, current) => {
+            await updateDoc(doc(db, "users", userId), { isFrozen: !current });
+            await addDoc(collection(db, "admin_logs"), {
+                adminId: currentAdmin.uid, action: "toggle_freeze",
+                targetUserId: userId, details: { newState: !current },
+                timestamp: serverTimestamp()
+            });
+            loadUsers();
+            showNotification(`User freeze toggled`, 'success');
+        };
+        
+        window.toggleKYC = async (userId, current) => {
+            const newStatus = current === 'verified' ? 'unverified' : 'verified';
+            await updateDoc(doc(db, "users", userId), { kycStatus: newStatus });
+            loadUsers();
+            showNotification(`KYC status updated to ${newStatus}`, 'success');
+        };
+        
+        window.adjustBalance = async (userId) => {
+            const amount = parseFloat(prompt("Enter amount to add (use negative to subtract):"));
+            if (isNaN(amount)) return;
+            await updateDoc(doc(db, "users", userId), { withdrawableBalance: increment(amount) });
+            await addDoc(collection(db, "admin_logs"), {
+                adminId: currentAdmin.uid, action: "adjust_balance",
+                targetUserId: userId, details: { amount },
+                timestamp: serverTimestamp()
+            });
+            loadUsers();
+            showNotification(`Balance adjusted by $${amount}`, 'success');
+        };
+        
+        window.loadTickets = async function() {
+            const ticketsSnap = await getDocs(query(collection(db, "support_tickets"), orderBy("createdAt", "desc")));
+            let html = '';
+            for (const ticketDoc of ticketsSnap.docs) {
+                const t = ticketDoc.data();
+                const statusColor = t.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : t.status === 'resolved' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800';
+                html += `
+                    <div class="border rounded-lg p-4 mb-3">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h3 class="font-bold">${t.subject}</h3>
+                                <p class="text-sm text-gray-600">From: ${t.userEmail}</p>
+                            </div>
+                            <span class="px-2 py-1 rounded text-xs ${statusColor}">${t.status}</span>
+                        </div>
+                        <p class="text-gray-700 mb-3">${t.message}</p>
+                        <div class="flex gap-2">
+                            <textarea id="reply-${ticketDoc.id}" placeholder="Admin reply..." class="flex-1 border rounded-lg p-2 text-sm" rows="2"></textarea>
+                            <button onclick="replyToTicket('${ticketDoc.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
+                                <i class="fas fa-reply"></i> Reply
+                            </button>
+                        </div>
+                        <div class="mt-2">
+                            <select id="status-${ticketDoc.id}" class="border rounded-lg p-1 text-sm">
+                                <option value="pending" ${t.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                <option value="in_progress" ${t.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
+                                <option value="resolved" ${t.status === 'resolved' ? 'selected' : ''}>Resolved</option>
+                            </select>
+                            <button onclick="updateTicketStatus('${ticketDoc.id}')" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded-lg text-sm ml-2">
+                                Update Status
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            document.getElementById('ticketsList').innerHTML = html || '<p class="text-gray-500 text-center py-8">No tickets found</p>';
+            document.getElementById('ticketCount').innerText = ticketsSnap.size;
+        };
+        
+        window.replyToTicket = async (ticketId) => {
+            const replyMsg = document.getElementById(`reply-${ticketId}`).value;
+            if (!replyMsg) {
+                showNotification("Please enter a reply message", 'error');
+                return;
+            }
+            
+            await addDoc(collection(db, "support_tickets", ticketId, "messages"), {
+                senderId: currentAdmin.uid,
+                senderName: "Admin",
+                senderRole: "admin",
+                message: replyMsg,
+                timestamp: serverTimestamp(),
+                isRead: false
+            });
+            
+            await updateDoc(doc(db, "support_tickets", ticketId), { updatedAt: serverTimestamp() });
+            showNotification("Reply sent successfully!", 'success');
+            document.getElementById(`reply-${ticketId}`).value = '';
+            loadTickets();
+        };
+        
+        window.updateTicketStatus = async (ticketId) => {
+            const newStatus = document.getElementById(`status-${ticketId}`).value;
+            await updateDoc(doc(db, "support_tickets", ticketId), {
+                status: newStatus,
+                updatedAt: serverTimestamp()
+            });
+            showNotification(`Ticket status updated to ${newStatus}`, 'success');
+            loadTickets();
+        };
+        
+        window.loadPlans = async function() {
+            const plansSnap = await getDocs(collection(db, "investment_plans"));
+            let html = '';
+            plansSnap.forEach(planDoc => {
+                const p = planDoc.data();
+                html += `
+                    <div class="border rounded-lg p-4 flex justify-between items-center">
+                        <div>
+                            <h3 class="font-bold">${p.name}</h3>
+                            <p class="text-sm text-gray-600">Min: $${p.minAmount} | ROI: ${p.roiPercent}% | Duration: ${p.durationDays || 30} days</p>
+                            <p class="text-xs text-gray-500 mt-1">${p.productDescription}</p>
+                        </div>
+                        <button onclick="deletePlan('${planDoc.id}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                `;
+            });
+            document.getElementById('plansList').innerHTML = html || '<p class="text-gray-500 text-center py-8">No investment plans</p>';
+        };
+        
+        window.addPlan = async function() {
+            const name = prompt("Plan name:");
+            if (!name) return;
+            const minAmount = parseFloat(prompt("Minimum investment amount:"));
+            if (isNaN(minAmount)) return;
+            const roiPercent = parseFloat(prompt("ROI percentage:"));
+            if (isNaN(roiPercent)) return;
+            const description = prompt("Plan description:");
+            
+            await addDoc(collection(db, "investment_plans"), {
+                name, minAmount, roiPercent, durationDays: 30, isActive: true,
+                productImageURL: "https://picsum.photos/400/200",
+                productURL: "#", productDescription: description || "New investment plan",
+                maxAmount: null
+            });
+            
+            showNotification("Investment plan added successfully!", 'success');
+            loadPlans();
+        };
+        
+        window.deletePlan = async (planId) => {
+            if (confirm("Are you sure you want to delete this plan?")) {
+                await deleteDoc(doc(db, "investment_plans", planId));
+                showNotification("Plan deleted", 'success');
+                loadPlans();
+            }
+        };
+        
+        window.loadWithdrawals = async function() {
+            const withdrawSnap = await getDocs(query(collection(db, "withdrawals"), orderBy("createdAt", "desc")));
+            let html = '';
+            for (const withdrawDoc of withdrawSnap.docs) {
+                const w = withdrawDoc.data();
+                const userDoc = await getDoc(doc(db, "users", w.userId));
+                const userEmail = userDoc.exists() ? userDoc.data().email : 'Unknown';
+                
+                html += `
+                    <div class="border rounded-lg p-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-semibold">User: ${userEmail}</p>
+                                <p class="text-2xl font-bold text-green-600">$${w.amount}</p>
+                                <p class="text-sm text-gray-600">Method: ${w.method}</p>
+                            </div>
+                            <div>
+                                <span class="px-2 py-1 rounded text-xs ${w.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : w.status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                    ${w.status}
+                                </span>
+                                <div class="mt-2 space-x-1">
+                                    ${w.status === 'pending' ? `
+                                        <button onclick="approveWithdrawal('${withdrawDoc.id}', '${w.userId}', ${w.amount})" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs">
+                                            Approve
+                                        </button>
+                                        <button onclick="rejectWithdrawal('${withdrawDoc.id}')" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs">
+                                            Reject
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            document.getElementById('withdrawalsList').innerHTML = html || '<p class="text-gray-500 text-center py-8">No withdrawal requests</p>';
+        };
+        
+        window.approveWithdrawal = async (withdrawId, userId, amount) => {
+            await updateDoc(doc(db, "withdrawals", withdrawId), {
+                status: "approved",
+                processedAt: serverTimestamp()
+            });
+            
+            await updateDoc(doc(db, "users", userId), {
+                withdrawableBalance: increment(-amount),
+                totalWithdrawn: increment(amount)
+            });
+            
+            showNotification("Withdrawal approved!", 'success');
+            loadWithdrawals();
+        };
+        
+        window.rejectWithdrawal = async (withdrawId) => {
+            const withdrawDoc = await getDoc(doc(db, "withdrawals", withdrawId));
+            const amount = withdrawDoc.data().amount;
+            const userId = withdrawDoc.data().userId;
+            
+            await updateDoc(doc(db, "withdrawals", withdrawId), {
+                status: "rejected",
+                processedAt: serverTimestamp()
+            });
+            
+            await updateDoc(doc(db, "users", userId), {
+                withdrawableBalance: increment(amount)
+            });
+            
+            showNotification("Withdrawal rejected, funds returned", 'success');
+            loadWithdrawals();
+        };
+        
+        window.showSection = function(section) {
+            document.querySelectorAll('.admin-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`${section}Section`).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('bg-blue-600', 'text-white'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.add('bg-gray-200', 'text-gray-700'));
+            event.target.classList.remove('bg-gray-200', 'text-gray-700');
+            event.target.classList.add('bg-blue-600', 'text-white');
+            
+            if (section === 'users') loadUsers();
+            else if (section === 'tickets') loadTickets();
+            else if (section === 'plans') loadPlans();
+            else if (section === 'withdrawals') loadWithdrawals();
+        };
+        
+        window.logout = async function() {
+            await signOut(auth);
+            window.location.href = "registration.html";
+        };
+        
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed bottom-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+            notification.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2"></i>${message}`;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+        
+        // Initial load
+        setTimeout(() => {
+            loadUsers();
+        }, 500);
+    </script>
+</head>
+<body class="bg-gray-100">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-gray-900 text-white shadow-lg">
+            <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-shield-alt text-2xl text-blue-400"></i>
+                    <h1 class="text-xl font-bold">BestPay Admin Console</h1>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span><i class="fas fa-user mr-2"></i><span id="adminName">Admin</span></span>
+                    <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </header>
+        
+        <div class="container mx-auto px-4 py-6">
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white rounded-xl shadow-md p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm">Total Users</p>
+                            <p class="text-2xl font-bold" id="userCount">0</p>
+                        </div>
+                        <i class="fas fa-users text-3xl text-blue-500"></i>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-md p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm">Open Tickets</p>
+                            <p class="text-2xl font-bold" id="ticketCount">0</p>
+                        </div>
+                        <i class="fas fa-ticket-alt text-3xl text-yellow-500"></i>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-md p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm">Investment Plans</p>
+                            <p class="text-2xl font-bold" id="planCount">0</p>
+                        </div>
+                        <i class="fas fa-chart-line text-3xl text-green-500"></i>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-md p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm">Pending Withdrawals</p>
+                            <p class="text-2xl font-bold" id="withdrawCount">0</p>
+                        </div>
+                        <i class="fas fa-hand-holding-usd text-3xl text-purple-500"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Navigation Tabs -->
+            <div class="flex gap-2 mb-6 flex-wrap">
+                <button onclick="showSection('users')" class="nav-btn bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold transition">
+                    <i class="fas fa-users mr-2"></i>User Management
+                </button>
+                <button onclick="showSection('tickets')" class="nav-btn bg-gray-200 text-gray-700 px-6 py-2 rounded-lg font-semibold transition">
+                    <i class="fas fa-headset mr-2"></i>Support Tickets
+                </button>
+                <button onclick="showSection('plans')" class="nav-btn bg-gray-200 text-gray-700 px-6 py-2 rounded-lg font-semibold transition">
+                    <i class="fas fa-chart-line mr-2"></i>Investment Plans
+                </button>
+                <button onclick="showSection('withdrawals')" class="nav-btn bg-gray-200 text-gray-700 px-6 py-2 rounded-lg font-semibold transition">
+                    <i class="fas fa-dollar-sign mr-2"></i>Withdrawals
+                </button>
+            </div>
+            
+            <!-- Users Section -->
+            <div id="usersSection" class="admin-section bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="p-6">
+                    <h2 class="text-xl font-bold mb-4"><i class="fas fa-users text-blue-600 mr-2"></i>User Management</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="p-3 text-left">Email</th>
+                                    <th class="p-3 text-left">Name</th>
+                                    <th class="p-3 text-left">KYC</th>
+                                    <th class="p-3 text-left">Suspended</th>
+                                    <th class="p-3 text-left">Frozen</th>
+                                    <th class="p-3 text-left">Balance</th>
+                                    <th class="p-3 text-left">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr><td colspan="7" class="text-center p-4">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tickets Section -->
+            <div id="ticketsSection" class="admin-section hidden bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-xl font-bold mb-4"><i class="fas fa-headset text-blue-600 mr-2"></i>Support Tickets</h2>
+                <div id="ticketsList" class="max-h-[600px] overflow-y-auto">
+                    <p class="text-gray-500 text-center py-8">Loading tickets...</p>
+                </div>
+            </div>
+            
+            <!-- Plans Section -->
+            <div id="plansSection" class="admin-section hidden bg-white rounded-xl shadow-md p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold"><i class="fas fa-chart-line text-green-600 mr-2"></i>Investment Plans</h2>
+                    <button onclick="addPlan()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-plus mr-2"></i>Add New Plan
+                    </button>
+                </div>
+                <div id="plansList" class="space-y-3">
+                    <p class="text-gray-500 text-center py-8">Loading plans...</p>
+                </div>
+            </div>
+            
+            <!-- Withdrawals Section -->
+            <div id="withdrawalsSection" class="admin-section hidden bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-xl font-bold mb-4"><i class="fas fa-hand-holding-usd text-purple-600 mr-2"></i>Withdrawal Requests</h2>
+                <div id="withdrawalsList" class="space-y-3">
+                    <p class="text-gray-500 text-center py-8">Loading withdrawals...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
