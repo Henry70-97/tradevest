@@ -1,440 +1,176 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>BestPay - Earn, Invest, Grow</title>
-    <!-- Tailwind + Font Awesome -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Firebase SDKs (modular) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, getDocs, query, where, serverTimestamp, addDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        
-        // Firebase config (provided)
-        const firebaseConfig = {
-            apiKey: "AIzaSyDtGN7KCK0A4fhztLN0CgxsKkGROcO_-vI",
-            authDomain: "bestpay-5b78c.firebaseapp.com",
-            projectId: "bestpay-5b78c",
-            storageBucket: "bestpay-5b78c.firebasestorage.app",
-            messagingSenderId: "583230068716",
-            appId: "1:583230068716:web:3e8d298b4d00b46c8652c9"
-        };
-        
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        
-        // Helper: generate random referral code
-        function generateReferralCode() {
-            return Math.random().toString(36).substring(2, 8).toUpperCase();
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BestPay – Earn, Invest, Grow</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs, query, where, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "YOUR_KEY",
+    authDomain: "bestpay-5b78c.firebaseapp.com",
+    projectId: "bestpay-5b78c",
+    storageBucket: "bestpay-5b78c.appspot.com",
+    messagingSenderId: "583230068716",
+    appId: "1:583230068716:web:3e8d298b4d00b46c8652c9"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// Redirect if already logged in
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+            const role = userDoc.data().role;
+            window.location.href = role === "admin" ? "admin-html" : "dashboard-html";
         }
-        
-        // ---------- UI State & Rendering ----------
-        let currentUserRole = null;
-        let currentUserData = null;
-        
-        // Root element
-        const appRoot = document.getElementById('app-root');
-        
-        // Render landing + auth forms (when no user logged in)
-        function renderLandingAndAuth() {
-            appRoot.innerHTML = `
-                <!-- HERO LANDING SECTION -->
-                <div class="bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-white">
-                    <div class="container mx-auto px-6 py-16 md:py-24 text-center">
-                        <div class="inline-flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-full px-4 py-1 mb-6">
-                            <i class="fas fa-coins text-yellow-300 mr-2"></i>
-                            <span class="text-sm font-medium">Next-Gen Fintech Platform</span>
-                        </div>
-                        <h1 class="text-5xl md:text-6xl font-extrabold mb-6 tracking-tight">BestPay<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-pink-400">Earn. Invest. Thrive.</span></h1>
-                        <p class="text-xl text-blue-100 max-w-2xl mx-auto mb-8">Join thousands of smart earners — get $20 bonus, daily streaks, referral rewards, and secure crypto-ready wallet.</p>
-                        <button id="getStartedBtn" class="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-gray-900 font-bold py-4 px-10 rounded-full text-lg shadow-xl transform transition hover:scale-105 inline-flex items-center gap-2">
-                            <i class="fas fa-rocket"></i> Get Started
-                        </button>
-                    </div>
-                    
-                    <!-- How it works + Company info -->
-                    <div class="bg-white text-gray-800 rounded-t-3xl px-6 py-16">
-                        <div class="container mx-auto max-w-6xl">
-                            <div class="text-center mb-12">
-                                <h2 class="text-3xl md:text-4xl font-bold text-gray-800">How <span class="text-blue-600">BestPay</span> Works</h2>
-                                <div class="w-24 h-1 bg-blue-500 mx-auto mt-4 rounded-full"></div>
-                            </div>
-                            <div class="grid md:grid-cols-3 gap-10">
-                                <div class="text-center p-6 rounded-2xl bg-gray-50 shadow-sm">
-                                    <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fas fa-user-plus text-2xl text-blue-600"></i></div>
-                                    <h3 class="text-xl font-bold mb-2">1. Create Account</h3>
-                                    <p class="text-gray-600">Sign up in seconds, verify email, and get $20 welcome bonus instantly. No deposit required.</p>
-                                </div>
-                                <div class="text-center p-6 rounded-2xl bg-gray-50 shadow-sm">
-                                    <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fas fa-chart-line text-2xl text-green-600"></i></div>
-                                    <h3 class="text-xl font-bold mb-2">2. Earn & Invest</h3>
-                                    <p class="text-gray-600">Daily login streaks, refer friends (10% commission), and grow your balance. Invest in secure pools.</p>
-                                </div>
-                                <div class="text-center p-6 rounded-2xl bg-gray-50 shadow-sm">
-                                    <div class="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fas fa-hand-holding-usd text-2xl text-purple-600"></i></div>
-                                    <h3 class="text-xl font-bold mb-2">3. Withdraw Anytime</h3>
-                                    <p class="text-gray-600">Low minimum withdrawal, instant processing, and full KYC protection. Your money, your rules.</p>
-                                </div>
-                            </div>
-                            <div class="mt-16 text-center bg-gradient-to-r from-blue-50 to-indigo-50 p-8 rounded-2xl">
-                                <i class="fas fa-building text-3xl text-blue-700 mb-3"></i>
-                                <h3 class="text-2xl font-semibold">Trusted by 10,000+ members worldwide</h3>
-                                <p class="text-gray-600 mt-2 max-w-2xl mx-auto">BestPay Ltd is a registered fintech innovator, providing transparent rewards ecosystem. Headquartered in Delaware, USA. © 2025 BestPay</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- AUTH CARD SECTION (Registration / Login toggle without tabs) -->
-                <div id="authCardContainer" class="container mx-auto px-4 py-12 -mt-8 relative z-10">
-                    <div class="max-w-md mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-100">
-                        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 p-5 text-center">
-                            <i class="fas fa-wallet text-4xl text-yellow-200 mb-1"></i>
-                            <h2 class="text-2xl font-bold text-white" id="formTitle">Create Account</h2>
-                            <p class="text-blue-100 text-sm">Join BestPay & start earning</p>
-                        </div>
-                        <div class="p-6">
-                            <!-- Registration Form (visible by default) -->
-                            <div id="registerFormWrapper">
-                                <div class="space-y-4">
-                                    <div><label class="block text-sm font-medium text-gray-700">Full Name *</label><input type="text" id="regName" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="John Doe"></div>
-                                    <div><label class="block text-sm font-medium text-gray-700">Email Address *</label><input type="email" id="regEmail" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="you@example.com"></div>
-                                    <div><label class="block text-sm font-medium text-gray-700">Password *</label><input type="password" id="regPassword" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Min. 6 characters"></div>
-                                    <div><label class="block text-sm font-medium text-gray-700">Referral Code (optional)</label><input type="text" id="regReferral" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="FRIEND CODE"></div>
-                                    <div class="flex items-start gap-2">
-                                        <input type="checkbox" id="termsCheckbox" class="mt-1 w-4 h-4 text-blue-600 rounded">
-                                        <label for="termsCheckbox" class="text-sm text-gray-600">I agree to the <button type="button" id="viewTermsBtn" class="text-blue-600 underline font-medium">Terms & Conditions</button> (20 clauses)</label>
-                                    </div>
-                                    <button id="doRegisterBtn" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-2.5 rounded-lg transition"><i class="fas fa-user-plus mr-2"></i>Register Now</button>
-                                    <p id="regMessage" class="text-sm text-center text-red-500"></p>
-                                    <div class="text-center text-sm mt-2"><button id="switchToLoginLink" class="text-blue-600 hover:underline font-medium"><i class="fas fa-sign-in-alt mr-1"></i>Already have an account? Sign In</button></div>
-                                </div>
-                            </div>
-                            <!-- Login Form (hidden initially) -->
-                            <div id="loginFormWrapper" class="hidden">
-                                <div class="space-y-4">
-                                    <div><label class="block text-sm font-medium text-gray-700">Email Address</label><input type="email" id="loginEmail" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="you@example.com"></div>
-                                    <div><label class="block text-sm font-medium text-gray-700">Password</label><input type="password" id="loginPassword" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="••••••••"></div>
-                                    <button id="doLoginBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition"><i class="fas fa-key mr-2"></i>Login</button>
-                                    <p id="loginMessage" class="text-sm text-center text-red-500"></p>
-                                    <div class="text-center text-sm mt-2"><button id="switchToRegisterLink" class="text-blue-600 hover:underline font-medium"><i class="fas fa-user-plus mr-1"></i>No account? Create one</button></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            // Attach event listeners for auth toggles & registration / login
-            const getStarted = document.getElementById('getStartedBtn');
-            if (getStarted) {
-                getStarted.addEventListener('click', () => {
-                    document.getElementById('authCardContainer')?.scrollIntoView({ behavior: 'smooth' });
+    }
+});
+
+function generateReferralCode() {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+// REGISTER
+window.handleRegister = async () => {
+    const name = document.getElementById('regName').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPassword').value;
+    const referralCode = document.getElementById('regReferral').value.trim();
+    const msgEl = document.getElementById('regMessage');
+
+    if (!name || !email || !password) {
+        msgEl.innerText = "Fill all fields";
+        return;
+    }
+
+    try {
+        msgEl.innerText = "Creating account...";
+
+        // ✅ AUTH FIRST
+        const userCred = await createUserWithEmailAndPassword(auth, email, password);
+        const uid = userCred.user.uid;
+
+        await updateProfile(userCred.user, { displayName: name });
+
+        const newReferralCode = generateReferralCode();
+
+        // ✅ THEN FIRESTORE
+        await setDoc(doc(db, "users", uid), {
+            email,
+            displayName: name,
+            createdAt: serverTimestamp(),
+            referralCode: newReferralCode,
+            referredBy: referralCode || null,
+            kycStatus: "unverified",
+            isSuspended: false,
+            isFrozen: false,
+            role: "user",
+            totalEarned: 20,
+            withdrawableBalance: 20,
+            totalWithdrawn: 0
+        });
+
+        await setDoc(doc(db, "wallets", uid), {
+            investedBalance: 0,
+            bonusBalance: 20,
+            totalDeposited: 0,
+            lastUpdated: serverTimestamp()
+        });
+
+        await setDoc(doc(db, "login_streaks", uid), {
+            currentStreak: 1,
+            longestStreak: 1,
+            lastLoginDate: new Date().toISOString().split('T')[0],
+            bonusClaimedToday: true
+        });
+
+        // Referral logic
+        if (referralCode) {
+            const q = query(collection(db, "users"), where("referralCode", "==", referralCode));
+            const qSnap = await getDocs(q);
+            if (!qSnap.empty) {
+                await addDoc(collection(db, "referrals"), {
+                    referrerId: qSnap.docs[0].id,
+                    referredId: uid,
+                    commissionEarned: 0,
+                    status: "pending",
+                    commissionRate: 10,
+                    createdAt: serverTimestamp()
                 });
             }
-            
-            // Toggle between forms (no tabs, just link-based)
-            const switchToLogin = document.getElementById('switchToLoginLink');
-            const switchToRegister = document.getElementById('switchToRegisterLink');
-            const regWrapper = document.getElementById('registerFormWrapper');
-            const loginWrapper = document.getElementById('loginFormWrapper');
-            const formTitle = document.getElementById('formTitle');
-            
-            if (switchToLogin) {
-                switchToLogin.addEventListener('click', () => {
-                    regWrapper.classList.add('hidden');
-                    loginWrapper.classList.remove('hidden');
-                    formTitle.innerText = 'Welcome Back';
-                });
-            }
-            if (switchToRegister) {
-                switchToRegister.addEventListener('click', () => {
-                    loginWrapper.classList.add('hidden');
-                    regWrapper.classList.remove('hidden');
-                    formTitle.innerText = 'Create Account';
-                });
-            }
-            
-            // Terms modal binding
-            const viewTermsBtn = document.getElementById('viewTermsBtn');
-            if (viewTermsBtn) {
-                viewTermsBtn.addEventListener('click', showTermsModal);
-            }
-            
-            // Register handler
-            const regBtn = document.getElementById('doRegisterBtn');
-            if (regBtn) regBtn.addEventListener('click', handleRegister);
-            
-            // Login handler
-            const loginBtn = document.getElementById('doLoginBtn');
-            if (loginBtn) loginBtn.addEventListener('click', handleLogin);
         }
-        
-        // ----- Terms Modal (20 detailed clauses) -----
-        function showTermsModal() {
-            const modalHtml = `
-                <div id="termsModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-                    <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[85vh] overflow-y-auto shadow-2xl">
-                        <div class="sticky top-0 bg-white border-b p-5 flex justify-between items-center">
-                            <h2 class="text-2xl font-bold text-gray-800"><i class="fas fa-file-contract text-blue-600 mr-2"></i>BestPay Terms & Conditions</h2>
-                            <button id="closeTermsModalBtn" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
-                        </div>
-                        <div class="p-6 space-y-4 text-gray-700 text-sm leading-relaxed">
-                            <ol class="list-decimal pl-5 space-y-3">
-                                <li><strong>Acceptance of Terms:</strong> By registering, you unconditionally accept these Terms & Conditions and our Privacy Policy.</li>
-                                <li><strong>Eligibility:</strong> You must be at least 18 years old and capable of forming a binding contract. Certain jurisdictions may be restricted.</li>
-                                <li><strong>Account Registration:</strong> You agree to provide accurate, current, and complete information. One account per user.</li>
-                                <li><strong>Referral Program:</strong> Referral commissions (10% of referred friend's first $20 bonus) apply only for valid, active referrals. Abuse leads to disqualification.</li>
-                                <li><strong>Welcome Bonus & Earnings:</strong> New users receive $20 withdrawable balance after successful registration and email verification. Bonuses are subject to anti-fraud checks.</li>
-                                <li><strong>Daily Streaks:</strong> Consecutive login bonuses are credited automatically. Missed day resets streak. BestPay may adjust rewards.</li>
-                                <li><strong>KYC Verification:</strong> To withdraw above $500 cumulative, identity verification (KYC) is mandatory. We reserve the right to request documents anytime.</li>
-                                <li><strong>Withdrawal Policy:</strong> Minimum withdrawal $10. Processing within 2-5 business days. Fees may apply based on method.</li>
-                                <li><strong>Prohibited Activities:</strong> No multiple accounts, fake referrals, bots, hacking, money laundering, or any illegal activity. Violation results in permanent ban & forfeiture.</li>
-                                <li><strong>Suspension & Termination:</strong> BestPay can suspend or terminate accounts violating terms, without prior notice. Balance may be frozen pending investigation.</li>
-                                <li><strong>Privacy & Data Protection:</strong> Your data is handled under GDPR/CCPA standards. We never sell personal information.</li>
-                                <li><strong>Anti-Money Laundering (AML):</strong> We monitor transactions and report suspicious activity to financial authorities.</li>
-                                <li><strong>User Responsibilities:</strong> Keep your login credentials safe. Notify support immediately of unauthorized access.</li>
-                                <li><strong>Third-Party Links:</strong> Our platform may contain links to external sites. We are not responsible for their content or practices.</li>
-                                <li><strong>Disclaimer of Warranties:</strong> BestPay is provided "as is". We do not guarantee uninterrupted service or error-free operation.</li>
-                                <li><strong>Limitation of Liability:</strong> To the maximum extent permitted, BestPay is not liable for indirect, incidental, or consequential damages.</li>
-                                <li><strong>Indemnification:</strong> You agree to indemnify BestPay against claims arising from misuse of your account.</li>
-                                <li><strong>Modification of Terms:</strong> BestPay may update these terms. Continued use constitutes acceptance. Material changes will be notified via email.</li>
-                                <li><strong>Governing Law:</strong> These terms are governed by the laws of Delaware, USA, without regard to conflict of laws.</li>
-                                <li><strong>Contact Information:</strong> For any inquiries: support@bestpay.com or via live chat in dashboard.</li>
-                            </ol>
-                            <div class="bg-blue-50 p-3 rounded-lg mt-4 text-center text-xs text-gray-600">By checking "I agree" you confirm you have read and understood all 20 clauses.</div>
-                        </div>
-                        <div class="border-t p-4 text-right"><button id="modalAcceptBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">I Understand</button></div>
-                    </div>
-                </div>
-            `;
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
-            const closeModal = () => document.getElementById('termsModal')?.remove();
-            document.getElementById('closeTermsModalBtn')?.addEventListener('click', closeModal);
-            document.getElementById('modalAcceptBtn')?.addEventListener('click', () => {
-                const checkbox = document.getElementById('termsCheckbox');
-                if (checkbox) checkbox.checked = true;
-                closeModal();
-            });
-            document.getElementById('termsModal')?.addEventListener('click', (e) => { if(e.target.id === 'termsModal') closeModal(); });
-        }
-        
-        // ---------- Registration Logic with Terms validation ----------
-        async function handleRegister() {
-            const name = document.getElementById('regName').value.trim();
-            const email = document.getElementById('regEmail').value.trim();
-            const password = document.getElementById('regPassword').value;
-            const referralCode = document.getElementById('regReferral').value.trim();
-            const termsOk = document.getElementById('termsCheckbox').checked;
-            const msgEl = document.getElementById('regMessage');
-            
-            if (!name || !email || !password) {
-                msgEl.innerText = '❌ Please fill all required fields.';
-                return;
-            }
-            if (password.length < 6) {
-                msgEl.innerText = '❌ Password must be at least 6 characters.';
-                return;
-            }
-            if (!termsOk) {
-                msgEl.innerText = '❌ You must accept the Terms & Conditions (20 clauses) to register.';
-                return;
-            }
-            msgEl.innerText = '⏳ Creating account...';
-            msgEl.style.color = '#2563eb';
-            
-            try {
-                // Check first user (admin detection)
-                const usersSnapshot = await getDocs(collection(db, "users"));
-                const isFirstUser = usersSnapshot.empty;
-                const role = isFirstUser ? "admin" : "user";
-                
-                // Create auth user
-                const userCred = await createUserWithEmailAndPassword(auth, email, password);
-                const uid = userCred.user.uid;
-                await updateProfile(userCred.user, { displayName: name });
-                
-                const newReferralCode = generateReferralCode();
-                // Create user document
-                await setDoc(doc(db, "users", uid), {
-                    email: email,
-                    displayName: name,
-                    createdAt: serverTimestamp(),
-                    referralCode: newReferralCode,
-                    referredBy: referralCode || null,
-                    kycStatus: "unverified",
-                    isSuspended: false,
-                    isFrozen: false,
-                    role: role,
-                    totalEarned: 20,
-                    withdrawableBalance: 20,
-                    totalWithdrawn: 0
-                });
-                // Wallet doc
-                await setDoc(doc(db, "wallets", uid), {
-                    investedBalance: 0,
-                    bonusBalance: 20,
-                    totalDeposited: 0,
-                    lastUpdated: serverTimestamp()
-                });
-                // Login streak init
-                await setDoc(doc(db, "login_streaks", uid), {
-                    currentStreak: 1,
-                    longestStreak: 1,
-                    lastLoginDate: new Date().toISOString().split('T')[0],
-                    bonusClaimedToday: true
-                });
-                // Referral tracking
-                if (referralCode) {
-                    const q = query(collection(db, "users"), where("referralCode", "==", referralCode));
-                    const qSnap = await getDocs(q);
-                    if (!qSnap.empty) {
-                        await addDoc(collection(db, "referrals"), {
-                            referrerId: qSnap.docs[0].id,
-                            referredId: uid,
-                            commissionEarned: 0,
-                            status: "pending",
-                            commissionRate: 10,
-                            createdAt: serverTimestamp()
-                        });
-                    }
-                }
-                msgEl.innerText = '✅ Registration successful! Redirecting to dashboard...';
-                msgEl.style.color = 'green';
-                // Auth state will trigger rerender (dashboard/admin)
-            } catch (error) {
-                msgEl.style.color = 'red';
-                msgEl.innerText = `⚠️ ${error.message}`;
-            }
-        }
-        
-        // Login Handler
-        async function handleLogin() {
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            const msgEl = document.getElementById('loginMessage');
-            if (!email || !password) {
-                msgEl.innerText = 'Please enter email and password';
-                return;
-            }
-            msgEl.innerText = 'Signing in...';
-            try {
-                const userCred = await signInWithEmailAndPassword(auth, email, password);
-                // Auth state changed will render appropriate view
-                msgEl.innerText = 'Success! Redirecting...';
-                msgEl.style.color = 'green';
-            } catch (err) {
-                msgEl.innerText = err.message;
-                msgEl.style.color = 'red';
-            }
-        }
-        
-        // ---------- Dashboard (User) ----------
-        async function renderUserDashboard(user, userDocSnap) {
-            const userData = userDocSnap.data();
-            const walletSnap = await getDoc(doc(db, "wallets", user.uid));
-            const walletData = walletSnap.exists() ? walletSnap.data() : { bonusBalance: 0, investedBalance: 0 };
-            appRoot.innerHTML = `
-                <div class="min-h-screen bg-gray-100">
-                    <div class="bg-gradient-to-r from-blue-700 to-indigo-800 text-white p-5 shadow-lg">
-                        <div class="container mx-auto flex justify-between items-center">
-                            <div><i class="fas fa-coins text-2xl mr-2"></i><span class="font-bold text-xl">BestPay Dashboard</span></div>
-                            <div class="flex items-center gap-4"><span class="hidden md:inline">Welcome, ${userData.displayName || user.email}</span><button id="logoutBtnMain" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg text-sm"><i class="fas fa-sign-out-alt"></i> Logout</button></div>
-                        </div>
-                    </div>
-                    <div class="container mx-auto px-4 py-8">
-                        <div class="grid md:grid-cols-3 gap-6">
-                            <div class="bg-white rounded-2xl shadow p-6"><i class="fas fa-dollar-sign text-green-500 text-3xl"></i><h3 class="text-lg font-semibold mt-2">Withdrawable Balance</h3><p class="text-3xl font-bold">$${userData.withdrawableBalance || 0}</p></div>
-                            <div class="bg-white rounded-2xl shadow p-6"><i class="fas fa-chart-line text-blue-500 text-3xl"></i><h3 class="text-lg font-semibold mt-2">Total Earned</h3><p class="text-3xl font-bold">$${userData.totalEarned || 0}</p></div>
-                            <div class="bg-white rounded-2xl shadow p-6"><i class="fas fa-gift text-purple-500 text-3xl"></i><h3 class="text-lg font-semibold mt-2">Bonus Wallet</h3><p class="text-3xl font-bold">$${walletData.bonusBalance || 0}</p></div>
-                        </div>
-                        <div class="mt-8 bg-white rounded-2xl shadow p-6">
-                            <h3 class="font-bold text-xl"><i class="fas fa-users"></i> Referral Program</h3>
-                            <p class="text-gray-600">Your unique referral code: <span class="font-mono bg-gray-100 px-3 py-1 rounded">${userData.referralCode}</span></p>
-                            <p class="text-sm mt-2">Share & earn 10% commission from each referred friend's welcome bonus!</p>
-                        </div>
-                        <div class="mt-6 text-center text-gray-500 text-sm">BestPay — Secure and instant earnings. Need help? support@bestpay.com</div>
-                    </div>
-                </div>
-            `;
-            document.getElementById('logoutBtnMain')?.addEventListener('click', () => signOut(auth));
-        }
-        
-        // ---------- Admin Dashboard (with user list) ----------
-        async function renderAdminDashboard(user, userDocSnap) {
-            const usersSnapshot = await getDocs(collection(db, "users"));
-            const usersList = [];
-            usersSnapshot.forEach(docSnap => { usersList.push({ id: docSnap.id, ...docSnap.data() }); });
-            appRoot.innerHTML = `
-                <div class="min-h-screen bg-gray-900 text-white">
-                    <div class="bg-black/40 backdrop-blur p-5 flex justify-between items-center">
-                        <div><i class="fas fa-shield-alt text-yellow-400 mr-2"></i><span class="font-bold text-xl">BestPay Admin Console</span></div>
-                        <button id="adminLogoutBtn" class="bg-red-600 px-5 py-2 rounded-lg"><i class="fas fa-sign-out-alt"></i> Logout</button>
-                    </div>
-                    <div class="container mx-auto p-6">
-                        <div class="bg-white/10 rounded-2xl p-6 mb-8">
-                            <h2 class="text-2xl font-bold">Admin Overview</h2>
-                            <p>Total registered users: ${usersList.length} | Admin role: ${userDocSnap.data().role}</p>
-                            <p class="text-sm text-gray-300 mt-1">First sign-up becomes admin automatically. Manage users below.</p>
-                        </div>
-                        <div class="bg-gray-800 rounded-2xl overflow-hidden shadow-xl">
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-left">
-                                    <thead class="bg-gray-700"><tr><th class="p-3">Name</th><th>Email</th><th>Role</th><th>Balance</th><th>Referral Code</th></tr></thead>
-                                    <tbody>${usersList.map(u => `<tr class="border-b border-gray-700"><td class="p-3">${u.displayName || 'N/A'}</td><td>${u.email}</td><td><span class="px-2 py-1 rounded-full text-xs ${u.role === 'admin' ? 'bg-yellow-600' : 'bg-blue-600'}">${u.role}</span></td><td>$${u.withdrawableBalance || 0}</td><td>${u.referralCode || '-'}</td></tr>`).join('')}</tbody>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="mt-6 text-gray-400 text-sm text-center">Admin actions: user suspension (coming soon), full audit logs available.</div>
-                    </div>
-                </div>
-            `;
-            document.getElementById('adminLogoutBtn')?.addEventListener('click', () => signOut(auth));
-        }
-        
-        // ---------- Main Auth State Handler (no broken redirects, dynamic rendering) ----------
-        async function initAuthState() {
-            onAuthStateChanged(auth, async (firebaseUser) => {
-                if (!firebaseUser) {
-                    // No user -> show landing + auth
-                    renderLandingAndAuth();
-                    return;
-                }
-                // User is signed in -> fetch role from firestore
-                try {
-                    const userDocRef = doc(db, "users", firebaseUser.uid);
-                    const userDocSnap = await getDoc(userDocRef);
-                    if (!userDocSnap.exists()) {
-                        // Edge: doc missing -> signout
-                        await signOut(auth);
-                        renderLandingAndAuth();
-                        return;
-                    }
-                    const role = userDocSnap.data().role;
-                    if (role === "admin") {
-                        await renderAdminDashboard(firebaseUser, userDocSnap);
-                    } else {
-                        await renderUserDashboard(firebaseUser, userDocSnap);
-                    }
-                } catch (err) {
-                    console.error(err);
-                    renderLandingAndAuth();
-                }
-            });
-        }
-        
-        // start the application
-        initAuthState();
-    </script>
+
+        msgEl.innerText = "Success! Redirecting...";
+        setTimeout(() => {
+            window.location.href = "dashboard-html";
+        }, 1500);
+
+    } catch (err) {
+        msgEl.innerText = err.message;
+    }
+};
+
+// LOGIN
+window.handleLogin = async () => {
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+
+    const userCred = await signInWithEmailAndPassword(auth, email, password);
+    const userDoc = await getDoc(doc(db, "users", userCred.user.uid));
+
+    const role = userDoc.data().role;
+    window.location.href = role === "admin" ? "admin-html" : "dashboard-html";
+};
+
+// 👉 CHANGE: redirect instead of scroll
+window.goToRegisterPage = () => {
+    window.location.href = "register.html";
+};
+</script>
 </head>
-<body class="bg-gray-50 font-sans antialiased">
-    <div id="app-root" class="min-h-screen">
-        <!-- initial loading placeholder -->
-        <div class="flex justify-center items-center h-screen"><div class="text-center"><i class="fas fa-spinner fa-spin text-4xl text-blue-600"></i><p class="mt-3">Loading BestPay...</p></div></div>
-    </div>
+
+<body class="bg-gray-50">
+
+<!-- HERO -->
+<div class="bg-blue-900 text-white text-center py-20">
+    <h1 class="text-5xl font-bold mb-6">BestPay</h1>
+    <p class="mb-6">Earn. Invest. Grow.</p>
+
+    <!-- ✅ UPDATED BUTTON -->
+    <button onclick="goToRegisterPage()" 
+        class="bg-yellow-400 text-black px-6 py-3 rounded-lg font-bold">
+        Get Started
+    </button>
+</div>
+
+<!-- REGISTER PAGE CONTENT -->
+<div class="max-w-md mx-auto mt-10 bg-white p-6 rounded-lg shadow">
+
+    <h2 class="text-xl font-bold mb-4">Register</h2>
+
+    <input id="regName" placeholder="Full Name" class="w-full mb-2 p-2 border">
+    <input id="regEmail" placeholder="Email" class="w-full mb-2 p-2 border">
+    <input id="regPassword" type="password" placeholder="Password" class="w-full mb-2 p-2 border">
+    <input id="regReferral" placeholder="Referral Code" class="w-full mb-2 p-2 border">
+
+    <button onclick="handleRegister()" class="bg-green-500 text-white w-full py-2">
+        Register
+    </button>
+
+    <p id="regMessage" class="text-red-500 mt-2"></p>
+
+</div>
+
 </body>
 </html>
