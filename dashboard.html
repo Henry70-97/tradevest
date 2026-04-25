@@ -35,7 +35,7 @@
             currentUser = user;
             const userDoc = await getDoc(doc(db, "users", user.uid));
             if (!userDoc.exists()) {
-                window.location.href = "registration.html";
+                window.location.href = "index.html";
                 return;
             }
             
