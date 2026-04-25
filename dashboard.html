@@ -17,55 +17,56 @@
         .book-card:hover { transform: translateY(-2px); }
         .sidebar {
             position: fixed; top:0; left:0; width:280px; height:100%;
-            background: #1f2937; color: #e5e7eb;
+            background:#1f2937; color:#e5e7eb;
             transform: translateX(-100%); transition: transform 0.3s;
             z-index: 10000; overflow-y: auto;
         }
         .sidebar.open { transform: translateX(0); }
-        .sidebar a { display: flex; align-items: center; gap:0.75rem; padding:0.7rem 1rem; border-radius:0.75rem; color:#e5e7eb; }
-        .sidebar a:hover { background:#374151; }
-        .sidebar a.active { background:#4f46e5; color:white; }
+        .sidebar a { display: flex; align-items: center; gap:0.75rem; padding:0.7rem 1rem; border-radius:0.75rem; color:#e5e7eb; text-decoration: none; }
+        .sidebar a:hover, .sidebar a.active { background:#4f46e5; color:white; cursor: pointer; }
         .overlay { position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:9999; display:none; }
         .overlay.active { display:block; }
         .content-section { display: none; animation: fadeIn 0.2s; }
         .content-section.active-section { display: block; }
         @keyframes fadeIn { from { opacity:0; transform:translateY(6px);} to { opacity:1; transform:translateY(0);} }
-        .loading { text-align: center; color: #6b7280; padding: 1rem; }
-        .empty-message { text-align: center; color: #9ca3af; padding: 2rem; font-style: italic; }
+        .loading-spinner { text-align:center; padding:2rem; }
         .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #4f46e5; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .empty-message { text-align:center; color:#9ca3af; padding:2rem; font-style:italic; }
+        .maintenance-banner { background: #fef3c7; color: #92400e; padding: 0.75rem; text-align: center; border-bottom: 1px solid #fde68a; }
+        .social-footer a:hover { color: #4f46e5; transform: scale(1.05); transition: all 0.2s; }
     </style>
 </head>
 <body class="bg-amber-50">
-
+    <div id="maintenanceBanner" class="maintenance-banner hidden"></div>
     <div id="sidebarOverlay" class="overlay"></div>
     <aside id="mainSidebar" class="sidebar">
         <div class="flex justify-between items-center p-4 border-b border-gray-700 sticky top-0 bg-gray-800">
-            <div class="flex items-center gap-2"><i class="fas fa-book-open text-2xl text-indigo-400"></i><span class="font-bold text-xl">BestPay</span></div>
+            <div class="flex items-center gap-2"><i class="fas fa-book-open text-2xl text-indigo-400"></i><span class="font-bold text-xl" id="siteName">BestPay</span></div>
             <button id="closeSidebarBtn" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
         </div>
         <nav class="sidebar-nav px-3 py-4 space-y-1">
-            <a href="#" data-section="overview"><i class="fas fa-tachometer-alt w-5"></i> Overview</a>
-            <a href="#" data-section="balances"><i class="fas fa-wallet w-5"></i> Balances</a>
-            <a href="#" data-section="investments"><i class="fas fa-chart-line w-5"></i> Investments</a>
-            <a href="#" data-section="activeInvestments"><i class="fas fa-clock w-5"></i> Active Portfolios</a>
-            <a href="#" data-section="trade"><i class="fas fa-chart-simple w-5"></i> Trade (Forex/Crypto)</a>   <!-- NEW TRADE SECTION -->
-            <a href="#" data-section="transactions"><i class="fas fa-exchange-alt w-5"></i> Transactions</a>
-            <a href="#" data-section="withdrawals"><i class="fas fa-hand-holding-usd w-5"></i> Withdrawals</a>
-            <a href="#" data-section="deposits"><i class="fas fa-plus-circle w-5"></i> Deposits</a>
-            <a href="#" data-section="referrals"><i class="fas fa-users w-5"></i> Referrals</a>
-            <a href="#" data-section="leaderboard"><i class="fas fa-trophy w-5"></i> Leaderboard</a>
-            <a href="#" data-section="support"><i class="fas fa-headset w-5"></i> Support Tickets</a>
-            <a href="#" data-section="streak"><i class="fas fa-fire w-5"></i> Daily Streak</a>
-            <a href="#" data-section="kyc"><i class="fas fa-id-card w-5"></i> KYC Status</a>
-            <a href="#" data-section="security"><i class="fas fa-shield-alt w-5"></i> Security</a>
-            <a href="#" data-section="notifications"><i class="fas fa-bell w-5"></i> Notifications</a>
-            <a href="#" data-section="api"><i class="fas fa-key w-5"></i> API Keys</a>
-            <a href="#" data-section="logs"><i class="fas fa-history w-5"></i> Activity Logs</a>
-            <a href="#" data-section="announcements"><i class="fas fa-bullhorn w-5"></i> Announcements</a>
-            <a href="#" data-section="spin"><i class="fas fa-gamepad w-5"></i> Prize Wheel</a>
-            <a href="#" data-section="settings"><i class="fas fa-sliders-h w-5"></i> Settings</a>
-            <a href="#" data-section="inviteFriends"><i class="fas fa-envelope-open-text w-5"></i> Invite Friends</a>
+            <a data-section="overview"><i class="fas fa-tachometer-alt"></i> Overview</a>
+            <a data-section="balances"><i class="fas fa-wallet"></i> Balances</a>
+            <a data-section="investments"><i class="fas fa-chart-line"></i> Investments</a>
+            <a data-section="activeInvestments"><i class="fas fa-clock"></i> Active Portfolios</a>
+            <a data-section="trade"><i class="fas fa-chart-simple"></i> Trade (Demo)</a>
+            <a data-section="transactions"><i class="fas fa-exchange-alt"></i> Transactions</a>
+            <a data-section="withdrawals"><i class="fas fa-hand-holding-usd"></i> Withdrawals</a>
+            <a data-section="deposits"><i class="fas fa-plus-circle"></i> Deposits</a>
+            <a data-section="referrals"><i class="fas fa-users"></i> Referrals</a>
+            <a data-section="leaderboard"><i class="fas fa-trophy"></i> Leaderboard</a>
+            <a data-section="support"><i class="fas fa-headset"></i> Support Tickets</a>
+            <a data-section="streak"><i class="fas fa-fire"></i> Daily Streak</a>
+            <a data-section="kyc"><i class="fas fa-id-card"></i> KYC Status</a>
+            <a data-section="security"><i class="fas fa-shield-alt"></i> Security</a>
+            <a data-section="notifications"><i class="fas fa-bell"></i> Notifications</a>
+            <a data-section="api"><i class="fas fa-key"></i> API Keys</a>
+            <a data-section="logs"><i class="fas fa-history"></i> Activity Logs</a>
+            <a data-section="announcements"><i class="fas fa-bullhorn"></i> Announcements</a>
+            <a data-section="spin"><i class="fas fa-gamepad"></i> Prize Wheel</a>
+            <a data-section="settings"><i class="fas fa-sliders-h"></i> Settings</a>
+            <a data-section="inviteFriends"><i class="fas fa-envelope-open-text"></i> Invite Friends</a>
         </nav>
         <div class="border-t border-gray-700 p-4"><button id="logoutBtn" class="flex items-center gap-3 w-full text-left text-red-400 hover:bg-red-900/30 rounded-xl p-2"><i class="fas fa-sign-out-alt"></i> Logout</button></div>
     </aside>
@@ -73,37 +74,44 @@
     <div class="ml-0">
         <header class="bg-white shadow-sm sticky top-0 z-20 px-4 py-3 flex items-center gap-4">
             <button id="hamburgerBtn" class="text-2xl p-1 rounded-md hover:bg-gray-100"><i class="fas fa-bars"></i></button>
-            <h1 class="text-xl font-semibold text-gray-800"><i class="fas fa-book-open text-indigo-500 mr-2"></i>My Dashboard</h1>
+            <h1 class="text-xl font-semibold text-gray-800"><i class="fas fa-book-open text-indigo-500 mr-2"></i><span id="headerTitle">My Dashboard</span></h1>
             <div class="flex-1"></div>
             <div class="flex items-center gap-2"><span id="userShort" class="text-sm font-medium"></span><i class="fas fa-user-circle text-2xl text-gray-600"></i></div>
         </header>
-        <main class="container mx-auto px-4 py-6 space-y-6">
-            <!-- Overview Section -->
-            <div id="overview" class="content-section active-section"><div class="book-card p-6"><h2 class="text-2xl font-bold">Dashboard Overview</h2><div id="overviewStats" class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4"><div class="spinner"></div></div></div></div>
-            <div id="balances" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">💰 Balances</h3><div id="balanceDetails" class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="spinner"></div></div></div></div>
-            <div id="investments" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">📈 Investment Plans</h3><div id="plansContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="spinner"></div></div></div></div>
-            <div id="activeInvestments" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">⏳ My Active Investments</h3><div id="activeInvList" class="space-y-2"><div class="spinner"></div></div></div></div>
-            
-            <!-- NEW TRADE SECTION -->
-            <div id="trade" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">📊 Trade Forex & Crypto</h3><div id="tradeInterface"><p class="text-gray-600">Simulated trading (real-time prices coming soon).</p><div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4"><div class="border rounded p-3"><h4 class="font-bold">EUR/USD</h4><p>Price: <span id="eurusd">1.0892</span></p><button onclick="simulateTrade('EUR/USD', 'buy')" class="bg-green-600 text-white px-2 py-1 rounded text-sm">Buy</button> <button onclick="simulateTrade('EUR/USD', 'sell')" class="bg-red-600 text-white px-2 py-1 rounded text-sm">Sell</button></div><div class="border rounded p-3"><h4 class="font-bold">BTC/USD</h4><p>Price: <span id="btcusd">65420</span></p><button onclick="simulateTrade('BTC/USD', 'buy')" class="bg-green-600 text-white px-2 py-1 rounded text-sm">Buy</button> <button onclick="simulateTrade('BTC/USD', 'sell')" class="bg-red-600 text-white px-2 py-1 rounded text-sm">Sell</button></div></div><p class="text-xs text-gray-400 mt-4">Demo mode – no real funds involved. Real trading will be enabled after KYC.</p></div></div></div>
-
-            <div id="transactions" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">📜 Transaction History</h3><div id="historyList" class="space-y-2 max-h-96 overflow-auto"><div class="spinner"></div></div></div></div>
-            <div id="withdrawals" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">🏦 Withdrawal Requests</h3><button onclick="requestWithdrawal()" class="mb-4 bg-blue-600 text-white px-4 py-2 rounded-lg">New Request</button><div id="withdrawalsList"><div class="spinner"></div></div></div></div>
-            <div id="deposits" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">💎 Deposit History</h3><div id="depositsList"><div class="spinner"></div></div></div></div>
-            <div id="referrals" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">👥 Referral Program</h3><div id="referralStats"><div class="spinner"></div></div><div class="mt-4"><p class="font-mono bg-gray-100 p-2 rounded" id="referralLinkDisplay"></p><button onclick="copyReferralLink()" class="mt-2 bg-indigo-600 text-white px-3 py-1 rounded">Copy Link</button></div></div></div>
-            <div id="leaderboard" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">🏆 Top Earners</h3><div id="leaderboardContainer"><div class="spinner"></div></div></div></div>
-            <div id="support" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">🎫 Support Tickets</h3><button onclick="createTicket()" class="mb-3 bg-green-600 text-white px-3 py-1 rounded">New Ticket</button><div id="supportTicketsList"><div class="spinner"></div></div></div></div>
-            <div id="streak" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">🔥 Daily Login Streak</h3><div id="streakInfo"><div class="spinner"></div></div><button onclick="claimDailyBonus()" class="mt-3 bg-orange-500 text-white px-5 py-2 rounded">Claim Today’s Bonus</button></div></div>
-            <div id="kyc" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">🪪 KYC Verification</h3><div id="kycStatusDisplay"><div class="spinner"></div></div><button onclick="startKYC()" class="mt-3 bg-indigo-600 text-white px-4 py-2 rounded">Submit KYC</button></div></div>
+        <main class="container mx-auto px-4 py-6 space-y-6" id="mainContent">
+            <!-- All sections will appear here, but they are dynamically loaded – I'll embed them for clarity -->
+            <div id="overview" class="content-section active-section"><div class="book-card p-6"><h2 class="text-2xl font-bold">Dashboard Overview</h2><div id="overviewStats" class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
+            <div id="balances" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">💰 Balances</h3><div id="balanceDetails"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
+            <div id="investments" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">📈 Investment Plans</h3><div id="plansContainer"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
+            <div id="activeInvestments" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">⏳ My Active Investments</h3><div id="activeInvList"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
+            <div id="trade" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">📊 Trade Forex & Crypto (Demo)</h3><div id="tradeInterface"><p class="text-gray-600">Simulated trading environment – real trading after KYC.</p><div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4"><div class="border rounded p-3"><h4 class="font-bold">EUR/USD</h4><p>Price: <span id="eurusd">1.0892</span></p><button onclick="simulateTrade('EUR/USD', 'buy')" class="bg-green-600 text-white px-2 py-1 rounded text-sm">Buy</button> <button onclick="simulateTrade('EUR/USD', 'sell')" class="bg-red-600 text-white px-2 py-1 rounded text-sm">Sell</button></div><div class="border rounded p-3"><h4 class="font-bold">BTC/USD</h4><p>Price: <span id="btcusd">65420</span></p><button onclick="simulateTrade('BTC/USD', 'buy')" class="bg-green-600 text-white px-2 py-1 rounded text-sm">Buy</button> <button onclick="simulateTrade('BTC/USD', 'sell')" class="bg-red-600 text-white px-2 py-1 rounded text-sm">Sell</button></div></div><p class="text-xs text-gray-400 mt-4">Demo mode – no real funds involved.</p></div></div></div>
+            <div id="transactions" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">📜 Transaction History</h3><div id="historyList"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
+            <div id="withdrawals" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">🏦 Withdrawal Requests</h3><button onclick="requestWithdrawal()" class="mb-4 bg-blue-600 text-white px-4 py-2 rounded-lg">New Request</button><div id="withdrawalsList"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
+            <div id="deposits" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">💎 Deposit History</h3><div id="depositsList"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
+            <div id="referrals" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">👥 Referral Program</h3><div id="referralStats"><div class="loading-spinner"><div class="spinner"></div></div></div><div class="mt-4"><p class="font-mono bg-gray-100 p-2 rounded" id="referralLinkDisplay"></p><button onclick="copyReferralLink()" class="mt-2 bg-indigo-600 text-white px-3 py-1 rounded">Copy Link</button></div></div></div>
+            <div id="leaderboard" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">🏆 Top Earners</h3><div id="leaderboardContainer"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
+            <div id="support" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">🎫 Support Tickets</h3><button onclick="createTicket()" class="mb-3 bg-green-600 text-white px-3 py-1 rounded">New Ticket</button><div id="supportTicketsList"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
+            <div id="streak" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">🔥 Daily Login Streak</h3><div id="streakInfo"><div class="loading-spinner"><div class="spinner"></div></div></div><button onclick="claimDailyBonus()" class="mt-3 bg-orange-500 text-white px-5 py-2 rounded">Claim Today’s Bonus</button></div></div>
+            <div id="kyc" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">🪪 KYC Verification</h3><div id="kycStatusDisplay"><div class="loading-spinner"><div class="spinner"></div></div></div><button onclick="startKYC()" class="mt-3 bg-indigo-600 text-white px-4 py-2 rounded">Submit KYC</button></div></div>
             <div id="security" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">🔐 Security & 2FA</h3><p>Two‑Factor Authentication (coming soon)</p><button class="mt-2 bg-gray-700 text-white px-4 py-1 rounded">Enable 2FA</button></div></div>
             <div id="notifications" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">🔔 Notifications</h3><div id="notifList">No new notifications</div></div></div>
             <div id="api" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">🔑 API Keys</h3><button class="bg-blue-500 text-white px-3 py-1 rounded">Generate Key</button></div></div>
             <div id="logs" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">📋 Activity Logs</h3><div id="activityLogs">Loading...</div></div></div>
-            <div id="announcements" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">📢 Announcements</h3><div id="announcementsList"><div class="spinner"></div></div></div></div>
-            <div id="spin" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">🎡 Prize Wheel</h3><canvas id="wheelCanvas" width="250" height="250" class="mx-auto"></canvas><div class="mt-3 flex gap-2"><input type="number" id="spinStake" value="2" min="2" class="border rounded p-1 w-24"><button id="spinBtnWheel" class="bg-purple-600 text-white px-4 py-1 rounded">SPIN</button></div><p id="spinResultMsg" class="text-sm mt-2"></p></div></div>
-            <div id="settings" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">⚙️ Account Settings</h3><button class="bg-gray-500 text-white px-4 py-1 rounded">Update Profile</button></div></div>
-            <div id="inviteFriends" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">✉️ Invite Friends</h3><p>Share your referral code and earn 10% commission.</p><div id="refCodeDisplay" class="bg-gray-100 p-2 font-mono"></div><button onclick="copyReferralCodeOnly()" class="mt-2 bg-cyan-600 text-white px-3 py-1 rounded">Copy Code</button></div></div>
+            <div id="announcements" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">📢 Announcements</h3><div id="announcementsList"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
+            <div id="spin" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">🎡 Prize Wheel</h3><canvas id="wheelCanvas" width="250" height="250" class="mx-auto"></canvas><div class="mt-3 flex flex-col gap-2 items-center"><div><label>Stake ($): </label><input type="number" id="spinStake" value="2" min="2" class="border rounded p-1 w-24"></div><button id="spinBtnWheel" class="bg-purple-600 text-white px-6 py-2 rounded-lg">SPIN</button><p id="spinResultMsg" class="text-sm mt-2"></p></div></div></div>
+            <div id="settings" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">⚙️ Account Settings</h3><button onclick="updateProfile()" class="bg-gray-500 text-white px-4 py-1 rounded">Update Profile</button></div></div>
+            <div id="inviteFriends" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">✉️ Invite Friends</h3><p>Share your referral code and earn <span id="referralCommissionDisplay">10</span>% commission.</p><div id="refCodeDisplay" class="bg-gray-100 p-2 font-mono"></div><button onclick="copyReferralCodeOnly()" class="mt-2 bg-cyan-600 text-white px-3 py-1 rounded">Copy Code</button></div></div>
         </main>
+        
+        <!-- Footer with social links -->
+        <footer class="bg-white border-t py-4 mt-8 social-footer">
+            <div class="container mx-auto px-4 flex flex-wrap justify-between items-center gap-3">
+                <div class="text-sm text-gray-500">© 2025 <span id="footerSiteName">BestPay</span>. All rights reserved.</div>
+                <div class="flex gap-4" id="socialLinksContainer">
+                    <!-- Social links will be injected from settings -->
+                </div>
+            </div>
+        </footer>
     </div>
 
     <script type="module">
@@ -124,16 +132,60 @@
         const db = getFirestore(app);
         
         let currentUser, currentUserData, currentWallet = {};
-        let wheelCtx, wheelCanvas, wheelSegments = defaultWheel();
-        function defaultWheel() { return [{label:"0x",mult:0,color:"#f87171"},{label:"0.07x",mult:0.07,color:"#60a5fa"},{label:"1x",mult:1,color:"#4ade80"},{label:"5x",mult:5,color:"#fbbf24"},{label:"10x",mult:10,color:"#c084fc"},{label:"FREE",mult:"free",color:"#facc15"}]; }
-        let currentRotation = 0;
-        
-        // Cache object to store loaded data
-        let cache = {
-            plans: null, activeInv: null, transactions: null, withdrawals: null, deposits: null,
-            referrals: null, leaderboard: null, tickets: null, announcements: null
+        let systemSettings = {
+            minWithdrawal: 10,
+            referralCommission: 10,
+            dailyStreakMaxBonus: 10,
+            spinMinStake: 2,
+            siteName: "BestPay",
+            contactEmail: "support@bestpay.com",
+            maintenanceMode: false,
+            social: {}
         };
-
+        
+        // Wheel variables
+        let wheelCanvas, wheelCtx, currentRotation = 0, spinning = false;
+        let wheelSegments = [
+            { label: "0x", multiplier: 0, color: "#f87171" },
+            { label: "0.07x", multiplier: 0.07, color: "#60a5fa" },
+            { label: "1x", multiplier: 1, color: "#4ade80" },
+            { label: "5x", multiplier: 5, color: "#fbbf24" },
+            { label: "10x", multiplier: 10, color: "#c084fc" },
+            { label: "FREE", multiplier: "free", color: "#facc15" }
+        ];
+        
+        // ---------- Fetch System Settings from Firestore ----------
+        async function loadSystemSettings() {
+            try {
+                const settingsDoc = await getDoc(doc(db, "settings", "system"));
+                if (settingsDoc.exists()) {
+                    systemSettings = { ...systemSettings, ...settingsDoc.data() };
+                }
+                // Apply settings to UI
+                document.getElementById('siteName').innerText = systemSettings.siteName;
+                document.getElementById('headerTitle').innerText = systemSettings.siteName;
+                document.getElementById('footerSiteName').innerText = systemSettings.siteName;
+                document.getElementById('referralCommissionDisplay').innerText = systemSettings.referralCommission;
+                const stakeInput = document.getElementById('spinStake');
+                if (stakeInput) stakeInput.min = systemSettings.spinMinStake;
+                // Show maintenance banner if needed
+                if (systemSettings.maintenanceMode) {
+                    document.getElementById('maintenanceBanner').innerHTML = `⚠️ ${systemSettings.siteName} is currently under maintenance. Some features may be limited.`;
+                    document.getElementById('maintenanceBanner').classList.remove('hidden');
+                }
+                // Render social links
+                const socialContainer = document.getElementById('socialLinksContainer');
+                if (socialContainer && systemSettings.social) {
+                    socialContainer.innerHTML = '';
+                    if (systemSettings.social.twitter) socialContainer.innerHTML += `<a href="${systemSettings.social.twitter}" target="_blank" class="text-gray-500 hover:text-blue-500"><i class="fab fa-twitter text-xl"></i></a>`;
+                    if (systemSettings.social.facebook) socialContainer.innerHTML += `<a href="${systemSettings.social.facebook}" target="_blank" class="text-gray-500 hover:text-blue-700"><i class="fab fa-facebook text-xl"></i></a>`;
+                    if (systemSettings.social.telegram) socialContainer.innerHTML += `<a href="${systemSettings.social.telegram}" target="_blank" class="text-gray-500 hover:text-blue-400"><i class="fab fa-telegram text-xl"></i></a>`;
+                    if (systemSettings.social.instagram) socialContainer.innerHTML += `<a href="${systemSettings.social.instagram}" target="_blank" class="text-gray-500 hover:text-pink-500"><i class="fab fa-instagram text-xl"></i></a>`;
+                }
+            } catch(e) { console.error("Settings error", e); }
+        }
+        
+        // ---------- Authentication & Initial Load ----------
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = "index.html"; return; }
             currentUser = user;
@@ -141,203 +193,379 @@
             if (!userSnap.exists()) { window.location.href = "index.html"; return; }
             currentUserData = userSnap.data();
             if (currentUserData.role === "admin") { window.location.href = "admin.html"; return; }
-            await loadUserData();  // loads balances, streak, kyc, etc.
-            initSidebarNav();
+            await loadSystemSettings();
+            await loadUserData();
+            await preloadAllUserData();
             initWheel();
-            // Preload all data in background (but show sections when clicked)
-            await preloadAllData();
+            setupNavigation();
         });
-
+        
         async function loadUserData() {
             const walletSnap = await getDoc(doc(db,"wallets",currentUser.uid));
             currentWallet = walletSnap.data() || { investedBalance:0, bonusBalance:0 };
             document.getElementById('userShort').innerText = currentUserData.displayName?.split(' ')[0] || currentUser.email.split('@')[0];
-            // Update overview (no cache needed because always fresh)
+            // Overview stats
             document.getElementById('overviewStats').innerHTML = `
                 <div class="book-card p-3 text-center"><p class="text-gray-500">Withdrawable</p><p class="text-2xl font-bold">$${(currentUserData.withdrawableBalance||0).toFixed(2)}</p></div>
                 <div class="book-card p-3 text-center"><p class="text-gray-500">Invested</p><p class="text-2xl font-bold">$${currentWallet.investedBalance}</p></div>
                 <div class="book-card p-3 text-center"><p class="text-gray-500">Bonus</p><p class="text-2xl font-bold">$${currentWallet.bonusBalance}</p></div>
                 <div class="book-card p-3 text-center"><p class="text-gray-500">Total Earned</p><p class="text-2xl font-bold">$${(currentUserData.totalEarned||0).toFixed(2)}</p></div>`;
             document.getElementById('balanceDetails').innerHTML = `
-                <div class="book-card p-3"><span class="font-bold">Withdrawable:</span> $${(currentUserData.withdrawableBalance||0).toFixed(2)}</div>
-                <div class="book-card p-3"><span>Invested:</span> $${currentWallet.investedBalance}</div>
-                <div class="book-card p-3"><span>Bonus:</span> $${currentWallet.bonusBalance}</div>`;
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="book-card p-3"><span class="font-bold">Withdrawable:</span> $${(currentUserData.withdrawableBalance||0).toFixed(2)}</div>
+                    <div class="book-card p-3"><span>Invested:</span> $${currentWallet.investedBalance}</div>
+                    <div class="book-card p-3"><span>Bonus:</span> $${currentWallet.bonusBalance}</div>
+                </div>`;
             const streakSnap = await getDoc(doc(db,"login_streaks",currentUser.uid));
             let streakDays = streakSnap.exists() ? streakSnap.data().currentStreak : 0;
-            document.getElementById('streakInfo').innerHTML = `<p class="text-2xl">🔥 ${streakDays} days</p><p class="text-sm">Login daily to increase bonus</p>`;
+            document.getElementById('streakInfo').innerHTML = `<p class="text-2xl">🔥 ${streakDays} days</p><p class="text-sm">Login daily to increase bonus (max $${systemSettings.dailyStreakMaxBonus})</p>`;
             document.getElementById('kycStatusDisplay').innerHTML = `<span class="px-3 py-1 rounded ${currentUserData.kycStatus==='verified'?'bg-green-100 text-green-800':'bg-yellow-100'}">${currentUserData.kycStatus||'unverified'}</span>`;
-            const refCode = currentUserData.referralCode;
-            document.getElementById('refCodeDisplay').innerHTML = refCode;
-            document.getElementById('referralLinkDisplay').innerHTML = `${window.location.origin}/index.html?ref=${refCode}`;
+            document.getElementById('refCodeDisplay').innerHTML = currentUserData.referralCode;
+            document.getElementById('referralLinkDisplay').innerHTML = `${window.location.origin}/index.html?ref=${currentUserData.referralCode}`;
             document.getElementById('activityLogs').innerHTML = `<p>Last login: ${new Date().toLocaleString()}</p>`;
         }
-
-        async function preloadAllData() {
+        
+        // ---------- Preload all data once (cached) ----------
+        let cache = {};
+        async function preloadAllUserData() {
             await Promise.all([
                 loadPlans(true), loadActiveInvestments(true), loadTransactions(true), loadWithdrawals(true),
                 loadDeposits(true), loadReferralStats(true), loadLeaderboard(true), loadTickets(true), loadAnnouncements(true)
             ]);
         }
-
-        // Generic loader with cache
+        
+        // Generic loaders with cache
         async function loadPlans(forceRefresh = false) {
-            if(!forceRefresh && cache.plans) { renderPlans(cache.plans); return; }
+            if (!forceRefresh && cache.plans) { renderPlans(cache.plans); return; }
             const qSnap = await getDocs(query(collection(db,"investment_plans"), where("isActive","==",true)));
             cache.plans = qSnap;
             renderPlans(qSnap);
         }
         function renderPlans(qSnap) {
-            if(qSnap.empty) { document.getElementById('plansContainer').innerHTML = '<div class="empty-message">No investment plans available.</div>'; return; }
-            let html=''; qSnap.forEach(d=>{ const p=d.data(); html+=`<div class="book-card p-3"><h4 class="font-bold">${p.name}</h4><p>Min $${p.minAmount} | ROI ${p.roiPercent}%</p><button onclick="investNow('${d.id}',${p.minAmount},${p.roiPercent})" class="mt-2 bg-indigo-600 text-white px-3 py-1 rounded text-sm">Invest from Bonus</button></div>`; });
+            if (qSnap.empty) { document.getElementById('plansContainer').innerHTML = '<div class="empty-message">No active investment plans.</div>'; return; }
+            let html = ''; qSnap.forEach(d => { const p = d.data(); html += `<div class="book-card p-3"><img src="${p.productImageURL || 'https://via.placeholder.com/80'}" class="w-full h-32 object-cover rounded mb-2"><h4 class="font-bold">${p.name}</h4><p class="text-sm">${p.productDescription?.substring(0,60)}</p><p>Min $${p.minAmount} | ROI ${p.roiPercent}% | ${p.durationDays}d</p><button onclick="investNow('${d.id}',${p.minAmount},${p.roiPercent})" class="mt-2 w-full bg-indigo-600 text-white px-3 py-1 rounded text-sm">Invest from Bonus</button></div>`; });
             document.getElementById('plansContainer').innerHTML = html;
         }
+        window.investNow = async (planId, minAmt, roi) => {
+            if (currentWallet.bonusBalance < minAmt) return alert("Insufficient bonus balance");
+            const end = new Date(); end.setDate(end.getDate() + 30);
+            const roiAmt = minAmt * roi / 100;
+            await addDoc(collection(db,"investments"),{userId:currentUser.uid,planId,amount:minAmt,startDate:serverTimestamp(),endDate:Timestamp.fromDate(end),status:"active",roiEarned:roiAmt});
+            await updateDoc(doc(db,"wallets",currentUser.uid),{bonusBalance:increment(-minAmt),investedBalance:increment(minAmt)});
+            await addAdminLog("invest", currentUser.uid, {amount: minAmt, planId});
+            cache.activeInv = null; cache.transactions = null;
+            await loadActiveInvestments(true); await loadTransactions(true); await loadUserData();
+            alert("Investment successful!");
+        };
         
         async function loadActiveInvestments(forceRefresh = false) {
-            if(!forceRefresh && cache.activeInv) { renderActiveInv(cache.activeInv); return; }
+            if (!forceRefresh && cache.activeInv) { renderActiveInv(cache.activeInv); return; }
             const q = query(collection(db,"investments"), where("userId","==",currentUser.uid), where("status","==","active"));
             const snap = await getDocs(q);
             cache.activeInv = snap;
             renderActiveInv(snap);
         }
         function renderActiveInv(snap) {
-            if(snap.empty) { document.getElementById('activeInvList').innerHTML = '<div class="empty-message">No active investments.</div>'; return; }
-            let html=""; snap.forEach(i=>{ const data=i.data(); html+=`<div class="book-card p-2 flex justify-between"><span>$${data.amount}</span><span>Matures: ${data.endDate?.toDate().toLocaleDateString()}</span><span>+$${data.roiEarned}</span></div>`; });
+            if (snap.empty) { document.getElementById('activeInvList').innerHTML = '<div class="empty-message">No active investments.</div>'; return; }
+            let html = ''; snap.forEach(i=>{ const d=i.data(); html+=`<div class="book-card p-2 flex justify-between"><span>$${d.amount}</span><span>Matures: ${d.endDate?.toDate().toLocaleDateString()}</span><span>+$${d.roiEarned}</span></div>`; });
             document.getElementById('activeInvList').innerHTML = html;
         }
         
         async function loadTransactions(forceRefresh = false) {
-            if(!forceRefresh && cache.transactions) { renderTransactions(cache.transactions); return; }
-            const q = query(collection(db,"transactions"), where("userId","==",currentUser.uid), orderBy("timestamp","desc"), limit(30));
+            if (!forceRefresh && cache.transactions) { renderTransactions(cache.transactions); return; }
+            const q = query(collection(db,"transactions"), where("userId","==",currentUser.uid), orderBy("timestamp","desc"), limit(50));
             const snap = await getDocs(q);
             cache.transactions = snap;
             renderTransactions(snap);
         }
         function renderTransactions(snap) {
-            if(snap.empty) { document.getElementById('historyList').innerHTML = '<div class="empty-message">No transactions yet.</div>'; return; }
-            let html=""; snap.forEach(t=>{ const d=t.data(); html+=`<div class="flex justify-between border-b py-2"><span>${d.type}</span><span class="${d.amount>0?'text-green-600':'text-red-600'}">$${d.amount.toFixed(2)}</span></div>`; });
+            if (snap.empty) { document.getElementById('historyList').innerHTML = '<div class="empty-message">No transactions yet.</div>'; return; }
+            let html = ''; snap.forEach(t=>{ const d=t.data(); html+=`<div class="flex justify-between border-b py-2"><span>${d.type}</span><span class="${d.amount>0?'text-green-600':'text-red-600'}">$${d.amount.toFixed(2)}</span><span class="text-xs">${d.timestamp?.toDate().toLocaleString()}</span></div>`; });
             document.getElementById('historyList').innerHTML = html;
         }
         
         async function loadWithdrawals(forceRefresh = false) {
-            if(!forceRefresh && cache.withdrawals) { renderWithdrawals(cache.withdrawals); return; }
+            if (!forceRefresh && cache.withdrawals) { renderWithdrawals(cache.withdrawals); return; }
             const q = query(collection(db,"withdrawals"), where("userId","==",currentUser.uid), orderBy("createdAt","desc"));
             const snap = await getDocs(q);
             cache.withdrawals = snap;
             renderWithdrawals(snap);
         }
         function renderWithdrawals(snap) {
-            if(snap.empty) { document.getElementById('withdrawalsList').innerHTML = '<div class="empty-message">No withdrawal requests yet.</div>'; return; }
-            let html=""; snap.forEach(w=>{ const data=w.data(); html+=`<div class="book-card p-2 flex justify-between"><span>$${data.amount} - ${data.method}</span><span class="text-sm ${data.status==='pending'?'text-yellow-600':'text-green-600'}">${data.status}</span></div>`; });
+            if (snap.empty) { document.getElementById('withdrawalsList').innerHTML = '<div class="empty-message">No withdrawal requests.</div>'; return; }
+            let html = ''; snap.forEach(w=>{ const d=w.data(); html+=`<div class="book-card p-2 flex justify-between"><span>$${d.amount} - ${d.method}</span><span class="text-sm ${d.status==='pending'?'text-yellow-600':'text-green-600'}">${d.status}</span><span class="text-xs">${d.createdAt?.toDate().toLocaleDateString()}</span></div>`; });
             document.getElementById('withdrawalsList').innerHTML = html;
         }
+        window.requestWithdrawal = async () => {
+            const min = systemSettings.minWithdrawal;
+            const bal = currentUserData.withdrawableBalance || 0;
+            if (bal < min) return alert(`Minimum withdrawal is $${min}`);
+            const amt = parseFloat(prompt(`Balance $${bal.toFixed(2)}\nEnter amount (min $${min}):`));
+            if (isNaN(amt) || amt < min || amt > bal) return alert("Invalid amount");
+            const method = prompt("Method (Bank/Crypto/PayPal):");
+            if (!method) return;
+            const details = prompt("Payment details:");
+            if (!details) return;
+            await addDoc(collection(db,"withdrawals"),{userId:currentUser.uid, amount:amt, method, paymentDetails:details, status:"pending", createdAt:serverTimestamp()});
+            await addAdminLog("request_withdrawal", currentUser.uid, {amount: amt});
+            cache.withdrawals = null;
+            await loadWithdrawals(true);
+            alert("Withdrawal request submitted.");
+        };
         
         async function loadDeposits(forceRefresh = false) {
-            if(!forceRefresh && cache.deposits) { renderDeposits(cache.deposits); return; }
+            if (!forceRefresh && cache.deposits) { renderDeposits(cache.deposits); return; }
             const q = query(collection(db,"deposits"), where("userId","==",currentUser.uid), orderBy("createdAt","desc"));
             const snap = await getDocs(q);
             cache.deposits = snap;
             renderDeposits(snap);
         }
         function renderDeposits(snap) {
-            if(snap.empty) { document.getElementById('depositsList').innerHTML = '<div class="empty-message">No deposit history.</div>'; return; }
-            let html=""; snap.forEach(d=>{ const data=d.data(); html+=`<div class="book-card p-2 flex justify-between"><span>$${data.amount} ${data.method}</span><span>${data.status}</span></div>`; });
+            if (snap.empty) { document.getElementById('depositsList').innerHTML = '<div class="empty-message">No deposit history.</div>'; return; }
+            let html = ''; snap.forEach(d=>{ const data=d.data(); html+=`<div class="book-card p-2 flex justify-between"><span>$${data.amount} ${data.method}</span><span>${data.status}</span><span class="text-xs">${data.createdAt?.toDate().toLocaleDateString()}</span></div>`; });
             document.getElementById('depositsList').innerHTML = html;
         }
         
         async function loadReferralStats(forceRefresh = false) {
-            if(!forceRefresh && cache.referrals) { renderReferralStats(cache.referrals); return; }
+            if (!forceRefresh && cache.referrals) { renderReferralStats(cache.referrals); return; }
             const q = query(collection(db,"referrals"), where("referrerId","==",currentUser.uid));
             const snap = await getDocs(q);
             cache.referrals = snap;
             renderReferralStats(snap);
         }
         function renderReferralStats(snap) {
-            let totalComm=0; snap.forEach(r=>totalComm+= (r.data().commissionEarned||0));
-            document.getElementById('referralStats').innerHTML = `<p>Total referrals: ${snap.size}</p><p>Commissions earned: $${totalComm.toFixed(2)}</p>`;
+            let totalComm = 0; snap.forEach(r=>totalComm+= (r.data().commissionEarned||0));
+            document.getElementById('referralStats').innerHTML = `<p>Total referrals: ${snap.size}</p><p>Commissions earned: $${totalComm.toFixed(2)} (${systemSettings.referralCommission}% of referred deposits)</p>`;
         }
         
         async function loadLeaderboard(forceRefresh = false) {
-            if(!forceRefresh && cache.leaderboard) { renderLeaderboard(cache.leaderboard); return; }
-            const q = query(collection(db,"users"), orderBy("totalEarned","desc"), limit(10));
+            if (!forceRefresh && cache.leaderboard) { renderLeaderboard(cache.leaderboard); return; }
+            const q = query(collection(db,"users"), orderBy("totalEarned","desc"), limit(20));
             const snap = await getDocs(q);
             cache.leaderboard = snap;
             renderLeaderboard(snap);
         }
         function renderLeaderboard(snap) {
-            if(snap.empty) { document.getElementById('leaderboardContainer').innerHTML = '<div class="empty-message">No users yet.</div>'; return; }
-            let rank=1, html="<ol class='space-y-1'>";
-            for(const u of snap.docs){ const data=u.data(); html+=`<li class="flex justify-between"><span>#${rank} ${data.displayName||'User'}</span><span>$${(data.totalEarned||0).toFixed(2)}</span></li>`; rank++; }
+            if (snap.empty) { document.getElementById('leaderboardContainer').innerHTML = '<div class="empty-message">No users yet.</div>'; return; }
+            let rank=1, html='<ol class="list-decimal pl-5 space-y-1">';
+            for(const u of snap.docs){ const data=u.data(); html+=`<li class="flex justify-between"><span>${data.displayName||'User'}</span><span>$${(data.totalEarned||0).toFixed(2)}</span></li>`; rank++; }
             html+='</ol>'; document.getElementById('leaderboardContainer').innerHTML = html;
         }
         
         async function loadTickets(forceRefresh = false) {
-            if(!forceRefresh && cache.tickets) { renderTickets(cache.tickets); return; }
+            if (!forceRefresh && cache.tickets) { renderTickets(cache.tickets); return; }
             const q = query(collection(db,"support_tickets"), where("userId","==",currentUser.uid), orderBy("createdAt","desc"));
             const snap = await getDocs(q);
             cache.tickets = snap;
             renderTickets(snap);
         }
         function renderTickets(snap) {
-            if(snap.empty) { document.getElementById('supportTicketsList').innerHTML = '<div class="empty-message">No support tickets.</div>'; return; }
-            let html=""; for(const t of snap.docs){ const data=t.data(); html+=`<div class="book-card p-2 mb-2"><b>${data.subject}</b><p>${data.message.substring(0,60)}</p><span class="text-xs">${data.status}</span></div>`; }
+            if (snap.empty) { document.getElementById('supportTicketsList').innerHTML = '<div class="empty-message">No tickets. Create one above.</div>'; return; }
+            let html = ''; for(const t of snap.docs){ const data=t.data(); html+=`<div class="book-card p-2 mb-2"><b>${data.subject}</b><p>${data.message.substring(0,80)}</p><span class="text-xs">${data.status}</span><div class="text-xs text-gray-400">${data.createdAt?.toDate().toLocaleString()}</div></div>`; }
             document.getElementById('supportTicketsList').innerHTML = html;
         }
+        window.createTicket = async () => {
+            const subject = prompt("Subject:"); if(!subject) return;
+            const message = prompt("Message:"); if(!message) return;
+            await addDoc(collection(db,"support_tickets"),{userId:currentUser.uid,userEmail:currentUser.email,subject,message,status:"open",createdAt:serverTimestamp()});
+            await addAdminLog("create_ticket", currentUser.uid, {subject});
+            cache.tickets = null; await loadTickets(true);
+            alert("Ticket created.");
+        };
         
         async function loadAnnouncements(forceRefresh = false) {
-            if(!forceRefresh && cache.announcements) { renderAnnouncements(cache.announcements); return; }
+            if (!forceRefresh && cache.announcements) { renderAnnouncements(cache.announcements); return; }
             const snap = await getDocs(query(collection(db,"announcements"), orderBy("createdAt","desc")));
             cache.announcements = snap;
             renderAnnouncements(snap);
         }
         function renderAnnouncements(snap) {
-            if(snap.empty) { document.getElementById('announcementsList').innerHTML = '<div class="empty-message">No announcements yet.</div>'; return; }
-            let html=""; snap.forEach(a=>{ const d=a.data(); html+=`<div class="book-card p-2 mb-2"><b>${d.title}</b><p>${d.content}</p></div>`; });
+            if (snap.empty) { document.getElementById('announcementsList').innerHTML = '<div class="empty-message">No announcements.</div>'; return; }
+            let html = ''; snap.forEach(a=>{ const d=a.data(); html+=`<div class="book-card p-2 mb-2"><b>${d.title}</b><p class="text-sm">${d.content}</p><span class="text-xs text-gray-400">${d.createdAt?.toDate().toLocaleDateString()}</span></div>`; });
             document.getElementById('announcementsList').innerHTML = html;
         }
         
-        // User actions (these invalidate relevant caches)
-        window.investNow = async (planId, minAmt, roi) => {
-            if(currentWallet.bonusBalance < minAmt) return alert("Insufficient bonus");
-            const end = new Date(); end.setDate(end.getDate()+30);
-            const roiAmt = minAmt * roi/100;
-            await addDoc(collection(db,"investments"),{userId:currentUser.uid,planId,amount:minAmt,startDate:serverTimestamp(),endDate:Timestamp.fromDate(end),status:"active",roiEarned:roiAmt});
-            await updateDoc(doc(db,"wallets",currentUser.uid),{bonusBalance:increment(-minAmt),investedBalance:increment(minAmt)});
-            // invalidate caches
-            cache.activeInv = null; cache.transactions = null;
-            await loadActiveInvestments(true); await loadTransactions(true); await loadUserData();
-            alert("Investment success");
-        };
-        window.createTicket = async()=>{ const sub=prompt("Subject"); if(!sub)return; const msg=prompt("Message"); if(!msg)return; await addDoc(collection(db,"support_tickets"),{userId:currentUser.uid,userEmail:currentUser.email,subject:sub,message:msg,status:"open",createdAt:serverTimestamp()}); cache.tickets=null; loadTickets(true); };
-        window.requestWithdrawal = async()=>{ const bal=currentUserData.withdrawableBalance||0; if(bal<10) return alert("Min $10"); const amt=parseFloat(prompt(`Balance $${bal}, amount:`)); if(amt<10||amt>bal)return; const method=prompt("Method"); const details=prompt("Details"); await addDoc(collection(db,"withdrawals"),{userId:currentUser.uid,amount:amt,method,paymentDetails:details,status:"pending",createdAt:serverTimestamp()}); cache.withdrawals=null; loadWithdrawals(true); };
-        window.claimDailyBonus = async()=>{ const today=new Date().toISOString().split('T')[0]; const streakRef=doc(db,"login_streaks",currentUser.uid); const snap=await getDoc(streakRef); let streak=1; if(snap.exists() && snap.data().lastLoginDate===today) return alert("Already claimed"); if(snap.exists() && snap.data().lastLoginDate===new Date(Date.now()-86400000).toISOString().split('T')[0]) streak=(snap.data().currentStreak||0)+1; const bonus=Math.min(1+Math.floor(streak/5),10); await updateDoc(doc(db,"users",currentUser.uid),{withdrawableBalance:increment(bonus),totalEarned:increment(bonus)}); await setDoc(streakRef,{currentStreak:streak,lastLoginDate:today,bonusClaimedToday:true},{merge:true}); alert(`+$${bonus} bonus`); cache.transactions=null; await loadUserData(); await loadTransactions(true); };
-        window.startKYC = ()=>{ alert("KYC submission would redirect to form. For demo, set verified."); };
-        window.copyReferralLink=()=>{ const link=document.getElementById('referralLinkDisplay').innerText; navigator.clipboard.writeText(link); alert("Copied"); };
-        window.copyReferralCodeOnly=()=>{ const code=currentUserData.referralCode; navigator.clipboard.writeText(code); alert("Code copied"); };
-        
-        // Trade simulation (demo)
-        window.simulateTrade = (symbol, side) => {
-            alert(`Demo trade: ${side} ${symbol} executed. (Real trading will be available after full KYC.)`);
+        window.claimDailyBonus = async () => {
+            const today = new Date().toISOString().split('T')[0];
+            const streakRef = doc(db,"login_streaks",currentUser.uid);
+            const snap = await getDoc(streakRef);
+            let streak = 1;
+            if (snap.exists() && snap.data().lastLoginDate === today) return alert("Already claimed today");
+            if (snap.exists() && snap.data().lastLoginDate === new Date(Date.now()-86400000).toISOString().split('T')[0]) streak = (snap.data().currentStreak || 0) + 1;
+            let bonus = Math.min(1 + Math.floor(streak / 5), systemSettings.dailyStreakMaxBonus);
+            await updateDoc(doc(db,"users",currentUser.uid),{withdrawableBalance:increment(bonus), totalEarned:increment(bonus)});
+            await setDoc(streakRef,{currentStreak:streak,lastLoginDate:today,bonusClaimedToday:true},{merge:true});
+            await addAdminLog("claim_streak", currentUser.uid, {bonus});
+            cache.transactions = null;
+            await loadUserData(); await loadTransactions(true);
+            alert(`+$${bonus} daily bonus!`);
         };
         
-        // Wheel (unchanged)
-        function initWheel(){ wheelCanvas=document.getElementById('wheelCanvas'); if(wheelCanvas){ wheelCtx=wheelCanvas.getContext('2d'); drawWheel(); document.getElementById('spinBtnWheel').onclick=spinWheel; } }
-        function drawWheel(){ if(!wheelCtx) return; const size=250, center=125, rad=120, angleStep=(Math.PI*2)/wheelSegments.length; wheelCtx.clearRect(0,0,size,size); for(let i=0;i<wheelSegments.length;i++){ const start=i*angleStep+currentRotation, end=start+angleStep; wheelCtx.beginPath(); wheelCtx.moveTo(center,center); wheelCtx.arc(center,center,rad,start,end); wheelCtx.fillStyle=wheelSegments[i].color; wheelCtx.fill(); wheelCtx.save(); wheelCtx.translate(center,center); wheelCtx.rotate(start+angleStep/2); wheelCtx.fillStyle='#1f2937'; wheelCtx.font='bold 12px "Segoe UI"'; wheelCtx.fillText(wheelSegments[i].label, rad-30, 6); wheelCtx.restore(); } wheelCtx.beginPath(); wheelCtx.arc(center,center,12,0,2*Math.PI); wheelCtx.fillStyle='white'; wheelCtx.fill(); }
-        async function spinWheel(){ const stake=parseFloat(document.getElementById('spinStake').value); if(stake<2 || stake>(currentUserData.withdrawableBalance||0)) return alert("Insufficient balance or stake <2"); await updateDoc(doc(db,"users",currentUser.uid),{withdrawableBalance:increment(-stake)}); let multi=Math.random()<0.99?(Math.random()<0.6?0:1):[0.07,5,10,'free'][Math.floor(Math.random()*4)]; let win=0; if(multi==='free') win=stake*0.5; else if(typeof multi==='number') win=stake*multi; if(win>0){ await updateDoc(doc(db,"users",currentUser.uid),{withdrawableBalance:increment(win),totalEarned:increment(win)}); await addDoc(collection(db,"transactions"),{userId:currentUser.uid,type:"spin_win",amount:win,description:`${multi}x win`,timestamp:serverTimestamp()}); alert(`You won $${win.toFixed(2)}`); } else alert("No win"); currentRotation+= (Math.random()*Math.PI*2); drawWheel(); cache.transactions=null; await loadUserData(); await loadTransactions(true); }
+        window.startKYC = () => { alert("KYC submission form would appear here. For demo, admin will verify manually."); };
+        window.updateProfile = () => { alert("Profile update functionality to be implemented."); };
+        window.simulateTrade = (symbol, side) => { alert(`Demo trade: ${side} ${symbol}. Real trading after KYC approval.`); };
+        window.copyReferralLink = () => { const link = document.getElementById('referralLinkDisplay').innerText; navigator.clipboard.writeText(link); alert("Link copied!"); };
+        window.copyReferralCodeOnly = () => { const code = currentUserData.referralCode; navigator.clipboard.writeText(code); alert("Code copied!"); };
         
-        // Sidebar navigation with caching: when a section is clicked, we load its data if not already cached
-        function initSidebarNav() {
+        async function addAdminLog(action, userId, details = {}) {
+            try {
+                await addDoc(collection(db, "admin_logs"), { adminId: currentUser.uid, adminEmail: currentUser.email, action, targetUserId: userId, details, timestamp: serverTimestamp() });
+            } catch(e) { console.error("Log failed", e); }
+        }
+        
+        // ---------- Spin Wheel (Realistic Animation & Weighted Outcome) ----------
+        function initWheel() {
+            wheelCanvas = document.getElementById('wheelCanvas');
+            if (!wheelCanvas) return;
+            wheelCtx = wheelCanvas.getContext('2d');
+            loadWheelSegmentsFromFirestore();
+            drawWheel();
+            document.getElementById('spinBtnWheel').onclick = startSpin;
+        }
+        async function loadWheelSegmentsFromFirestore() {
+            const configDoc = await getDoc(doc(db, "spin_config", "wheelSettings"));
+            if (configDoc.exists() && configDoc.data().segments) {
+                wheelSegments = configDoc.data().segments;
+                drawWheel();
+            }
+        }
+        function drawWheel() {
+            if (!wheelCtx) return;
+            const size = 250, center = 125, rad = 115, angleStep = (Math.PI * 2) / wheelSegments.length;
+            wheelCtx.clearRect(0, 0, size, size);
+            for (let i = 0; i < wheelSegments.length; i++) {
+                const start = i * angleStep + currentRotation;
+                const end = start + angleStep;
+                wheelCtx.beginPath();
+                wheelCtx.moveTo(center, center);
+                wheelCtx.arc(center, center, rad, start, end);
+                wheelCtx.fillStyle = wheelSegments[i].color;
+                wheelCtx.fill();
+                wheelCtx.save();
+                wheelCtx.translate(center, center);
+                wheelCtx.rotate(start + angleStep / 2);
+                wheelCtx.fillStyle = '#1f2937';
+                wheelCtx.font = 'bold 14px "Segoe UI"';
+                wheelCtx.fillText(wheelSegments[i].label, rad - 35, 8);
+                wheelCtx.restore();
+            }
+            wheelCtx.beginPath();
+            wheelCtx.arc(center, center, 12, 0, 2 * Math.PI);
+            wheelCtx.fillStyle = '#fff';
+            wheelCtx.fill();
+            wheelCtx.beginPath();
+            wheelCtx.moveTo(center - 8, 8);
+            wheelCtx.lineTo(center, 0);
+            wheelCtx.lineTo(center + 8, 8);
+            wheelCtx.fillStyle = '#ef4444';
+            wheelCtx.fill();
+        }
+        
+        async function startSpin() {
+            if (spinning) return;
+            const stake = parseFloat(document.getElementById('spinStake').value);
+            if (isNaN(stake) || stake < systemSettings.spinMinStake) {
+                return alert(`Minimum stake is $${systemSettings.spinMinStake}`);
+            }
+            const balance = currentUserData.withdrawableBalance || 0;
+            if (balance < stake) return alert("Insufficient balance");
+            
+            // Deduct stake immediately
+            await updateDoc(doc(db, "users", currentUser.uid), { withdrawableBalance: increment(-stake) });
+            await addAdminLog("spin_stake", currentUser.uid, {stake});
+            await addDoc(collection(db, "transactions"), {
+                userId: currentUser.uid, type: "spin_stake", amount: -stake,
+                status: "completed", description: `Stake for spin`, timestamp: serverTimestamp()
+            });
+            cache.transactions = null;
+            await loadUserData();
+            
+            // Determine outcome (weighted)
+            let outcomeMultiplier;
+            const rand = Math.random();
+            if (rand < 0.99) {
+                // 99% chance of 0 or 1 (equal probability)
+                outcomeMultiplier = Math.random() < 0.5 ? 0 : 1;
+            } else {
+                // 1% chance for rare segments (0.07, 5, 10, free)
+                const rare = [0.07, 5, 10, "free"];
+                outcomeMultiplier = rare[Math.floor(Math.random() * rare.length)];
+            }
+            
+            // Find segment index that matches multiplier (for visual alignment, but we will just animate to random rotation)
+            let winAmount = 0;
+            let winDesc = "";
+            if (outcomeMultiplier === "free") {
+                winAmount = stake * 0.5;
+                winDesc = `FREE SPIN! You won $${winAmount.toFixed(2)}`;
+            } else if (typeof outcomeMultiplier === "number") {
+                winAmount = stake * outcomeMultiplier;
+                winDesc = `${outcomeMultiplier}x - You won $${winAmount.toFixed(2)}`;
+            } else {
+                winAmount = 0;
+                winDesc = `0x - No win this time`;
+            }
+            
+            if (winAmount > 0) {
+                await updateDoc(doc(db, "users", currentUser.uid), { withdrawableBalance: increment(winAmount), totalEarned: increment(winAmount) });
+                await addAdminLog("spin_win", currentUser.uid, {winAmount, multiplier: outcomeMultiplier});
+                await addDoc(collection(db, "transactions"), {
+                    userId: currentUser.uid, type: "spin_win", amount: winAmount,
+                    status: "completed", description: winDesc, timestamp: serverTimestamp()
+                });
+            } else {
+                await addAdminLog("spin_loss", currentUser.uid, {stake});
+                await addDoc(collection(db, "transactions"), {
+                    userId: currentUser.uid, type: "spin_loss", amount: 0,
+                    status: "completed", description: "No win", timestamp: serverTimestamp()
+                });
+            }
+            cache.transactions = null;
+            await loadUserData();
+            
+            // Animate wheel
+            spinning = true;
+            const spinDuration = 2000; // 2 seconds
+            const startTime = Date.now();
+            const startRotation = currentRotation;
+            const extraSpins = Math.random() * 10 + 8; // between 8 and 18 full spins
+            const targetRotation = startRotation + (extraSpins * 2 * Math.PI);
+            
+            function animateSpin() {
+                const now = Date.now();
+                const elapsed = now - startTime;
+                let t = Math.min(1, elapsed / spinDuration);
+                // easeOutCubic
+                const ease = 1 - Math.pow(1 - t, 3);
+                currentRotation = startRotation + (targetRotation - startRotation) * ease;
+                drawWheel();
+                if (t < 1) {
+                    requestAnimationFrame(animateSpin);
+                } else {
+                    spinning = false;
+                    document.getElementById('spinResultMsg').innerHTML = `<span class="text-purple-700 font-bold">${winDesc}</span>`;
+                }
+            }
+            requestAnimationFrame(animateSpin);
+        }
+        
+        // ---------- Navigation ----------
+        function setupNavigation() {
             const links = document.querySelectorAll('.sidebar-nav a');
             const sections = document.querySelectorAll('.content-section');
             links.forEach(link => {
                 link.addEventListener('click', async (e) => {
                     e.preventDefault();
-                    const targetId = link.getAttribute('data-section');
+                    const sectionId = link.getAttribute('data-section');
+                    if (!sectionId) return;
                     sections.forEach(sec => sec.classList.remove('active-section'));
-                    document.getElementById(targetId).classList.add('active-section');
+                    const target = document.getElementById(sectionId);
+                    if (target) target.classList.add('active-section');
                     links.forEach(l => l.classList.remove('active'));
                     link.classList.add('active');
-                    // Load data for the clicked section if not yet cached
-                    switch(targetId) {
+                    
+                    // Lazy load data as needed (using cached version if available)
+                    switch(sectionId) {
                         case 'investments': await loadPlans(false); break;
                         case 'activeInvestments': await loadActiveInvestments(false); break;
                         case 'transactions': await loadTransactions(false); break;
@@ -347,13 +575,16 @@
                         case 'leaderboard': await loadLeaderboard(false); break;
                         case 'support': await loadTickets(false); break;
                         case 'announcements': await loadAnnouncements(false); break;
-                        // trade section has no firestore data, just static
                     }
-                    if(window.innerWidth < 768) closeSidebar();
+                    if (window.innerWidth < 768) closeSidebar();
                 });
             });
+            // default active
+            const defaultActive = document.querySelector('.sidebar-nav a[data-section="overview"]');
+            if (defaultActive) defaultActive.classList.add('active');
         }
         
+        // Sidebar controls
         const sidebar = document.getElementById('mainSidebar'), overlay = document.getElementById('sidebarOverlay');
         function openSidebar(){ sidebar.classList.add('open'); overlay.classList.add('active'); }
         function closeSidebar(){ sidebar.classList.remove('open'); overlay.classList.remove('active'); }
