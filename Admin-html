@@ -41,14 +41,19 @@
             currentAdmin = user;
             document.getElementById('adminName').innerText = userDoc.data().displayName || user.email;
             loadUsers();
+            loadTickets();
+            loadPlans();
+            loadWithdrawals();
         });
         
         async function loadUsers() {
             const usersSnap = await getDocs(collection(db, "users"));
             let html = '';
+            let userCount = 0;
             for (const userDoc of usersSnap.docs) {
                 const u = userDoc.data();
                 if (u.role === 'admin') continue;
+                userCount++;
                 
                 const walletSnap = await getDoc(doc(db, "wallets", userDoc.id));
                 const wallet = walletSnap.data() || {};
@@ -79,7 +84,7 @@
                 `;
             }
             document.getElementById('usersTableBody').innerHTML = html || '<tr><td colspan="7" class="text-center p-4">No users found</td></tr>';
-            document.getElementById('userCount').innerText = usersSnap.size - 1;
+            document.getElementById('userCount').innerText = userCount;
         }
         
         window.toggleSuspend = async (userId, current) => {
@@ -127,8 +132,10 @@
         window.loadTickets = async function() {
             const ticketsSnap = await getDocs(query(collection(db, "support_tickets"), orderBy("createdAt", "desc")));
             let html = '';
+            let ticketCount = 0;
             for (const ticketDoc of ticketsSnap.docs) {
                 const t = ticketDoc.data();
+                ticketCount++;
                 const statusColor = t.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : t.status === 'resolved' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800';
                 html += `
                     <div class="border rounded-lg p-4 mb-3">
@@ -160,7 +167,7 @@
                 `;
             }
             document.getElementById('ticketsList').innerHTML = html || '<p class="text-gray-500 text-center py-8">No tickets found</p>';
-            document.getElementById('ticketCount').innerText = ticketsSnap.size;
+            document.getElementById('ticketCount').innerText = ticketCount;
         };
         
         window.replyToTicket = async (ticketId) => {
@@ -198,7 +205,9 @@
         window.loadPlans = async function() {
             const plansSnap = await getDocs(collection(db, "investment_plans"));
             let html = '';
+            let planCount = 0;
             plansSnap.forEach(planDoc => {
+                planCount++;
                 const p = planDoc.data();
                 html += `
                     <div class="border rounded-lg p-4 flex justify-between items-center">
@@ -214,6 +223,7 @@
                 `;
             });
             document.getElementById('plansList').innerHTML = html || '<p class="text-gray-500 text-center py-8">No investment plans</p>';
+            document.getElementById('planCount').innerText = planCount;
         };
         
         window.addPlan = async function() {
@@ -247,8 +257,10 @@
         window.loadWithdrawals = async function() {
             const withdrawSnap = await getDocs(query(collection(db, "withdrawals"), orderBy("createdAt", "desc")));
             let html = '';
+            let pendingCount = 0;
             for (const withdrawDoc of withdrawSnap.docs) {
                 const w = withdrawDoc.data();
+                if (w.status === 'pending') pendingCount++;
                 const userDoc = await getDoc(doc(db, "users", w.userId));
                 const userEmail = userDoc.exists() ? userDoc.data().email : 'Unknown';
                 
@@ -280,6 +292,7 @@
                 `;
             }
             document.getElementById('withdrawalsList').innerHTML = html || '<p class="text-gray-500 text-center py-8">No withdrawal requests</p>';
+            document.getElementById('withdrawCount').innerText = pendingCount;
         };
         
         window.approveWithdrawal = async (withdrawId, userId, amount) => {
@@ -319,10 +332,15 @@
             document.querySelectorAll('.admin-section').forEach(el => el.classList.add('hidden'));
             document.getElementById(`${section}Section`).classList.remove('hidden');
             
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('bg-blue-600', 'text-white'));
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.add('bg-gray-200', 'text-gray-700'));
-            event.target.classList.remove('bg-gray-200', 'text-gray-700');
-            event.target.classList.add('bg-blue-600', 'text-white');
+            const btns = document.querySelectorAll('.nav-btn');
+            btns.forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white');
+                btn.classList.add('bg-gray-200', 'text-gray-700');
+            });
+            if (event && event.target) {
+                event.target.classList.remove('bg-gray-200', 'text-gray-700');
+                event.target.classList.add('bg-blue-600', 'text-white');
+            }
             
             if (section === 'users') loadUsers();
             else if (section === 'tickets') loadTickets();
@@ -342,11 +360,6 @@
             document.body.appendChild(notification);
             setTimeout(() => notification.remove(), 3000);
         }
-        
-        // Initial load
-        setTimeout(() => {
-            loadUsers();
-        }, 500);
     </script>
 </head>
 <body class="bg-gray-100">
