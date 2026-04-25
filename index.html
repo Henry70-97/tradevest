@@ -163,7 +163,7 @@
                 msgEl.innerText = '✅ Registration successful! Redirecting...';
                 msgEl.style.color = 'green';
                 setTimeout(() => {
-                    window.location.href = role === "admin" ? "admin.html" : "dashboard.html";
+                    window.location.href = role === "admin" ? "admin-html" : "dashboard-html";
                 }, 1500);
             } catch (error) {
                 msgEl.innerText = `⚠️ ${error.message}`;
