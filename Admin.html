@@ -7,253 +7,87 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* Admin panel styling – clean & book‑like */
-        .admin-card {
-            background: linear-gradient(145deg, #ffffff 0%, #fef9e8 100%);
-            border-radius: 1.25rem;
-            box-shadow: 8px 8px 16px rgba(0,0,0,0.05), -4px -4px 12px rgba(255,255,240,0.7);
-            border: 1px solid rgba(210, 180, 140, 0.3);
-        }
-        /* Sidebar */
+        .admin-card { background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 1rem; margin-bottom: 1rem; }
         .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 280px;
-            height: 100%;
-            background: #1f2937;
-            color: #e5e7eb;
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-            z-index: 10000;
-            overflow-y: auto;
+            position: fixed; top:0; left:0; width:280px; height:100%;
+            background:#1f2937; color:#e5e7eb;
+            transform: translateX(-100%); transition: transform 0.3s;
+            z-index: 10000; overflow-y: auto;
         }
-        .sidebar.open {
-            transform: translateX(0);
-        }
-        .sidebar a {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.7rem 1rem;
-            border-radius: 0.75rem;
-            color: #e5e7eb;
-            transition: all 0.2s;
-        }
-        .sidebar a:hover {
-            background: #374151;
-        }
-        .sidebar a.active {
-            background: #4f46e5;
-            color: white;
-        }
-        .overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.4);
-            z-index: 9999;
-            display: none;
-        }
-        .overlay.active {
-            display: block;
-        }
-        .content-section {
-            display: none;
-            animation: fadeIn 0.2s ease;
-        }
-        .content-section.active-section {
-            display: block;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px);}
-            to { opacity: 1; transform: translateY(0);}
-        }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #e5e7eb; }
-        .badge {
-            padding: 0.25rem 0.5rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-        }
+        .sidebar.open { transform: translateX(0); }
+        .sidebar a { display: flex; align-items: center; gap:0.75rem; padding:0.7rem 1rem; border-radius:0.75rem; color:#e5e7eb; text-decoration: none; }
+        .sidebar a:hover, .sidebar a.active { background:#4f46e5; color:white; cursor: pointer; }
+        .overlay { position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:9999; display:none; }
+        .overlay.active { display:block; }
+        .content-section { display: none; animation: fadeIn 0.2s; }
+        .content-section.active-section { display: block; }
+        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+        .loading-spinner { text-align:center; padding:2rem; }
+        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #4f46e5; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .empty-message { text-align:center; color:#9ca3af; padding:2rem; font-style:italic; }
+        table { width:100%; border-collapse: collapse; }
+        th, td { text-align:left; padding:0.75rem; border-bottom:1px solid #e5e7eb; }
     </style>
 </head>
 <body class="bg-gray-100">
-
-    <!-- Overlay -->
     <div id="sidebarOverlay" class="overlay"></div>
-
-    <!-- Sidebar (Admin Menu) -->
     <aside id="adminSidebar" class="sidebar">
-        <div class="flex justify-between items-center p-4 border-b border-gray-700 sticky top-0 bg-gray-800 z-10">
-            <div class="flex items-center gap-2">
-                <i class="fas fa-shield-alt text-2xl text-indigo-400"></i>
-                <span class="font-bold text-xl">BestPay<span class="text-indigo-400">.Admin</span></span>
-            </div>
-            <button id="closeSidebarBtn" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+        <div class="flex justify-between items-center p-4 border-b border-gray-700 sticky top-0 bg-gray-800">
+            <div class="flex items-center gap-2"><i class="fas fa-shield-alt text-2xl text-indigo-400"></i><span class="font-bold text-xl">BestPay Admin</span></div>
+            <button id="closeSidebarBtn" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
         </div>
         <nav class="sidebar-nav px-3 py-4 space-y-1">
-            <a href="#" data-section="dashboard"><i class="fas fa-tachometer-alt w-5"></i>📊 Admin Dashboard</a>
-            <a href="#" data-section="users"><i class="fas fa-users w-5"></i>👥 User Management</a>
-            <a href="#" data-section="investments"><i class="fas fa-chart-line w-5"></i>📈 Investment Plans</a>
-            <a href="#" data-section="activeInvestments"><i class="fas fa-clock w-5"></i>⏳ User Investments</a>
-            <a href="#" data-section="withdrawals"><i class="fas fa-hand-holding-usd w-5"></i>🏦 Withdrawals</a>
-            <a href="#" data-section="deposits"><i class="fas fa-plus-circle w-5"></i>💎 Deposits</a>
-            <a href="#" data-section="tickets"><i class="fas fa-ticket-alt w-5"></i>🎫 Support Tickets</a>
-            <a href="#" data-section="transactions"><i class="fas fa-exchange-alt w-5"></i>📜 All Transactions</a>
-            <a href="#" data-section="referrals"><i class="fas fa-users w-5"></i>👥 Referral Overview</a>
-            <a href="#" data-section="leaderboard"><i class="fas fa-trophy w-5"></i>🏆 Leaderboard</a>
-            <a href="#" data-section="systemLogs"><i class="fas fa-history w-5"></i>📋 Admin Logs</a>
-            <a href="#" data-section="announcements"><i class="fas fa-bullhorn w-5"></i>📢 Announcements</a>
-            <a href="#" data-section="kycVerifications"><i class="fas fa-id-card w-5"></i>🪪 KYC Approvals</a>
-            <a href="#" data-section="emailSettings"><i class="fas fa-envelope w-5"></i>📧 Email Templates</a>
-            <a href="#" data-section="spinConfig"><i class="fas fa-gamepad w-5"></i>🎡 Spin Wheel Config</a>
-            <a href="#" data-section="systemSettings"><i class="fas fa-cogs w-5"></i>⚙️ System Settings</a>
-            <a href="#" data-section="backup"><i class="fas fa-database w-5"></i>💾 Backup / Export</a>
-            <a href="#" data-section="apiKeys"><i class="fas fa-key w-5"></i>🔑 API Keys</a>
-            <a href="#" data-section="staff"><i class="fas fa-user-shield w-5"></i>👮 Staff Management</a>
-            <a href="#" data-section="reports"><i class="fas fa-chart-pie w-5"></i>📊 Financial Reports</a>
-            <a href="#" data-section="maintenance"><i class="fas fa-wrench w-5"></i>🔧 Maintenance Mode</a>
+            <a data-section="dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a data-section="users"><i class="fas fa-users"></i> Users</a>
+            <a data-section="investments"><i class="fas fa-chart-line"></i> Investment Plans</a>
+            <a data-section="activeInvestments"><i class="fas fa-clock"></i> User Investments</a>
+            <a data-section="withdrawals"><i class="fas fa-hand-holding-usd"></i> Withdrawals</a>
+            <a data-section="deposits"><i class="fas fa-plus-circle"></i> Deposits</a>
+            <a data-section="tickets"><i class="fas fa-ticket-alt"></i> Support Tickets</a>
+            <a data-section="transactions"><i class="fas fa-exchange-alt"></i> All Transactions</a>
+            <a data-section="referrals"><i class="fas fa-users"></i> Referrals</a>
+            <a data-section="leaderboard"><i class="fas fa-trophy"></i> Leaderboard</a>
+            <a data-section="adminLogs"><i class="fas fa-history"></i> Admin Logs</a>
+            <a data-section="announcements"><i class="fas fa-bullhorn"></i> Announcements</a>
+            <a data-section="kyc"><i class="fas fa-id-card"></i> KYC Approvals</a>
+            <a data-section="spinConfig"><i class="fas fa-gamepad"></i> Spin Config</a>
+            <a data-section="settings"><i class="fas fa-cogs"></i> System Settings</a>
+            <a data-section="export"><i class="fas fa-database"></i> Export Data</a>
         </nav>
-        <div class="border-t border-gray-700 p-4 mt-auto">
-            <button id="logoutAdminBtn" class="flex items-center gap-3 w-full text-left text-red-400 hover:bg-red-900/30 rounded-xl p-2"><i class="fas fa-sign-out-alt"></i> Logout</button>
-        </div>
+        <div class="border-t border-gray-700 p-4"><button id="logoutAdminBtn" class="flex items-center gap-3 w-full text-left text-red-400 hover:bg-red-900/30 rounded-xl p-2"><i class="fas fa-sign-out-alt"></i> Logout</button></div>
     </aside>
 
-    <!-- Main Content -->
     <div class="ml-0">
         <header class="bg-white shadow-sm sticky top-0 z-20 px-4 py-3 flex items-center gap-4">
-            <button id="hamburgerBtn" class="text-2xl p-1 rounded-md hover:bg-gray-100"><i class="fas fa-bars"></i></button>
-            <h1 class="text-xl font-semibold text-gray-800"><i class="fas fa-shield-alt text-indigo-500 mr-2"></i>Admin Control Panel</h1>
-            <div class="flex-1"></div>
-            <div class="flex items-center gap-2"><span id="adminName" class="text-sm font-medium"></span><i class="fas fa-user-circle text-2xl text-gray-600"></i></div>
+            <button id="hamburgerBtn" class="text-2xl"><i class="fas fa-bars"></i></button>
+            <h1 class="text-xl font-semibold">Admin Control Panel</h1>
+            <div class="flex-1"></div><span id="adminName" class="text-sm"></span>
         </header>
-
         <main class="container mx-auto px-4 py-6 space-y-6">
-            <!-- Dashboard Section -->
-            <div id="section-dashboard" class="content-section active-section">
-                <div class="admin-card p-6">
-                    <h2 class="text-2xl font-bold">Admin Overview</h2>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4" id="adminStats"></div>
-                </div>
-            </div>
-
-            <!-- Users Section -->
-            <div id="section-users" class="content-section">
-                <div class="admin-card p-6">
-                    <h3 class="text-xl font-bold mb-4"><i class="fas fa-users text-blue-600"></i> User Management</h3>
-                    <div class="overflow-x-auto">
-                        <table id="usersTable">
-                            <thead><tr><th>Email</th><th>Name</th><th>Balance</th><th>KYC</th><th>Suspended</th><th>Actions</th></tr></thead>
-                            <tbody id="usersTableBody"><tr><td colspan="6">Loading...</td></tr></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Investment Plans -->
-            <div id="section-investments" class="content-section">
-                <div class="admin-card p-6">
-                    <div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold">📈 Investment Plans</h3><button onclick="createPlan()" class="bg-green-600 text-white px-3 py-1 rounded">+ Add Plan</button></div>
-                    <div id="plansListAdmin" class="space-y-3"></div>
-                </div>
-            </div>
-
-            <!-- Active Investments (users) -->
-            <div id="section-activeInvestments" class="content-section">
-                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">⏳ All Active Investments</h3><div id="allInvestmentsList" class="space-y-2"></div></div>
-            </div>
-
-            <!-- Withdrawals Management -->
-            <div id="section-withdrawals" class="content-section">
-                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">🏦 Withdrawal Requests</h3><div id="withdrawalsAdminList"></div></div>
-            </div>
-
-            <!-- Deposits Management -->
-            <div id="section-deposits" class="content-section">
-                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">💎 Pending Deposits</h3><div id="depositsAdminList"></div></div>
-            </div>
-
-            <!-- Support Tickets -->
-            <div id="section-tickets" class="content-section">
-                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">🎫 Support Tickets</h3><div id="ticketsAdminList"></div></div>
-            </div>
-
-            <!-- All Transactions -->
-            <div id="section-transactions" class="content-section">
-                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">📜 Recent Transactions</h3><div id="allTransactionsList" class="max-h-96 overflow-auto"></div></div>
-            </div>
-
-            <!-- Referral Overview -->
-            <div id="section-referrals" class="content-section">
-                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">👥 Referral Stats</h3><div id="referralAdminStats"></div></div>
-            </div>
-
-            <!-- Leaderboard (Admin view) -->
-            <div id="section-leaderboard" class="content-section">
-                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">🏆 Top Earners</h3><div id="leaderboardAdminList"></div></div>
-            </div>
-
-            <!-- System Logs -->
-            <div id="section-systemLogs" class="content-section">
-                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">📋 Admin Action Logs</h3><div id="adminLogsList" class="max-h-96 overflow-auto"></div></div>
-            </div>
-
-            <!-- Announcements -->
-            <div id="section-announcements" class="content-section">
-                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">📢 Announcements</h3><button onclick="createAnnouncement()" class="mb-3 bg-indigo-600 text-white px-3 py-1 rounded">New Announcement</button><div id="announcementsList"></div></div>
-            </div>
-
-            <!-- KYC Approvals -->
-            <div id="section-kycVerifications" class="content-section">
-                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">🪪 KYC Verification Requests</h3><div id="kycRequestsList"></div></div>
-            </div>
-
-            <!-- Email Templates -->
-            <div id="section-emailSettings" class="content-section">
-                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">📧 Email Templates</h3><p>Placeholder: manage email templates (future)</p></div>
-            </div>
-
-            <!-- Spin Wheel Config -->
-            <div id="section-spinConfig" class="content-section">
-                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">🎡 Spin Wheel Configuration</h3><button onclick="configureWheel()" class="bg-purple-600 text-white px-4 py-2 rounded">Edit Segments</button><div id="wheelConfigPreview" class="mt-3"></div></div>
-            </div>
-
-            <!-- System Settings -->
-            <div id="section-systemSettings" class="content-section">
-                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">⚙️ System Settings</h3><label><input type="checkbox" id="maintenanceToggle"> Maintenance Mode</label><button onclick="saveSettings()" class="ml-3 bg-blue-600 text-white px-3 py-1 rounded">Save</button></div>
-            </div>
-
-            <!-- Backup / Export -->
-            <div id="section-backup" class="content-section">
-                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">💾 Export Data</h3><button onclick="exportUsersCSV()" class="bg-gray-600 text-white px-4 py-2 rounded">Export Users CSV</button></div>
-            </div>
-
-            <!-- API Keys -->
-            <div id="section-apiKeys" class="content-section">
-                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">🔑 API Keys</h3><button class="bg-blue-500 text-white px-3 py-1 rounded">Generate New Key</button></div>
-            </div>
-
-            <!-- Staff Management -->
-            <div id="section-staff" class="content-section">
-                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">👮 Admin Staff</h3><div id="staffList"></div><button onclick="addStaff()" class="mt-3 bg-indigo-600 text-white px-3 py-1 rounded">Add Admin</button></div>
-            </div>
-
-            <!-- Financial Reports -->
-            <div id="section-reports" class="content-section">
-                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">📊 Financial Summary</h3><div id="financialReport"></div></div>
-            </div>
-
-            <!-- Maintenance Mode -->
-            <div id="section-maintenance" class="content-section">
-                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">🔧 Maintenance Mode</h3><p>Toggle system maintenance from System Settings tab.</p></div>
-            </div>
+            <div id="section-dashboard" class="content-section active-section"><div class="admin-card"><h2 class="text-xl font-bold">Dashboard Stats</h2><div id="adminStats"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
+            <div id="section-users" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">👥 Users</h3><div id="usersTable"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
+            <div id="section-investments" class="content-section"><div class="admin-card"><div class="flex justify-between"><h3 class="text-lg font-bold">📈 Investment Plans</h3><button onclick="window.createPlan()" class="bg-green-600 text-white px-2 py-1 rounded">+ Add</button></div><div id="plansListAdmin"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
+            <div id="section-activeInvestments" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">⏳ All Active Investments</h3><div id="allInvestmentsList"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
+            <div id="section-withdrawals" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">🏦 Withdrawal Requests</h3><div id="withdrawalsAdminList"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
+            <div id="section-deposits" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">💎 Pending Deposits</h3><div id="depositsAdminList"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
+            <div id="section-tickets" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">🎫 Support Tickets</h3><div id="ticketsAdminList"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
+            <div id="section-transactions" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">📜 Recent Transactions</h3><div id="allTransactionsList"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
+            <div id="section-referrals" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">👥 Referral Stats</h3><div id="referralAdminStats"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
+            <div id="section-leaderboard" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">🏆 Top Earners</h3><div id="leaderboardAdminList"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
+            <div id="section-adminLogs" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">📋 Admin Logs</h3><div id="adminLogsList" class="max-h-96 overflow-auto"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
+            <div id="section-announcements" class="content-section"><div class="admin-card"><div class="flex justify-between"><h3 class="text-lg font-bold">📢 Announcements</h3><button onclick="window.createAnnouncement()" class="bg-indigo-600 text-white px-2 py-1 rounded">New</button></div><div id="announcementsList"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
+            <div id="section-kyc" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">🪪 KYC Requests</h3><div id="kycRequestsList"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
+            <div id="section-spinConfig" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">🎡 Spin Wheel Config</h3><button onclick="window.configureWheel()" class="bg-purple-600 text-white px-3 py-1 rounded">Edit Segments</button><div id="wheelConfigPreview" class="mt-2"></div></div></div>
+            <div id="section-settings" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">⚙️ System Settings</h3><label><input type="checkbox" id="maintenanceToggle"> Maintenance Mode</label><button onclick="window.saveSettings()" class="ml-3 bg-blue-600 text-white px-3 py-1 rounded">Save</button></div></div>
+            <div id="section-export" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">💾 Export Data</h3><button onclick="window.exportUsersCSV()" class="bg-gray-700 text-white px-3 py-1 rounded">Export Users CSV</button></div></div>
         </main>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, orderBy, serverTimestamp, addDoc, increment, deleteDoc, setDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, orderBy, serverTimestamp, addDoc, increment, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         
         const firebaseConfig = {
             apiKey: "AIzaSyDtGN7KCK0A4fhztLN0CgxsKkGROcO_-vI",
@@ -271,235 +105,337 @@
         
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = "index.html"; return; }
-            const userDoc = await getDoc(doc(db, "users", user.uid));
-            if (!userDoc.exists() || userDoc.data().role !== "admin") {
-                window.location.href = "dashboard.html";
-                return;
-            }
+            const userDoc = await getDoc(doc(db,"users",user.uid));
+            if (!userDoc.exists() || userDoc.data().role !== "admin") { window.location.href = "dashboard.html"; return; }
             currentAdmin = user;
             document.getElementById('adminName').innerText = userDoc.data().displayName || user.email;
-            await loadAllAdminData();
-            initAdminNav();
+            // Load only dashboard stats on first load (fast)
+            await loadDashboardStats();
+            // Setup navigation AFTER DOM is ready
+            setupNavigation();
         });
         
-        async function loadAllAdminData() {
-            await loadUsers(); await loadPlans(); await loadAllInvestments(); await loadWithdrawals(); await loadDeposits(); await loadTickets(); await loadTransactions(); await loadReferralStats(); await loadLeaderboard(); await loadAdminLogs(); await loadAnnouncements(); await loadKYCRequests(); await loadStaff(); await loadFinancialReport(); loadDashboardStats();
-        }
-        
+        // ----- Helper: show loading & fetch data for each section -----
         async function loadDashboardStats() {
-            const usersSnap = await getDocs(collection(db,"users"));
-            const pendingWithdrawals = await getDocs(query(collection(db,"withdrawals"), where("status","==","pending")));
-            const pendingDeposits = await getDocs(query(collection(db,"deposits"), where("status","==","pending")));
-            document.getElementById('adminStats').innerHTML = `
-                <div class="admin-card p-3 text-center"><p class="text-gray-500">Total Users</p><p class="text-2xl font-bold">${usersSnap.size}</p></div>
-                <div class="admin-card p-3 text-center"><p class="text-gray-500">Pending Withdrawals</p><p class="text-2xl font-bold">${pendingWithdrawals.size}</p></div>
-                <div class="admin-card p-3 text-center"><p class="text-gray-500">Pending Deposits</p><p class="text-2xl font-bold">${pendingDeposits.size}</p></div>
-                <div class="admin-card p-3 text-center"><p class="text-gray-500">Open Tickets</p><p class="text-2xl font-bold">${(await getDocs(query(collection(db,"support_tickets"), where("status","==","open")))).size}</p></div>
-            `;
+            const container = document.getElementById('adminStats');
+            container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+            try {
+                const [usersSnap, pendingWith, pendingDep, openTickets] = await Promise.all([
+                    getDocs(collection(db,"users")),
+                    getDocs(query(collection(db,"withdrawals"), where("status","==","pending"))),
+                    getDocs(query(collection(db,"deposits"), where("status","==","pending"))),
+                    getDocs(query(collection(db,"support_tickets"), where("status","==","open")))
+                ]);
+                container.innerHTML = `
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="admin-card text-center"><p class="text-gray-500">Total Users</p><p class="text-2xl font-bold">${usersSnap.size}</p></div>
+                        <div class="admin-card text-center"><p class="text-gray-500">Pending Withdrawals</p><p class="text-2xl font-bold">${pendingWith.size}</p></div>
+                        <div class="admin-card text-center"><p class="text-gray-500">Pending Deposits</p><p class="text-2xl font-bold">${pendingDep.size}</p></div>
+                        <div class="admin-card text-center"><p class="text-gray-500">Open Tickets</p><p class="text-2xl font-bold">${openTickets.size}</p></div>
+                    </div>`;
+            } catch (error) { container.innerHTML = `<div class="empty-message">Error loading stats: ${error.message}</div>`; }
         }
         
-        // User management
         async function loadUsers() {
-            const usersSnap = await getDocs(collection(db,"users"));
-            let html = '';
-            for(const userDoc of usersSnap.docs) {
-                const u = userDoc.data();
-                if(u.role === 'admin') continue;
-                const walletSnap = await getDoc(doc(db,"wallets",userDoc.id));
-                const balance = u.withdrawableBalance || 0;
-                html += `<tr>
-                            <td>${u.email}</td>
-                            <td>${u.displayName || '-'}</td>
-                            <td>$${balance.toFixed(2)}</td>
-                            <td><span class="badge ${u.kycStatus==='verified'?'bg-green-100 text-green-800':'bg-yellow-100'}">${u.kycStatus}</span></td>
-                            <td>${u.isSuspended ? '<span class="text-red-600">Yes</span>' : 'No'}</td>
-                            <td><button onclick="toggleSuspend('${userDoc.id}', ${u.isSuspended})" class="bg-yellow-500 text-white px-2 py-1 rounded text-xs">Toggle Suspend</button>
-                                <button onclick="adjustBalance('${userDoc.id}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Adjust</button></td>
-                         </tr>`;
-            }
-            document.getElementById('usersTableBody').innerHTML = html || '<tr><td colspan="6">No users</td></tr>';
+            const container = document.getElementById('usersTable');
+            container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+            try {
+                const usersSnap = await getDocs(collection(db,"users"));
+                if (usersSnap.empty) { container.innerHTML = '<div class="empty-message">No users found.</div>'; return; }
+                let html = '<table><thead><tr><th>Email</th><th>Name</th><th>Balance</th><th>KYC</th><th>Actions</th></tr></thead><tbody>';
+                for (const u of usersSnap.docs) {
+                    const data = u.data();
+                    if (data.role === 'admin') continue;
+                    html += `<tr>
+                        <td>${data.email}</td>
+                        <td>${data.displayName || '-'}</td>
+                        <td>$${(data.withdrawableBalance || 0).toFixed(2)}</td>
+                        <td>${data.kycStatus}</td>
+                        <td>
+                            <button onclick="window.toggleSuspend('${u.id}', ${data.isSuspended})" class="bg-yellow-500 text-white px-2 py-1 rounded text-xs">Toggle Suspend</button>
+                            <button onclick="window.adjustBalance('${u.id}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Adjust</button>
+                        </td>
+                    </tr>`;
+                }
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            } catch (error) { container.innerHTML = `<div class="empty-message">Error: ${error.message}</div>`; }
         }
-        window.toggleSuspend = async (uid, current) => { await updateDoc(doc(db,"users",uid),{isSuspended:!current}); loadUsers(); };
-        window.adjustBalance = async (uid) => { const amt = parseFloat(prompt("Amount (+/-):")); if(!isNaN(amt)) await updateDoc(doc(db,"users",uid),{withdrawableBalance:increment(amt),totalEarned:increment(amt)}); loadUsers(); };
         
-        // Plans
+        window.toggleSuspend = async (uid, current) => {
+            await updateDoc(doc(db,"users",uid),{isSuspended:!current});
+            loadUsers(); // refresh
+        };
+        window.adjustBalance = async (uid) => {
+            const amt = parseFloat(prompt("Amount (+/-):"));
+            if (!isNaN(amt)) {
+                await updateDoc(doc(db,"users",uid),{withdrawableBalance:increment(amt), totalEarned:increment(amt)});
+                loadUsers();
+            }
+        };
+        
         async function loadPlans() {
-            const snap = await getDocs(collection(db,"investment_plans"));
-            let html = '';
-            snap.forEach(p => { const d=p.data(); html+=`<div class="admin-card p-3 flex justify-between"><div><b>${d.name}</b> | Min $${d.minAmount} | ROI ${d.roiPercent}%</div><button onclick="deletePlan('${p.id}')" class="text-red-600">Delete</button></div>`; });
-            document.getElementById('plansListAdmin').innerHTML = html || '<p>No plans</p>';
+            const container = document.getElementById('plansListAdmin');
+            container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+            try {
+                const snap = await getDocs(collection(db,"investment_plans"));
+                if (snap.empty) { container.innerHTML = '<div class="empty-message">No investment plans.</div>'; return; }
+                let html = '';
+                snap.forEach(p => {
+                    const d = p.data();
+                    html += `<div class="flex justify-between items-center border-b py-2"><div><b>${d.name}</b> - Min $${d.minAmount} - ROI ${d.roiPercent}%</div><button onclick="window.deletePlan('${p.id}')" class="text-red-600">Delete</button></div>`;
+                });
+                container.innerHTML = html;
+            } catch (error) { container.innerHTML = `<div class="empty-message">Error: ${error.message}</div>`; }
         }
-        window.createPlan = async () => { const name=prompt("Plan name"); if(!name)return; const min=parseFloat(prompt("Min amount")); const roi=parseFloat(prompt("ROI %")); await addDoc(collection(db,"investment_plans"),{name,minAmount:min,roiPercent:roi,isActive:true,durationDays:30,productDescription:"Admin created"}); loadPlans(); };
-        window.deletePlan = async (id) => { if(confirm("Delete plan?")) await deleteDoc(doc(db,"investment_plans",id)); loadPlans(); };
+        window.createPlan = async () => {
+            const name = prompt("Plan name"); if (!name) return;
+            const min = parseFloat(prompt("Min amount")); if (isNaN(min)) return;
+            const roi = parseFloat(prompt("ROI %")); if (isNaN(roi)) return;
+            await addDoc(collection(db,"investment_plans"),{name,minAmount:min,roiPercent:roi,isActive:true,durationDays:30,productDescription:"Admin plan"});
+            loadPlans();
+        };
+        window.deletePlan = async (id) => { if (confirm("Delete plan?")) { await deleteDoc(doc(db,"investment_plans",id)); loadPlans(); } };
         
-        // Investments (all users)
         async function loadAllInvestments() {
-            const snap = await getDocs(query(collection(db,"investments"), where("status","==","active")));
-            let html='';
-            for(const inv of snap.docs) {
-                const d=inv.data();
-                const user = await getDoc(doc(db,"users",d.userId));
-                html+=`<div class="admin-card p-2 flex justify-between"><span>${user.data()?.email || d.userId}</span><span>$${d.amount}</span><span>ROI: $${d.roiEarned}</span></div>`;
-            }
-            document.getElementById('allInvestmentsList').innerHTML=html||'No active investments';
+            const container = document.getElementById('allInvestmentsList');
+            container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+            try {
+                const snap = await getDocs(query(collection(db,"investments"), where("status","==","active")));
+                if (snap.empty) { container.innerHTML = '<div class="empty-message">No active investments.</div>'; return; }
+                let html = '';
+                for (const inv of snap.docs) {
+                    const d = inv.data();
+                    const user = await getDoc(doc(db,"users",d.userId));
+                    html += `<div class="admin-card flex justify-between"><span>${user.data()?.email || d.userId}</span><span>$${d.amount}</span><span>ROI: $${d.roiEarned}</span></div>`;
+                }
+                container.innerHTML = html;
+            } catch (error) { container.innerHTML = `<div class="empty-message">Error: ${error.message}</div>`; }
         }
         
-        // Withdrawals
         async function loadWithdrawals() {
-            const snap = await getDocs(query(collection(db,"withdrawals"), orderBy("createdAt","desc")));
-            let html='';
-            for(const w of snap.docs) {
-                const data=w.data();
-                const user=await getDoc(doc(db,"users",data.userId));
-                html+=`<div class="admin-card p-3 flex justify-between items-center"><div><b>${user.data()?.email}</b> - $${data.amount} (${data.method})<br><span class="text-xs">${data.status}</span></div><div>${data.status==='pending'? `<button onclick="approveWithdrawal('${w.id}','${data.userId}',${data.amount})" class="bg-green-600 text-white px-2 py-1 rounded">Approve</button> <button onclick="rejectWithdrawal('${w.id}','${data.userId}',${data.amount})" class="bg-red-600 text-white px-2 py-1 rounded">Reject</button>` : ''}</div></div>`;
-            }
-            document.getElementById('withdrawalsAdminList').innerHTML=html||'No withdrawals';
+            const container = document.getElementById('withdrawalsAdminList');
+            container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+            try {
+                const snap = await getDocs(query(collection(db,"withdrawals"), orderBy("createdAt","desc")));
+                if (snap.empty) { container.innerHTML = '<div class="empty-message">No withdrawal requests.</div>'; return; }
+                let html = '';
+                for (const w of snap.docs) {
+                    const data = w.data();
+                    const user = await getDoc(doc(db,"users",data.userId));
+                    html += `<div class="admin-card flex justify-between items-center"><div><b>${user.data()?.email}</b> - $${data.amount} (${data.method})<br><span class="text-xs">${data.status}</span></div>${data.status === 'pending' ? `<div><button onclick="window.approveWithdrawal('${w.id}','${data.userId}',${data.amount})" class="bg-green-600 text-white px-2 py-1 rounded">Approve</button> <button onclick="window.rejectWithdrawal('${w.id}','${data.userId}',${data.amount})" class="bg-red-600 text-white px-2 py-1 rounded">Reject</button></div>` : ''}</div>`;
+                }
+                container.innerHTML = html;
+            } catch (error) { container.innerHTML = `<div class="empty-message">Error: ${error.message}</div>`; }
         }
-        window.approveWithdrawal = async (id, uid, amt) => { await updateDoc(doc(db,"withdrawals",id),{status:"approved"}); await updateDoc(doc(db,"users",uid),{withdrawableBalance:increment(-amt), totalWithdrawn:increment(amt)}); loadWithdrawals(); loadDashboardStats(); };
-        window.rejectWithdrawal = async (id, uid, amt) => { await updateDoc(doc(db,"withdrawals",id),{status:"rejected"}); await updateDoc(doc(db,"users",uid),{withdrawableBalance:increment(amt)}); loadWithdrawals(); };
+        window.approveWithdrawal = async (id, uid, amt) => {
+            await updateDoc(doc(db,"withdrawals",id),{status:"approved"});
+            await updateDoc(doc(db,"users",uid),{withdrawableBalance:increment(-amt), totalWithdrawn:increment(amt)});
+            loadWithdrawals(); loadDashboardStats();
+        };
+        window.rejectWithdrawal = async (id, uid, amt) => {
+            await updateDoc(doc(db,"withdrawals",id),{status:"rejected"});
+            await updateDoc(doc(db,"users",uid),{withdrawableBalance:increment(amt)});
+            loadWithdrawals();
+        };
         
-        // Deposits
         async function loadDeposits() {
-            const snap = await getDocs(query(collection(db,"deposits"), where("status","==","pending"), orderBy("createdAt","desc")));
-            let html='';
-            for(const d of snap.docs) {
-                const data=d.data();
-                const user=await getDoc(doc(db,"users",data.userId));
-                html+=`<div class="admin-card p-3 flex justify-between"><div>${user.data()?.email} - $${data.amount} (${data.method})<br>Ref: ${data.reference}</div><div><button onclick="approveDeposit('${d.id}','${data.userId}',${data.amount})" class="bg-green-600 text-white px-2 py-1 rounded">Approve</button> <button onclick="rejectDeposit('${d.id}')" class="bg-red-600 text-white px-2 py-1 rounded">Reject</button></div></div>`;
-            }
-            document.getElementById('depositsAdminList').innerHTML=html||'No pending deposits';
+            const container = document.getElementById('depositsAdminList');
+            container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+            try {
+                const snap = await getDocs(query(collection(db,"deposits"), where("status","==","pending"), orderBy("createdAt","desc")));
+                if (snap.empty) { container.innerHTML = '<div class="empty-message">No pending deposits.</div>'; return; }
+                let html = '';
+                for (const d of snap.docs) {
+                    const data = d.data();
+                    const user = await getDoc(doc(db,"users",data.userId));
+                    html += `<div class="admin-card flex justify-between"><div>${user.data()?.email} - $${data.amount} (${data.method})<br>Ref: ${data.reference}</div><div><button onclick="window.approveDeposit('${d.id}','${data.userId}',${data.amount})" class="bg-green-600 text-white px-2 py-1 rounded">Approve</button> <button onclick="window.rejectDeposit('${d.id}')" class="bg-red-600 text-white px-2 py-1 rounded">Reject</button></div></div>`;
+                }
+                container.innerHTML = html;
+            } catch (error) { container.innerHTML = `<div class="empty-message">Error: ${error.message}</div>`; }
         }
-        window.approveDeposit = async (id, uid, amt) => { await updateDoc(doc(db,"deposits",id),{status:"approved"}); await updateDoc(doc(db,"users",uid),{withdrawableBalance:increment(amt),totalEarned:increment(amt)}); loadDeposits(); loadDashboardStats(); };
-        window.rejectDeposit = async (id) => { await updateDoc(doc(db,"deposits",id),{status:"rejected"}); loadDeposits(); };
+        window.approveDeposit = async (id, uid, amt) => {
+            await updateDoc(doc(db,"deposits",id),{status:"approved"});
+            await updateDoc(doc(db,"users",uid),{withdrawableBalance:increment(amt), totalEarned:increment(amt)});
+            loadDeposits(); loadDashboardStats();
+        };
+        window.rejectDeposit = async (id) => {
+            await updateDoc(doc(db,"deposits",id),{status:"rejected"});
+            loadDeposits();
+        };
         
-        // Tickets
         async function loadTickets() {
-            const snap = await getDocs(query(collection(db,"support_tickets"), orderBy("createdAt","desc")));
-            let html='';
-            for(const t of snap.docs) {
-                const data=t.data();
-                const user=await getDoc(doc(db,"users",data.userId));
-                html+=`<div class="admin-card p-3 mb-2"><div class="font-bold">${data.subject}</div><div>From: ${user.data()?.email}</div><div>${data.message.substring(0,100)}</div><div class="mt-2"><textarea id="reply-${t.id}" placeholder="Admin reply" class="border rounded p-1 w-full"></textarea><button onclick="replyTicket('${t.id}')" class="bg-blue-600 text-white px-3 py-1 rounded">Reply</button> <select id="status-${t.id}" class="border rounded p-1"><option ${data.status==='open'?'selected':''}>open</option><option ${data.status==='resolved'?'selected':''}>resolved</option></select><button onclick="updateTicketStatus('${t.id}')" class="bg-gray-600 text-white px-2 py-1 rounded">Update</button></div></div>`;
-            }
-            document.getElementById('ticketsAdminList').innerHTML=html||'No tickets';
+            const container = document.getElementById('ticketsAdminList');
+            container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+            try {
+                const snap = await getDocs(query(collection(db,"support_tickets"), orderBy("createdAt","desc")));
+                if (snap.empty) { container.innerHTML = '<div class="empty-message">No support tickets.</div>'; return; }
+                let html = '';
+                for (const t of snap.docs) {
+                    const data = t.data();
+                    const user = await getDoc(doc(db,"users",data.userId));
+                    html += `<div class="admin-card"><div class="font-bold">${data.subject}</div><div>From: ${user.data()?.email}</div><div>${data.message.substring(0,100)}</div><div class="mt-2"><textarea id="reply-${t.id}" placeholder="Admin reply" class="border rounded p-1 w-full"></textarea><button onclick="window.replyTicket('${t.id}')" class="bg-blue-600 text-white px-3 py-1 rounded">Reply</button> <select id="status-${t.id}"><option ${data.status === 'open' ? 'selected' : ''}>open</option><option ${data.status === 'resolved' ? 'selected' : ''}>resolved</option></select><button onclick="window.updateTicketStatus('${t.id}')" class="bg-gray-600 text-white px-2 py-1 rounded">Update</button></div></div>`;
+                }
+                container.innerHTML = html;
+            } catch (error) { container.innerHTML = `<div class="empty-message">Error: ${error.message}</div>`; }
         }
-        window.replyTicket = async (id) => { const msg=document.getElementById(`reply-${id}`).value; if(!msg)return; await addDoc(collection(db,"support_tickets",id,"replies"),{message:msg,isAdmin:true,createdAt:serverTimestamp(),senderName:"Admin"}); document.getElementById(`reply-${id}`).value=''; alert("Reply sent"); };
-        window.updateTicketStatus = async (id) => { const newStatus=document.getElementById(`status-${id}`).value; await updateDoc(doc(db,"support_tickets",id),{status:newStatus}); loadTickets(); };
+        window.replyTicket = async (id) => {
+            const msg = document.getElementById(`reply-${id}`).value;
+            if (!msg) return;
+            await addDoc(collection(db,"support_tickets",id,"replies"),{message:msg,isAdmin:true,createdAt:serverTimestamp(),senderName:"Admin"});
+            alert("Reply sent");
+            loadTickets();
+        };
+        window.updateTicketStatus = async (id) => {
+            const newStatus = document.getElementById(`status-${id}`).value;
+            await updateDoc(doc(db,"support_tickets",id),{status:newStatus});
+            loadTickets();
+        };
         
-        // Transactions (all)
         async function loadTransactions() {
-            const snap = await getDocs(query(collection(db,"transactions"), orderBy("timestamp","desc"), limit(100)));
-            let html='<table class="w-full"><tr><th>User</th><th>Type</th><th>Amount</th><th>Date</th></tr>';
-            for(const tx of snap.docs) {
-                const d=tx.data();
-                const user=await getDoc(doc(db,"users",d.userId));
-                html+=`<tr><td>${user.data()?.email || d.userId}</td><td>${d.type}</td><td class="${d.amount>0?'text-green-600':'text-red-600'}">$${d.amount.toFixed(2)}</td><td>${d.timestamp?.toDate().toLocaleString()||''}</td></tr>`;
-            }
-            html+='</table>';
-            document.getElementById('allTransactionsList').innerHTML=html;
+            const container = document.getElementById('allTransactionsList');
+            container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+            try {
+                const snap = await getDocs(query(collection(db,"transactions"), orderBy("timestamp","desc"), limit(100)));
+                if (snap.empty) { container.innerHTML = '<div class="empty-message">No transactions.</div>'; return; }
+                let html = '<table><thead><tr><th>User</th><th>Type</th><th>Amount</th><th>Date</th></tr></thead><tbody>';
+                for (const tx of snap.docs) {
+                    const d = tx.data();
+                    const user = await getDoc(doc(db,"users",d.userId));
+                    html += `<tr><td>${user.data()?.email || d.userId}</td><td>${d.type}</td><td class="${d.amount > 0 ? 'text-green-600' : 'text-red-600'}">$${d.amount.toFixed(2)}</td><td>${d.timestamp?.toDate().toLocaleString() || ''}</td></tr>`;
+                }
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            } catch (error) { container.innerHTML = `<div class="empty-message">Error: ${error.message}</div>`; }
         }
         
-        // Referral stats
         async function loadReferralStats() {
-            const referralsSnap = await getDocs(collection(db,"referrals"));
-            document.getElementById('referralAdminStats').innerHTML = `<p>Total Referral Records: ${referralsSnap.size}</p>`;
+            const container = document.getElementById('referralAdminStats');
+            container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+            try {
+                const snap = await getDocs(collection(db,"referrals"));
+                container.innerHTML = `<p>Total referral records: ${snap.size}</p>`;
+            } catch (error) { container.innerHTML = `<div class="empty-message">Error: ${error.message}</div>`; }
         }
         
-        // Leaderboard
         async function loadLeaderboard() {
-            const users = await getDocs(query(collection(db,"users"), orderBy("totalEarned","desc"), limit(20)));
-            let html='<ol>';
-            users.forEach(u=>{ html+=`<li>${u.data().displayName||u.data().email} - $${(u.data().totalEarned||0).toFixed(2)}</li>`; });
-            html+='</ol>';
-            document.getElementById('leaderboardAdminList').innerHTML=html;
+            const container = document.getElementById('leaderboardAdminList');
+            container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+            try {
+                const snap = await getDocs(query(collection(db,"users"), orderBy("totalEarned","desc"), limit(20)));
+                if (snap.empty) { container.innerHTML = '<div class="empty-message">No users.</div>'; return; }
+                let html = '<ol>';
+                snap.forEach(u => { html += `<li>${u.data().displayName || u.data().email} - $${(u.data().totalEarned || 0).toFixed(2)}</li>`; });
+                html += '</ol>';
+                container.innerHTML = html;
+            } catch (error) { container.innerHTML = `<div class="empty-message">Error: ${error.message}</div>`; }
         }
         
-        // Admin logs
         async function loadAdminLogs() {
-            const logs = await getDocs(query(collection(db,"admin_logs"), orderBy("timestamp","desc"), limit(50)));
-            let html='';
-            logs.forEach(l=>{ const d=l.data(); html+=`<div class="border-b py-1">${d.action} by ${d.adminId} on ${d.timestamp?.toDate().toLocaleString()}</div>`; });
-            document.getElementById('adminLogsList').innerHTML=html||'No logs';
+            const container = document.getElementById('adminLogsList');
+            container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+            try {
+                const snap = await getDocs(query(collection(db,"admin_logs"), orderBy("timestamp","desc"), limit(50)));
+                if (snap.empty) { container.innerHTML = '<div class="empty-message">No admin logs.</div>'; return; }
+                let html = '';
+                snap.forEach(l => { const d = l.data(); html += `<div class="border-b py-1">${d.action} by ${d.adminId} at ${d.timestamp?.toDate().toLocaleString()}</div>`; });
+                container.innerHTML = html;
+            } catch (error) { container.innerHTML = `<div class="empty-message">Error: ${error.message}</div>`; }
         }
         
-        // Announcements
         async function loadAnnouncements() {
-            const snap = await getDocs(collection(db,"announcements"));
-            let html='';
-            snap.forEach(a=>{ const d=a.data(); html+=`<div class="admin-card p-2 mb-2"><b>${d.title}</b><p>${d.content}</p></div>`; });
-            document.getElementById('announcementsList').innerHTML=html||'No announcements';
+            const container = document.getElementById('announcementsList');
+            container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+            try {
+                const snap = await getDocs(query(collection(db,"announcements"), orderBy("createdAt","desc")));
+                if (snap.empty) { container.innerHTML = '<div class="empty-message">No announcements.</div>'; return; }
+                let html = '';
+                snap.forEach(a => { const d = a.data(); html += `<div class="admin-card"><b>${d.title}</b><p>${d.content}</p></div>`; });
+                container.innerHTML = html;
+            } catch (error) { container.innerHTML = `<div class="empty-message">Error: ${error.message}</div>`; }
         }
-        window.createAnnouncement = async () => { const title=prompt("Title"); if(!title)return; const content=prompt("Content"); await addDoc(collection(db,"announcements"),{title,content,createdAt:serverTimestamp()}); loadAnnouncements(); };
+        window.createAnnouncement = async () => {
+            const title = prompt("Title"); if (!title) return;
+            const content = prompt("Content"); if (!content) return;
+            await addDoc(collection(db,"announcements"),{title,content,createdAt:serverTimestamp()});
+            loadAnnouncements();
+        };
         
-        // KYC
         async function loadKYCRequests() {
-            const users = await getDocs(query(collection(db,"users"), where("kycStatus","==","unverified")));
-            let html='';
-            users.forEach(u=>{ const d=u.data(); html+=`<div class="admin-card p-2 flex justify-between"><span>${d.email}</span><button onclick="verifyKYC('${u.id}')" class="bg-green-600 text-white px-2 py-1 rounded">Verify</button></div>`; });
-            document.getElementById('kycRequestsList').innerHTML=html||'No pending KYC';
+            const container = document.getElementById('kycRequestsList');
+            container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+            try {
+                const snap = await getDocs(query(collection(db,"users"), where("kycStatus","==","unverified")));
+                if (snap.empty) { container.innerHTML = '<div class="empty-message">No pending KYC requests.</div>'; return; }
+                let html = '';
+                snap.forEach(u => { const d = u.data(); html += `<div class="admin-card flex justify-between"><span>${d.email}</span><button onclick="window.verifyKYC('${u.id}')" class="bg-green-600 text-white px-2 py-1 rounded">Verify</button></div>`; });
+                container.innerHTML = html;
+            } catch (error) { container.innerHTML = `<div class="empty-message">Error: ${error.message}</div>`; }
         }
-        window.verifyKYC = async (uid) => { await updateDoc(doc(db,"users",uid),{kycStatus:"verified"}); loadKYCRequests(); };
+        window.verifyKYC = async (uid) => {
+            await updateDoc(doc(db,"users",uid),{kycStatus:"verified"});
+            loadKYCRequests();
+        };
         
-        // Staff management
-        async function loadStaff() {
-            const users = await getDocs(query(collection(db,"users"), where("role","==","admin")));
-            let html='';
-            users.forEach(u=>{ const d=u.data(); html+=`<div>${d.email} - ${d.displayName}</div>`; });
-            document.getElementById('staffList').innerHTML=html||'No admins';
-        }
-        window.addStaff = async () => { const email=prompt("Admin email"); if(!email)return; // would need to update role via cloud function or manual
-            alert("Functionality: assign admin role via Firebase console or implement cloud function."); };
-        
-        // Financial report
-        async function loadFinancialReport() {
-            const users = await getDocs(collection(db,"users"));
-            let totalBalance=0, totalInvested=0, totalWithdrawn=0;
-            for(const u of users.docs){
-                totalBalance += u.data().withdrawableBalance||0;
-                totalWithdrawn += u.data().totalWithdrawn||0;
-                const wallet=await getDoc(doc(db,"wallets",u.id));
-                if(wallet.exists()) totalInvested += wallet.data().investedBalance||0;
-            }
-            document.getElementById('financialReport').innerHTML = `<p>Total System Balance: $${totalBalance.toFixed(2)}</p><p>Total Invested: $${totalInvested.toFixed(2)}</p><p>Total Withdrawn: $${totalWithdrawn.toFixed(2)}</p>`;
-        }
-        
-        // Export CSV
+        window.configureWheel = () => { alert("Wheel configuration: edit segments in Firestore 'spin_config/wheelSettings'."); };
+        window.saveSettings = () => { alert("Settings saved (demo)."); };
         window.exportUsersCSV = async () => {
             const users = await getDocs(collection(db,"users"));
             let csv = "Email,Name,Balance,KYC,Suspended\n";
-            for(const u of users.docs){
-                const d=u.data();
-                csv += `"${d.email}","${d.displayName||''}",${d.withdrawableBalance||0},${d.kycStatus},${d.isSuspended}\n`;
-            }
-            const blob = new Blob([csv], {type:"text/csv"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="users.csv"; a.click();
+            users.forEach(u => { const d = u.data(); csv += `"${d.email}","${d.displayName||''}",${d.withdrawableBalance||0},${d.kycStatus},${d.isSuspended}\n`; });
+            const blob = new Blob([csv],{type:"text/csv"}); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "users.csv"; a.click();
         };
         
-        // Wheel config placeholder
-        window.configureWheel = () => { alert("Wheel configuration: extend with custom segments editor."); };
-        window.saveSettings = () => { alert("Settings saved (demo)"); };
-        
-        // Navigation
-        function initAdminNav() {
+        // ----- Setup navigation: attach click listeners to sidebar links -----
+        function setupNavigation() {
             const links = document.querySelectorAll('.sidebar-nav a');
             const sections = document.querySelectorAll('.content-section');
+            
             links.forEach(link => {
-                link.addEventListener('click', (e) => {
+                link.addEventListener('click', async (e) => {
                     e.preventDefault();
                     const sectionId = link.getAttribute('data-section');
+                    if (!sectionId) return;
+                    
+                    // Update active section visibility
                     sections.forEach(sec => sec.classList.remove('active-section'));
-                    document.getElementById(`section-${sectionId}`).classList.add('active-section');
+                    const targetSection = document.getElementById(`section-${sectionId}`);
+                    if (targetSection) targetSection.classList.add('active-section');
+                    
+                    // Update active class on sidebar links
                     links.forEach(l => l.classList.remove('active'));
                     link.classList.add('active');
-                    if(window.innerWidth < 768) closeSidebar();
+                    
+                    // Load data for the clicked section (lazy loading)
+                    switch(sectionId) {
+                        case 'dashboard': await loadDashboardStats(); break;
+                        case 'users': await loadUsers(); break;
+                        case 'investments': await loadPlans(); break;
+                        case 'activeInvestments': await loadAllInvestments(); break;
+                        case 'withdrawals': await loadWithdrawals(); break;
+                        case 'deposits': await loadDeposits(); break;
+                        case 'tickets': await loadTickets(); break;
+                        case 'transactions': await loadTransactions(); break;
+                        case 'referrals': await loadReferralStats(); break;
+                        case 'leaderboard': await loadLeaderboard(); break;
+                        case 'adminLogs': await loadAdminLogs(); break;
+                        case 'announcements': await loadAnnouncements(); break;
+                        case 'kyc': await loadKYCRequests(); break;
+                        // spinConfig, settings, export are static or button-triggered
+                    }
+                    if (window.innerWidth < 768) closeSidebar();
                 });
             });
+            
+            // Set default active (dashboard already active)
+            const dashboardLink = document.querySelector('.sidebar-nav a[data-section="dashboard"]');
+            if (dashboardLink) dashboardLink.classList.add('active');
         }
         
-        // Sidebar controls
-        const sidebar = document.getElementById('adminSidebar');
-        const overlay = document.getElementById('sidebarOverlay');
-        function openSidebar() { sidebar.classList.add('open'); overlay.classList.add('active'); }
-        function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('active'); }
+        // Sidebar open/close
+        const sidebar = document.getElementById('adminSidebar'), overlay = document.getElementById('sidebarOverlay');
+        function openSidebar(){ sidebar.classList.add('open'); overlay.classList.add('active'); }
+        function closeSidebar(){ sidebar.classList.remove('open'); overlay.classList.remove('active'); }
         document.getElementById('hamburgerBtn').onclick = openSidebar;
         document.getElementById('closeSidebarBtn').onclick = closeSidebar;
         overlay.onclick = closeSidebar;
