@@ -9,7 +9,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, updateDoc, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, updateDoc, increment, serverTimestamp, collection, addDoc, query, where, getDocs, orderBy, deleteDoc, setDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         
         const firebaseConfig = {
             apiKey: "AIzaSyDtGN7KCK0A4fhztLN0CgxsKkGROcO_-vI",
@@ -25,31 +25,33 @@
         const db = getFirestore(app);
         
         let currentUser = null;
+        let currentUserData = null;
         
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
-                window.location.href = "index.html";
+                window.location.href = "registration.html";
                 return;
             }
             
             currentUser = user;
             const userDoc = await getDoc(doc(db, "users", user.uid));
             if (!userDoc.exists()) {
-                window.location.href = "index.html";
+                window.location.href = "registration.html";
                 return;
             }
             
-            const userData = userDoc.data();
-            if (userData.role === "admin") {
+            currentUserData = userDoc.data();
+            if (currentUserData.role === "admin") {
                 window.location.href = "admin.html";
                 return;
             }
             
             // Display user info
-            document.getElementById('userName').innerText = userData.displayName || user.email;
+            document.getElementById('userName').innerText = currentUserData.displayName || user.email;
             document.getElementById('userEmail').innerText = user.email;
-            document.getElementById('balanceAmount').innerText = `$${(userData.withdrawableBalance || 0).toFixed(2)}`;
-            document.getElementById('referralCode').innerText = userData.referralCode || 'N/A';
+            document.getElementById('balanceAmount').innerText = `$${(currentUserData.withdrawableBalance || 0).toFixed(2)}`;
+            document.getElementById('referralCode').innerText = currentUserData.referralCode || 'N/A';
+            document.getElementById('referralLink').value = `${window.location.origin}/registration.html?ref=${currentUserData.referralCode || ''}`;
             
             // Load wallet data
             const walletDoc = await getDoc(doc(db, "wallets", user.uid));
@@ -58,21 +60,441 @@
                 document.getElementById('investedBalance').innerText = `$${(walletData.investedBalance || 0).toFixed(2)}`;
                 document.getElementById('bonusBalance').innerText = `$${(walletData.bonusBalance || 0).toFixed(2)}`;
             }
+            
+            // Load all sections
+            loadInvestmentPlans();
+            loadUserInvestments();
+            loadTransactionHistory();
+            loadWithdrawalHistory();
+            loadReferralStats();
+            loadDailyStreak();
+            loadSupportTickets();
         });
         
-        window.logout = async () => {
-            await signOut(auth);
-            window.location.href = "index.html";
+        // ==================== INVESTMENT PLANS ====================
+        async function loadInvestmentPlans() {
+            const plansSnap = await getDocs(collection(db, "investment_plans"));
+            let html = '';
+            for (const planDoc of plansSnap.docs) {
+                const plan = planDoc.data();
+                html += `
+                    <div class="border rounded-xl p-4 hover:shadow-lg transition">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h3 class="font-bold text-lg">${plan.name}</h3>
+                                <p class="text-sm text-gray-500">${plan.productDescription || 'Secure investment plan'}</p>
+                            </div>
+                            <i class="fas fa-chart-line text-2xl text-green-500"></i>
+                        </div>
+                        <div class="space-y-2 mb-4">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Min Investment:</span>
+                                <span class="font-semibold">$${plan.minAmount}</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">ROI:</span>
+                                <span class="font-semibold text-green-600">${plan.roiPercent}%</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Duration:</span>
+                                <span class="font-semibold">${plan.durationDays || 30} days</span>
+                            </div>
+                        </div>
+                        <button onclick="investNow('${planDoc.id}', ${plan.minAmount}, ${plan.roiPercent}, ${plan.durationDays || 30})" 
+                                class="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-2 rounded-lg transition">
+                            <i class="fas fa-rocket mr-2"></i>Invest Now
+                        </button>
+                    </div>
+                `;
+            }
+            document.getElementById('plansList').innerHTML = html || '<p class="text-center text-gray-500 col-span-full">No investment plans available</p>';
+        }
+        
+        window.investNow = async (planId, minAmount, roiPercent, durationDays) => {
+            const amount = parseFloat(prompt(`Enter investment amount (Min: $${minAmount}):`));
+            if (isNaN(amount) || amount < minAmount) {
+                showNotification(`Minimum investment is $${minAmount}`, 'error');
+                return;
+            }
+            
+            if (amount > (currentUserData.withdrawableBalance || 0)) {
+                showNotification('Insufficient balance!', 'error');
+                return;
+            }
+            
+            try {
+                // Deduct from wallet
+                await updateDoc(doc(db, "users", currentUser.uid), {
+                    withdrawableBalance: increment(-amount)
+                });
+                
+                // Update wallet document
+                const walletRef = doc(db, "wallets", currentUser.uid);
+                const walletDoc = await getDoc(walletRef);
+                if (walletDoc.exists()) {
+                    await updateDoc(walletRef, {
+                        investedBalance: increment(amount),
+                        totalDeposited: increment(amount),
+                        lastUpdated: serverTimestamp()
+                    });
+                } else {
+                    await setDoc(walletRef, {
+                        investedBalance: amount,
+                        bonusBalance: 0,
+                        totalDeposited: amount,
+                        lastUpdated: serverTimestamp()
+                    });
+                }
+                
+                // Calculate returns
+                const returnsAmount = amount * (roiPercent / 100);
+                const maturityDate = new Date();
+                maturityDate.setDate(maturityDate.getDate() + durationDays);
+                
+                // Create investment record
+                await addDoc(collection(db, "investments"), {
+                    userId: currentUser.uid,
+                    planId: planId,
+                    amount: amount,
+                    roiPercent: roiPercent,
+                    expectedReturns: returnsAmount,
+                    status: "active",
+                    startDate: serverTimestamp(),
+                    maturityDate: maturityDate,
+                    durationDays: durationDays
+                });
+                
+                // Update user totalEarned
+                await updateDoc(doc(db, "users", currentUser.uid), {
+                    totalEarned: increment(returnsAmount)
+                });
+                
+                showNotification(`Successfully invested $${amount}!`, 'success');
+                setTimeout(() => window.location.reload(), 1500);
+            } catch (error) {
+                showNotification(error.message, 'error');
+            }
         };
         
-        window.showNotification = (message, type) => {
+        // ==================== USER INVESTMENTS ====================
+        async function loadUserInvestments() {
+            const investmentsSnap = await getDocs(query(
+                collection(db, "investments"), 
+                where("userId", "==", currentUser.uid),
+                orderBy("startDate", "desc")
+            ));
+            
+            let html = '';
+            let activeCount = 0;
+            let totalInvested = 0;
+            
+            for (const invDoc of investmentsSnap.docs) {
+                const inv = invDoc.data();
+                totalInvested += inv.amount;
+                if (inv.status === 'active') activeCount++;
+                
+                const statusColor = inv.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
+                const statusIcon = inv.status === 'active' ? '<i class="fas fa-play-circle mr-1"></i>' : '<i class="fas fa-check-circle mr-1"></i>';
+                
+                html += `
+                    <div class="border rounded-lg p-3 flex justify-between items-center">
+                        <div>
+                            <p class="font-semibold">$${inv.amount} invested</p>
+                            <p class="text-sm text-gray-500">ROI: ${inv.roiPercent}% | Expected: $${inv.expectedReturns}</p>
+                        </div>
+                        <span class="px-2 py-1 rounded text-xs ${statusColor}">${statusIcon} ${inv.status}</span>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('activeInvestmentsCount').innerText = activeCount;
+            document.getElementById('totalInvested').innerText = `$${totalInvested.toFixed(2)}`;
+            document.getElementById('investmentsList').innerHTML = html || '<p class="text-gray-500 text-center py-4">No investments yet</p>';
+        }
+        
+        // ==================== TRANSACTION HISTORY ====================
+        async function loadTransactionHistory() {
+            // Get deposits/withdrawals from wallets history (you can create a transactions collection)
+            const investmentsSnap = await getDocs(query(
+                collection(db, "investments"), 
+                where("userId", "==", currentUser.uid),
+                orderBy("startDate", "desc")
+            ));
+            
+            let html = '';
+            investmentsSnap.forEach(inv => {
+                const data = inv.data();
+                const date = data.startDate?.toDate?.() || new Date();
+                html += `
+                    <div class="border-b py-3 flex justify-between items-center">
+                        <div>
+                            <p class="font-medium"><i class="fas fa-chart-line text-green-500 mr-2"></i>Investment</p>
+                            <p class="text-xs text-gray-400">${date.toLocaleDateString()}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-semibold text-green-600">-$${data.amount}</p>
+                            <p class="text-xs text-gray-500">${data.status}</p>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('transactionList').innerHTML = html || '<p class="text-gray-500 text-center py-4">No transactions yet</p>';
+        }
+        
+        // ==================== WITHDRAWAL REQUESTS ====================
+        window.requestWithdrawal = async () => {
+            const amount = parseFloat(document.getElementById('withdrawAmount').value);
+            const method = document.getElementById('withdrawMethod').value;
+            const details = document.getElementById('withdrawDetails').value;
+            
+            if (isNaN(amount) || amount < 10) {
+                showNotification('Minimum withdrawal amount is $10', 'error');
+                return;
+            }
+            
+            if (amount > (currentUserData.withdrawableBalance || 0)) {
+                showNotification('Insufficient balance!', 'error');
+                return;
+            }
+            
+            if (!details) {
+                showNotification('Please provide payment details', 'error');
+                return;
+            }
+            
+            try {
+                await addDoc(collection(db, "withdrawals"), {
+                    userId: currentUser.uid,
+                    userEmail: currentUser.email,
+                    amount: amount,
+                    method: method,
+                    paymentDetails: details,
+                    status: "pending",
+                    createdAt: serverTimestamp()
+                });
+                
+                showNotification('Withdrawal request submitted successfully!', 'success');
+                document.getElementById('withdrawAmount').value = '';
+                document.getElementById('withdrawDetails').value = '';
+                loadWithdrawalHistory();
+            } catch (error) {
+                showNotification(error.message, 'error');
+            }
+        };
+        
+        async function loadWithdrawalHistory() {
+            const withdrawSnap = await getDocs(query(
+                collection(db, "withdrawals"), 
+                where("userId", "==", currentUser.uid),
+                orderBy("createdAt", "desc")
+            ));
+            
+            let html = '';
+            withdrawSnap.forEach(wDoc => {
+                const w = wDoc.data();
+                const statusColor = w.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
+                                   w.status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+                const date = w.createdAt?.toDate?.() || new Date();
+                html += `
+                    <div class="border-b py-3 flex justify-between items-center">
+                        <div>
+                            <p class="font-medium">$${w.amount} - ${w.method}</p>
+                            <p class="text-xs text-gray-400">${date.toLocaleDateString()}</p>
+                        </div>
+                        <span class="px-2 py-1 rounded text-xs ${statusColor}">${w.status}</span>
+                    </div>
+                `;
+            });
+            document.getElementById('withdrawalHistoryList').innerHTML = html || '<p class="text-gray-500 text-center py-4">No withdrawal requests</p>';
+        }
+        
+        // ==================== REFERRAL STATS ====================
+        async function loadReferralStats() {
+            const referralsSnap = await getDocs(query(
+                collection(db, "referrals"), 
+                where("referrerId", "==", currentUser.uid)
+            ));
+            
+            let totalReferrals = 0;
+            let totalCommissions = 0;
+            
+            for (const refDoc of referralsSnap.docs) {
+                const ref = refDoc.data();
+                totalReferrals++;
+                totalCommissions += ref.commissionEarned || 0;
+            }
+            
+            document.getElementById('totalReferrals').innerText = totalReferrals;
+            document.getElementById('totalCommissions').innerText = `$${totalCommissions.toFixed(2)}`;
+        }
+        
+        window.copyReferralLink = () => {
+            const link = document.getElementById('referralLink');
+            link.select();
+            document.execCommand('copy');
+            showNotification('Referral link copied!', 'success');
+        };
+        
+        // ==================== DAILY STREAK ====================
+        async function loadDailyStreak() {
+            const streakDoc = await getDoc(doc(db, "login_streaks", currentUser.uid));
+            if (streakDoc.exists()) {
+                const streak = streakDoc.data();
+                document.getElementById('currentStreak').innerText = streak.currentStreak || 0;
+                document.getElementById('longestStreak').innerText = streak.longestStreak || 0;
+            }
+        }
+        
+        window.claimDailyBonus = async () => {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const streakDoc = await getDoc(doc(db, "login_streaks", currentUser.uid));
+                
+                if (streakDoc.exists() && streakDoc.data().bonusClaimedToday) {
+                    showNotification('You already claimed today\'s bonus!', 'error');
+                    return;
+                }
+                
+                const lastLogin = streakDoc.exists() ? streakDoc.data().lastLoginDate : null;
+                let newStreak = 1;
+                
+                if (lastLogin) {
+                    const yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    if (lastLogin === yesterday.toISOString().split('T')[0]) {
+                        newStreak = (streakDoc.data().currentStreak || 0) + 1;
+                    }
+                }
+                
+                const bonusAmount = Math.min(5 + Math.floor(newStreak / 7) * 2, 20);
+                
+                await updateDoc(doc(db, "users", currentUser.uid), {
+                    withdrawableBalance: increment(bonusAmount),
+                    totalEarned: increment(bonusAmount)
+                });
+                
+                await setDoc(doc(db, "login_streaks", currentUser.uid), {
+                    currentStreak: newStreak,
+                    longestStreak: Math.max(newStreak, streakDoc.exists() ? streakDoc.data().longestStreak || 0 : 0),
+                    lastLoginDate: today,
+                    bonusClaimedToday: true
+                });
+                
+                showNotification(`Daily bonus claimed! +$${bonusAmount}`, 'success');
+                location.reload();
+            } catch (error) {
+                showNotification(error.message, 'error');
+            }
+        };
+        
+        // ==================== SUPPORT TICKETS ====================
+        window.createSupportTicket = async () => {
+            const subject = document.getElementById('ticketSubject').value;
+            const message = document.getElementById('ticketMessage').value;
+            
+            if (!subject || !message) {
+                showNotification('Please fill all fields', 'error');
+                return;
+            }
+            
+            try {
+                await addDoc(collection(db, "support_tickets"), {
+                    userId: currentUser.uid,
+                    userEmail: currentUser.email,
+                    subject: subject,
+                    message: message,
+                    status: "pending",
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                });
+                
+                showNotification('Ticket created successfully!', 'success');
+                document.getElementById('ticketSubject').value = '';
+                document.getElementById('ticketMessage').value = '';
+                loadSupportTickets();
+            } catch (error) {
+                showNotification(error.message, 'error');
+            }
+        };
+        
+        async function loadSupportTickets() {
+            const ticketsSnap = await getDocs(query(
+                collection(db, "support_tickets"), 
+                where("userId", "==", currentUser.uid),
+                orderBy("createdAt", "desc")
+            ));
+            
+            let html = '';
+            for (const ticketDoc of ticketsSnap.docs) {
+                const t = ticketDoc.data();
+                const statusColor = t.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
+                                   t.status === 'resolved' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800';
+                const date = t.createdAt?.toDate?.() || new Date();
+                
+                // Get replies
+                const repliesSnap = await getDocs(collection(db, "support_tickets", ticketDoc.id, "messages"));
+                let repliesHtml = '';
+                repliesSnap.forEach(replyDoc => {
+                    const r = replyDoc.data();
+                    const replyDate = r.timestamp?.toDate?.() || new Date();
+                    repliesHtml += `
+                        <div class="mt-2 pl-4 border-l-2 ${r.senderRole === 'admin' ? 'border-blue-400' : 'border-gray-300'}">
+                            <p class="text-sm"><strong>${r.senderName}:</strong> ${r.message}</p>
+                            <p class="text-xs text-gray-400">${replyDate.toLocaleString()}</p>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                    <div class="border rounded-lg p-4 mb-3">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h3 class="font-bold">${t.subject}</h3>
+                                <p class="text-sm text-gray-500">${date.toLocaleString()}</p>
+                            </div>
+                            <span class="px-2 py-1 rounded text-xs ${statusColor}">${t.status}</span>
+                        </div>
+                        <p class="text-gray-700 mb-2">${t.message}</p>
+                        ${repliesHtml}
+                    </div>
+                `;
+            }
+            document.getElementById('ticketsList').innerHTML = html || '<p class="text-gray-500 text-center py-4">No tickets yet</p>';
+        }
+        
+        // ==================== UTILITIES ====================
+        window.logout = async () => {
+            await signOut(auth);
+            window.location.href = "registration.html";
+        };
+        
+        window.showSection = (section) => {
+            document.querySelectorAll('.dashboard-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`${section}Section`).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-item').forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white');
+                btn.classList.add('bg-gray-200', 'text-gray-700');
+            });
+            if (event && event.target) {
+                const btn = event.target.closest('.nav-item');
+                if (btn) {
+                    btn.classList.remove('bg-gray-200', 'text-gray-700');
+                    btn.classList.add('bg-blue-600', 'text-white');
+                }
+            }
+        };
+        
+        function showNotification(message, type) {
             const notification = document.createElement('div');
             notification.className = `fixed bottom-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
             notification.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2"></i>${message}`;
             document.body.appendChild(notification);
             setTimeout(() => notification.remove(), 3000);
-        };
+        }
         
+        // Make functions global
         window.copyReferralCode = () => {
             const code = document.getElementById('referralCode').innerText;
             navigator.clipboard.writeText(code);
@@ -83,8 +505,8 @@
 <body class="bg-gray-100">
     <div class="min-h-screen">
         <!-- Header -->
-        <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg">
-            <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+        <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg sticky top-0 z-20">
+            <div class="container mx-auto px-4 py-4 flex justify-between items-center flex-wrap gap-3">
                 <div class="flex items-center gap-3">
                     <i class="fas fa-wallet text-2xl text-yellow-300"></i>
                     <h1 class="text-xl font-bold">BestPay Dashboard</h1>
@@ -99,58 +521,183 @@
         </header>
         
         <div class="container mx-auto px-4 py-6">
-            <!-- Welcome Card -->
-            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">Welcome back, <span id="userNameDisplay">User</span>!</h2>
-                <p class="text-gray-600">Email: <span id="userEmail">loading...</span></p>
+            <!-- Navigation Tabs -->
+            <div class="flex gap-2 mb-6 flex-wrap">
+                <button onclick="showSection('overview')" class="nav-item bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold transition">
+                    <i class="fas fa-tachometer-alt mr-2"></i>Overview
+                </button>
+                <button onclick="showSection('invest')" class="nav-item bg-gray-200 text-gray-700 px-5 py-2 rounded-lg font-semibold transition">
+                    <i class="fas fa-chart-line mr-2"></i>Invest
+                </button>
+                <button onclick="showSection('portfolio')" class="nav-item bg-gray-200 text-gray-700 px-5 py-2 rounded-lg font-semibold transition">
+                    <i class="fas fa-briefcase mr-2"></i>Portfolio
+                </button>
+                <button onclick="showSection('withdraw')" class="nav-item bg-gray-200 text-gray-700 px-5 py-2 rounded-lg font-semibold transition">
+                    <i class="fas fa-hand-holding-usd mr-2"></i>Withdraw
+                </button>
+                <button onclick="showSection('referrals')" class="nav-item bg-gray-200 text-gray-700 px-5 py-2 rounded-lg font-semibold transition">
+                    <i class="fas fa-users mr-2"></i>Referrals
+                </button>
+                <button onclick="showSection('support')" class="nav-item bg-gray-200 text-gray-700 px-5 py-2 rounded-lg font-semibold transition">
+                    <i class="fas fa-headset mr-2"></i>Support
+                </button>
             </div>
             
-            <!-- Balance Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div class="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl shadow-md p-6 text-white">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm opacity-90">Available Balance</p>
-                            <p class="text-3xl font-bold" id="balanceAmount">$0.00</p>
+            <!-- Overview Section -->
+            <div id="overviewSection" class="dashboard-section">
+                <!-- Welcome Card -->
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Welcome back, <span id="userNameDisplay">User</span>!</h2>
+                    <p class="text-gray-600">Email: <span id="userEmail">loading...</span></p>
+                </div>
+                
+                <!-- Balance Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl shadow-md p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm opacity-90">Available Balance</p>
+                                <p class="text-3xl font-bold" id="balanceAmount">$0.00</p>
+                            </div>
+                            <i class="fas fa-dollar-sign text-4xl opacity-50"></i>
                         </div>
-                        <i class="fas fa-dollar-sign text-4xl opacity-50"></i>
+                    </div>
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-md p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm opacity-90">Invested Balance</p>
+                                <p class="text-3xl font-bold" id="investedBalance">$0.00</p>
+                            </div>
+                            <i class="fas fa-chart-line text-4xl opacity-50"></i>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl shadow-md p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm opacity-90">Bonus Balance</p>
+                                <p class="text-3xl font-bold" id="bonusBalance">$0.00</p>
+                            </div>
+                            <i class="fas fa-gift text-4xl opacity-50"></i>
+                        </div>
                     </div>
                 </div>
-                <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-md p-6 text-white">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm opacity-90">Invested Balance</p>
-                            <p class="text-3xl font-bold" id="investedBalance">$0.00</p>
+                
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white rounded-xl shadow-md p-4">
+                        <div class="flex items-center justify-between">
+                            <div><p class="text-gray-500 text-sm">Active Investments</p><p class="text-2xl font-bold" id="activeInvestmentsCount">0</p></div>
+                            <i class="fas fa-chart-simple text-2xl text-blue-500"></i>
                         </div>
-                        <i class="fas fa-chart-line text-4xl opacity-50"></i>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md p-4">
+                        <div class="flex items-center justify-between">
+                            <div><p class="text-gray-500 text-sm">Total Invested</p><p class="text-2xl font-bold" id="totalInvested">$0</p></div>
+                            <i class="fas fa-coins text-2xl text-green-500"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md p-4">
+                        <div class="flex items-center justify-between">
+                            <div><p class="text-gray-500 text-sm">Current Streak</p><p class="text-2xl font-bold" id="currentStreak">0</p></div>
+                            <i class="fas fa-calendar-day text-2xl text-orange-500"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md p-4">
+                        <div class="flex items-center justify-between">
+                            <div><p class="text-gray-500 text-sm">Longest Streak</p><p class="text-2xl font-bold" id="longestStreak">0</p></div>
+                            <i class="fas fa-trophy text-2xl text-yellow-500"></i>
+                        </div>
                     </div>
                 </div>
-                <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl shadow-md p-6 text-white">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm opacity-90">Bonus Balance</p>
-                            <p class="text-3xl font-bold" id="bonusBalance">$0.00</p>
-                        </div>
-                        <i class="fas fa-gift text-4xl opacity-50"></i>
+                
+                <!-- Daily Bonus -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <div class="flex justify-between items-center flex-wrap gap-3">
+                        <div><h3 class="text-xl font-bold"><i class="fas fa-calendar-check text-blue-600 mr-2"></i>Daily Login Streak</h3><p class="text-gray-600 text-sm">Claim your daily bonus every day!</p></div>
+                        <button onclick="claimDailyBonus()" class="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-gray-900 font-bold px-6 py-2 rounded-lg transition"><i class="fas fa-gift mr-2"></i>Claim Daily Bonus</button>
                     </div>
                 </div>
             </div>
             
-            <!-- Referral Section -->
-            <div class="bg-white rounded-xl shadow-md p-6">
-                <h3 class="text-xl font-bold mb-4"><i class="fas fa-users text-blue-600 mr-2"></i>Your Referral Code</h3>
-                <div class="flex items-center gap-4">
-                    <code class="bg-gray-100 px-4 py-2 rounded-lg text-lg font-mono" id="referralCode">Loading...</code>
-                    <button onclick="copyReferralCode()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
-                        <i class="fas fa-copy mr-2"></i>Copy
-                    </button>
+            <!-- Invest Section -->
+            <div id="investSection" class="dashboard-section hidden">
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-xl font-bold mb-4"><i class="fas fa-chart-line text-green-600 mr-2"></i>Investment Plans</h2>
+                    <div id="plansList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">Loading plans...</div>
                 </div>
-                <p class="text-sm text-gray-600 mt-4">Share your referral code with friends! You'll earn 10% commission on their welcome bonus.</p>
             </div>
             
-            <!-- Placeholder for more features -->
-            <div class="mt-6 text-center text-gray-500 text-sm">
-                <p>More features coming soon: Investment plans, withdrawal requests, transaction history, and more!</p>
+            <!-- Portfolio Section -->
+            <div id="portfolioSection" class="dashboard-section hidden">
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h2 class="text-xl font-bold mb-4"><i class="fas fa-briefcase text-blue-600 mr-2"></i>My Investments</h2>
+                    <div id="investmentsList" class="space-y-2">Loading investments...</div>
+                </div>
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-xl font-bold mb-4"><i class="fas fa-history text-gray-600 mr-2"></i>Transaction History</h2>
+                    <div id="transactionList" class="divide-y">Loading transactions...</div>
+                </div>
+            </div>
+            
+            <!-- Withdraw Section -->
+            <div id="withdrawSection" class="dashboard-section hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl shadow-md p-6">
+                        <h2 class="text-xl font-bold mb-4"><i class="fas fa-hand-holding-usd text-purple-600 mr-2"></i>Request Withdrawal</h2>
+                        <div class="space-y-4">
+                            <div><label class="block text-sm font-medium text-gray-700 mb-1">Amount (Min $10)</label><input type="number" id="withdrawAmount" class="w-full border rounded-lg px-4 py-2" placeholder="Enter amount"></div>
+                            <div><label class="block text-sm font-medium text-gray-700 mb-1">Payment Method</label><select id="withdrawMethod" class="w-full border rounded-lg px-4 py-2"><option value="Bank Transfer">Bank Transfer</option><option value="PayPal">PayPal</option><option value="Crypto">Cryptocurrency</option><option value="Mobile Money">Mobile Money</option></select></div>
+                            <div><label class="block text-sm font-medium text-gray-700 mb-1">Payment Details</label><textarea id="withdrawDetails" class="w-full border rounded-lg px-4 py-2" rows="3" placeholder="Enter your account details for payment"></textarea></div>
+                            <button onclick="requestWithdrawal()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg transition"><i class="fas fa-paper-plane mr-2"></i>Submit Request</button>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md p-6">
+                        <h2 class="text-xl font-bold mb-4"><i class="fas fa-clock text-yellow-600 mr-2"></i>Withdrawal History</h2>
+                        <div id="withdrawalHistoryList" class="divide-y">Loading history...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Referrals Section -->
+            <div id="referralsSection" class="dashboard-section hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-white rounded-xl shadow-md p-6 text-center">
+                        <i class="fas fa-user-friends text-4xl text-blue-500 mb-3"></i>
+                        <p class="text-gray-500 text-sm">Total Referrals</p>
+                        <p class="text-3xl font-bold" id="totalReferrals">0</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md p-6 text-center">
+                        <i class="fas fa-dollar-sign text-4xl text-green-500 mb-3"></i>
+                        <p class="text-gray-500 text-sm">Commissions Earned</p>
+                        <p class="text-3xl font-bold" id="totalCommissions">$0</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h3 class="text-xl font-bold mb-4"><i class="fas fa-share-alt text-blue-600 mr-2"></i>Your Referral Link</h3>
+                    <div class="flex flex-wrap gap-3">
+                        <input type="text" id="referralLink" class="flex-1 border rounded-lg px-4 py-2 bg-gray-50 text-sm" readonly>
+                        <button onclick="copyReferralLink()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition"><i class="fas fa-copy mr-2"></i>Copy Link</button>
+                    </div>
+                    <div class="mt-4 p-4 bg-blue-50 rounded-lg"><p class="text-sm text-blue-800"><i class="fas fa-info-circle mr-2"></i>Share your referral link with friends. When they sign up and deposit, you earn 10% commission!</p></div>
+                </div>
+            </div>
+            
+            <!-- Support Section -->
+            <div id="supportSection" class="dashboard-section hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl shadow-md p-6">
+                        <h2 class="text-xl font-bold mb-4"><i class="fas fa-ticket-alt text-blue-600 mr-2"></i>Create Support Ticket</h2>
+                        <div class="space-y-4">
+                            <div><label class="block text-sm font-medium text-gray-700 mb-1">Subject</label><input type="text" id="ticketSubject" class="w-full border rounded-lg px-4 py-2" placeholder="Brief description of issue"></div>
+                            <div><label class="block text-sm font-medium text-gray-700 mb-1">Message</label><textarea id="ticketMessage" class="w-full border rounded-lg px-4 py-2" rows="4" placeholder="Describe your issue in detail..."></textarea></div>
+                            <button onclick="createSupportTicket()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition"><i class="fas fa-paper-plane mr-2"></i>Submit Ticket</button>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md p-6">
+                        <h2 class="text-xl font-bold mb-4"><i class="fas fa-comments text-green-600 mr-2"></i>My Tickets</h2>
+                        <div id="ticketsList" class="max-h-[500px] overflow-y-auto">Loading tickets...</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
