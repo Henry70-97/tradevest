@@ -2,14 +2,258 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BestPay - Admin Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>BestPay | Admin Console</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Admin panel styling – clean & book‑like */
+        .admin-card {
+            background: linear-gradient(145deg, #ffffff 0%, #fef9e8 100%);
+            border-radius: 1.25rem;
+            box-shadow: 8px 8px 16px rgba(0,0,0,0.05), -4px -4px 12px rgba(255,255,240,0.7);
+            border: 1px solid rgba(210, 180, 140, 0.3);
+        }
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100%;
+            background: #1f2937;
+            color: #e5e7eb;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: 10000;
+            overflow-y: auto;
+        }
+        .sidebar.open {
+            transform: translateX(0);
+        }
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.7rem 1rem;
+            border-radius: 0.75rem;
+            color: #e5e7eb;
+            transition: all 0.2s;
+        }
+        .sidebar a:hover {
+            background: #374151;
+        }
+        .sidebar a.active {
+            background: #4f46e5;
+            color: white;
+        }
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 9999;
+            display: none;
+        }
+        .overlay.active {
+            display: block;
+        }
+        .content-section {
+            display: none;
+            animation: fadeIn 0.2s ease;
+        }
+        .content-section.active-section {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        .badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <!-- Overlay -->
+    <div id="sidebarOverlay" class="overlay"></div>
+
+    <!-- Sidebar (Admin Menu) -->
+    <aside id="adminSidebar" class="sidebar">
+        <div class="flex justify-between items-center p-4 border-b border-gray-700 sticky top-0 bg-gray-800 z-10">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-shield-alt text-2xl text-indigo-400"></i>
+                <span class="font-bold text-xl">BestPay<span class="text-indigo-400">.Admin</span></span>
+            </div>
+            <button id="closeSidebarBtn" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <nav class="sidebar-nav px-3 py-4 space-y-1">
+            <a href="#" data-section="dashboard"><i class="fas fa-tachometer-alt w-5"></i>📊 Admin Dashboard</a>
+            <a href="#" data-section="users"><i class="fas fa-users w-5"></i>👥 User Management</a>
+            <a href="#" data-section="investments"><i class="fas fa-chart-line w-5"></i>📈 Investment Plans</a>
+            <a href="#" data-section="activeInvestments"><i class="fas fa-clock w-5"></i>⏳ User Investments</a>
+            <a href="#" data-section="withdrawals"><i class="fas fa-hand-holding-usd w-5"></i>🏦 Withdrawals</a>
+            <a href="#" data-section="deposits"><i class="fas fa-plus-circle w-5"></i>💎 Deposits</a>
+            <a href="#" data-section="tickets"><i class="fas fa-ticket-alt w-5"></i>🎫 Support Tickets</a>
+            <a href="#" data-section="transactions"><i class="fas fa-exchange-alt w-5"></i>📜 All Transactions</a>
+            <a href="#" data-section="referrals"><i class="fas fa-users w-5"></i>👥 Referral Overview</a>
+            <a href="#" data-section="leaderboard"><i class="fas fa-trophy w-5"></i>🏆 Leaderboard</a>
+            <a href="#" data-section="systemLogs"><i class="fas fa-history w-5"></i>📋 Admin Logs</a>
+            <a href="#" data-section="announcements"><i class="fas fa-bullhorn w-5"></i>📢 Announcements</a>
+            <a href="#" data-section="kycVerifications"><i class="fas fa-id-card w-5"></i>🪪 KYC Approvals</a>
+            <a href="#" data-section="emailSettings"><i class="fas fa-envelope w-5"></i>📧 Email Templates</a>
+            <a href="#" data-section="spinConfig"><i class="fas fa-gamepad w-5"></i>🎡 Spin Wheel Config</a>
+            <a href="#" data-section="systemSettings"><i class="fas fa-cogs w-5"></i>⚙️ System Settings</a>
+            <a href="#" data-section="backup"><i class="fas fa-database w-5"></i>💾 Backup / Export</a>
+            <a href="#" data-section="apiKeys"><i class="fas fa-key w-5"></i>🔑 API Keys</a>
+            <a href="#" data-section="staff"><i class="fas fa-user-shield w-5"></i>👮 Staff Management</a>
+            <a href="#" data-section="reports"><i class="fas fa-chart-pie w-5"></i>📊 Financial Reports</a>
+            <a href="#" data-section="maintenance"><i class="fas fa-wrench w-5"></i>🔧 Maintenance Mode</a>
+        </nav>
+        <div class="border-t border-gray-700 p-4 mt-auto">
+            <button id="logoutAdminBtn" class="flex items-center gap-3 w-full text-left text-red-400 hover:bg-red-900/30 rounded-xl p-2"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="ml-0">
+        <header class="bg-white shadow-sm sticky top-0 z-20 px-4 py-3 flex items-center gap-4">
+            <button id="hamburgerBtn" class="text-2xl p-1 rounded-md hover:bg-gray-100"><i class="fas fa-bars"></i></button>
+            <h1 class="text-xl font-semibold text-gray-800"><i class="fas fa-shield-alt text-indigo-500 mr-2"></i>Admin Control Panel</h1>
+            <div class="flex-1"></div>
+            <div class="flex items-center gap-2"><span id="adminName" class="text-sm font-medium"></span><i class="fas fa-user-circle text-2xl text-gray-600"></i></div>
+        </header>
+
+        <main class="container mx-auto px-4 py-6 space-y-6">
+            <!-- Dashboard Section -->
+            <div id="section-dashboard" class="content-section active-section">
+                <div class="admin-card p-6">
+                    <h2 class="text-2xl font-bold">Admin Overview</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4" id="adminStats"></div>
+                </div>
+            </div>
+
+            <!-- Users Section -->
+            <div id="section-users" class="content-section">
+                <div class="admin-card p-6">
+                    <h3 class="text-xl font-bold mb-4"><i class="fas fa-users text-blue-600"></i> User Management</h3>
+                    <div class="overflow-x-auto">
+                        <table id="usersTable">
+                            <thead><tr><th>Email</th><th>Name</th><th>Balance</th><th>KYC</th><th>Suspended</th><th>Actions</th></tr></thead>
+                            <tbody id="usersTableBody"><tr><td colspan="6">Loading...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Investment Plans -->
+            <div id="section-investments" class="content-section">
+                <div class="admin-card p-6">
+                    <div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold">📈 Investment Plans</h3><button onclick="createPlan()" class="bg-green-600 text-white px-3 py-1 rounded">+ Add Plan</button></div>
+                    <div id="plansListAdmin" class="space-y-3"></div>
+                </div>
+            </div>
+
+            <!-- Active Investments (users) -->
+            <div id="section-activeInvestments" class="content-section">
+                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">⏳ All Active Investments</h3><div id="allInvestmentsList" class="space-y-2"></div></div>
+            </div>
+
+            <!-- Withdrawals Management -->
+            <div id="section-withdrawals" class="content-section">
+                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">🏦 Withdrawal Requests</h3><div id="withdrawalsAdminList"></div></div>
+            </div>
+
+            <!-- Deposits Management -->
+            <div id="section-deposits" class="content-section">
+                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">💎 Pending Deposits</h3><div id="depositsAdminList"></div></div>
+            </div>
+
+            <!-- Support Tickets -->
+            <div id="section-tickets" class="content-section">
+                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">🎫 Support Tickets</h3><div id="ticketsAdminList"></div></div>
+            </div>
+
+            <!-- All Transactions -->
+            <div id="section-transactions" class="content-section">
+                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">📜 Recent Transactions</h3><div id="allTransactionsList" class="max-h-96 overflow-auto"></div></div>
+            </div>
+
+            <!-- Referral Overview -->
+            <div id="section-referrals" class="content-section">
+                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">👥 Referral Stats</h3><div id="referralAdminStats"></div></div>
+            </div>
+
+            <!-- Leaderboard (Admin view) -->
+            <div id="section-leaderboard" class="content-section">
+                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">🏆 Top Earners</h3><div id="leaderboardAdminList"></div></div>
+            </div>
+
+            <!-- System Logs -->
+            <div id="section-systemLogs" class="content-section">
+                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">📋 Admin Action Logs</h3><div id="adminLogsList" class="max-h-96 overflow-auto"></div></div>
+            </div>
+
+            <!-- Announcements -->
+            <div id="section-announcements" class="content-section">
+                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">📢 Announcements</h3><button onclick="createAnnouncement()" class="mb-3 bg-indigo-600 text-white px-3 py-1 rounded">New Announcement</button><div id="announcementsList"></div></div>
+            </div>
+
+            <!-- KYC Approvals -->
+            <div id="section-kycVerifications" class="content-section">
+                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">🪪 KYC Verification Requests</h3><div id="kycRequestsList"></div></div>
+            </div>
+
+            <!-- Email Templates -->
+            <div id="section-emailSettings" class="content-section">
+                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">📧 Email Templates</h3><p>Placeholder: manage email templates (future)</p></div>
+            </div>
+
+            <!-- Spin Wheel Config -->
+            <div id="section-spinConfig" class="content-section">
+                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">🎡 Spin Wheel Configuration</h3><button onclick="configureWheel()" class="bg-purple-600 text-white px-4 py-2 rounded">Edit Segments</button><div id="wheelConfigPreview" class="mt-3"></div></div>
+            </div>
+
+            <!-- System Settings -->
+            <div id="section-systemSettings" class="content-section">
+                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">⚙️ System Settings</h3><label><input type="checkbox" id="maintenanceToggle"> Maintenance Mode</label><button onclick="saveSettings()" class="ml-3 bg-blue-600 text-white px-3 py-1 rounded">Save</button></div>
+            </div>
+
+            <!-- Backup / Export -->
+            <div id="section-backup" class="content-section">
+                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">💾 Export Data</h3><button onclick="exportUsersCSV()" class="bg-gray-600 text-white px-4 py-2 rounded">Export Users CSV</button></div>
+            </div>
+
+            <!-- API Keys -->
+            <div id="section-apiKeys" class="content-section">
+                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">🔑 API Keys</h3><button class="bg-blue-500 text-white px-3 py-1 rounded">Generate New Key</button></div>
+            </div>
+
+            <!-- Staff Management -->
+            <div id="section-staff" class="content-section">
+                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">👮 Admin Staff</h3><div id="staffList"></div><button onclick="addStaff()" class="mt-3 bg-indigo-600 text-white px-3 py-1 rounded">Add Admin</button></div>
+            </div>
+
+            <!-- Financial Reports -->
+            <div id="section-reports" class="content-section">
+                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">📊 Financial Summary</h3><div id="financialReport"></div></div>
+            </div>
+
+            <!-- Maintenance Mode -->
+            <div id="section-maintenance" class="content-section">
+                <div class="admin-card p-6"><h3 class="text-xl font-bold mb-3">🔧 Maintenance Mode</h3><p>Toggle system maintenance from System Settings tab.</p></div>
+            </div>
+        </main>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, getDocs, collection, query, updateDoc, deleteDoc, addDoc, serverTimestamp, orderBy, where, increment, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, orderBy, serverTimestamp, addDoc, increment, deleteDoc, setDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         
         const firebaseConfig = {
             apiKey: "AIzaSyDtGN7KCK0A4fhztLN0CgxsKkGROcO_-vI",
@@ -19,7 +263,6 @@
             messagingSenderId: "583230068716",
             appId: "1:583230068716:web:3e8d298b4d00b46c8652c9"
         };
-        
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -27,470 +270,240 @@
         let currentAdmin = null;
         
         onAuthStateChanged(auth, async (user) => {
-            if (!user) {
-                window.location.href = "index.html";
-                return;
-            }
-            
+            if (!user) { window.location.href = "index.html"; return; }
             const userDoc = await getDoc(doc(db, "users", user.uid));
             if (!userDoc.exists() || userDoc.data().role !== "admin") {
                 window.location.href = "dashboard.html";
                 return;
             }
-            
             currentAdmin = user;
             document.getElementById('adminName').innerText = userDoc.data().displayName || user.email;
-            loadUsers();
-            loadTickets();
-            loadPlans();
-            loadWithdrawals();
+            await loadAllAdminData();
+            initAdminNav();
         });
         
+        async function loadAllAdminData() {
+            await loadUsers(); await loadPlans(); await loadAllInvestments(); await loadWithdrawals(); await loadDeposits(); await loadTickets(); await loadTransactions(); await loadReferralStats(); await loadLeaderboard(); await loadAdminLogs(); await loadAnnouncements(); await loadKYCRequests(); await loadStaff(); await loadFinancialReport(); loadDashboardStats();
+        }
+        
+        async function loadDashboardStats() {
+            const usersSnap = await getDocs(collection(db,"users"));
+            const pendingWithdrawals = await getDocs(query(collection(db,"withdrawals"), where("status","==","pending")));
+            const pendingDeposits = await getDocs(query(collection(db,"deposits"), where("status","==","pending")));
+            document.getElementById('adminStats').innerHTML = `
+                <div class="admin-card p-3 text-center"><p class="text-gray-500">Total Users</p><p class="text-2xl font-bold">${usersSnap.size}</p></div>
+                <div class="admin-card p-3 text-center"><p class="text-gray-500">Pending Withdrawals</p><p class="text-2xl font-bold">${pendingWithdrawals.size}</p></div>
+                <div class="admin-card p-3 text-center"><p class="text-gray-500">Pending Deposits</p><p class="text-2xl font-bold">${pendingDeposits.size}</p></div>
+                <div class="admin-card p-3 text-center"><p class="text-gray-500">Open Tickets</p><p class="text-2xl font-bold">${(await getDocs(query(collection(db,"support_tickets"), where("status","==","open")))).size}</p></div>
+            `;
+        }
+        
+        // User management
         async function loadUsers() {
-            const usersSnap = await getDocs(collection(db, "users"));
+            const usersSnap = await getDocs(collection(db,"users"));
             let html = '';
-            let userCount = 0;
-            for (const userDoc of usersSnap.docs) {
+            for(const userDoc of usersSnap.docs) {
                 const u = userDoc.data();
-                if (u.role === 'admin') continue;
-                userCount++;
-                
-                const walletSnap = await getDoc(doc(db, "wallets", userDoc.id));
-                const wallet = walletSnap.data() || {};
-                
-                html += `
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="p-3">${u.email}</td>
-                        <td class="p-3">${u.displayName || '-'}</td>
-                        <td class="p-3"><span class="px-2 py-1 rounded text-xs ${u.kycStatus === 'verified' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${u.kycStatus}</span></td>
-                        <td class="p-3">${u.isSuspended ? '<span class="text-red-600"><i class="fas fa-ban"></i> Yes</span>' : '<span class="text-green-600"><i class="fas fa-check"></i> No</span>'}</td>
-                        <td class="p-3">${u.isFrozen ? '<span class="text-orange-600"><i class="fas fa-snowflake"></i> Yes</span>' : '<span class="text-green-600">No</span>'}</td>
-                        <td class="p-3 font-bold">$${(u.withdrawableBalance || 0).toFixed(2)}</td>
-                        <td class="p-3 space-x-1">
-                            <button onclick="toggleSuspend('${userDoc.id}', ${u.isSuspended})" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs">
-                                ${u.isSuspended ? 'Unsuspend' : 'Suspend'}
-                            </button>
-                            <button onclick="toggleFreeze('${userDoc.id}', ${u.isFrozen})" class="bg-orange-500 hover:bg-orange-600 text-white px-2 py-1 rounded text-xs">
-                                ${u.isFrozen ? 'Unfreeze' : 'Freeze'}
-                            </button>
-                            <button onclick="toggleKYC('${userDoc.id}', '${u.kycStatus}')" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs">
-                                ${u.kycStatus === 'verified' ? 'Unverify' : 'Verify'}
-                            </button>
-                            <button onclick="adjustBalance('${userDoc.id}')" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs">
-                                <i class="fas fa-dollar-sign"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
+                if(u.role === 'admin') continue;
+                const walletSnap = await getDoc(doc(db,"wallets",userDoc.id));
+                const balance = u.withdrawableBalance || 0;
+                html += `<tr>
+                            <td>${u.email}</td>
+                            <td>${u.displayName || '-'}</td>
+                            <td>$${balance.toFixed(2)}</td>
+                            <td><span class="badge ${u.kycStatus==='verified'?'bg-green-100 text-green-800':'bg-yellow-100'}">${u.kycStatus}</span></td>
+                            <td>${u.isSuspended ? '<span class="text-red-600">Yes</span>' : 'No'}</td>
+                            <td><button onclick="toggleSuspend('${userDoc.id}', ${u.isSuspended})" class="bg-yellow-500 text-white px-2 py-1 rounded text-xs">Toggle Suspend</button>
+                                <button onclick="adjustBalance('${userDoc.id}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Adjust</button></td>
+                         </tr>`;
             }
-            document.getElementById('usersTableBody').innerHTML = html || '<tr><td colspan="7" class="text-center p-4">No users found</td></tr>';
-            document.getElementById('userCount').innerText = userCount;
+            document.getElementById('usersTableBody').innerHTML = html || '<tr><td colspan="6">No users</td></tr>';
+        }
+        window.toggleSuspend = async (uid, current) => { await updateDoc(doc(db,"users",uid),{isSuspended:!current}); loadUsers(); };
+        window.adjustBalance = async (uid) => { const amt = parseFloat(prompt("Amount (+/-):")); if(!isNaN(amt)) await updateDoc(doc(db,"users",uid),{withdrawableBalance:increment(amt),totalEarned:increment(amt)}); loadUsers(); };
+        
+        // Plans
+        async function loadPlans() {
+            const snap = await getDocs(collection(db,"investment_plans"));
+            let html = '';
+            snap.forEach(p => { const d=p.data(); html+=`<div class="admin-card p-3 flex justify-between"><div><b>${d.name}</b> | Min $${d.minAmount} | ROI ${d.roiPercent}%</div><button onclick="deletePlan('${p.id}')" class="text-red-600">Delete</button></div>`; });
+            document.getElementById('plansListAdmin').innerHTML = html || '<p>No plans</p>';
+        }
+        window.createPlan = async () => { const name=prompt("Plan name"); if(!name)return; const min=parseFloat(prompt("Min amount")); const roi=parseFloat(prompt("ROI %")); await addDoc(collection(db,"investment_plans"),{name,minAmount:min,roiPercent:roi,isActive:true,durationDays:30,productDescription:"Admin created"}); loadPlans(); };
+        window.deletePlan = async (id) => { if(confirm("Delete plan?")) await deleteDoc(doc(db,"investment_plans",id)); loadPlans(); };
+        
+        // Investments (all users)
+        async function loadAllInvestments() {
+            const snap = await getDocs(query(collection(db,"investments"), where("status","==","active")));
+            let html='';
+            for(const inv of snap.docs) {
+                const d=inv.data();
+                const user = await getDoc(doc(db,"users",d.userId));
+                html+=`<div class="admin-card p-2 flex justify-between"><span>${user.data()?.email || d.userId}</span><span>$${d.amount}</span><span>ROI: $${d.roiEarned}</span></div>`;
+            }
+            document.getElementById('allInvestmentsList').innerHTML=html||'No active investments';
         }
         
-        window.toggleSuspend = async (userId, current) => {
-            await updateDoc(doc(db, "users", userId), { isSuspended: !current });
-            await addDoc(collection(db, "admin_logs"), {
-                adminId: currentAdmin.uid, action: "toggle_suspend",
-                targetUserId: userId, details: { newState: !current },
-                timestamp: serverTimestamp()
-            });
-            loadUsers();
-            showNotification(`User suspension toggled`, 'success');
-        };
-        
-        window.toggleFreeze = async (userId, current) => {
-            await updateDoc(doc(db, "users", userId), { isFrozen: !current });
-            await addDoc(collection(db, "admin_logs"), {
-                adminId: currentAdmin.uid, action: "toggle_freeze",
-                targetUserId: userId, details: { newState: !current },
-                timestamp: serverTimestamp()
-            });
-            loadUsers();
-            showNotification(`User freeze toggled`, 'success');
-        };
-        
-        window.toggleKYC = async (userId, current) => {
-            const newStatus = current === 'verified' ? 'unverified' : 'verified';
-            await updateDoc(doc(db, "users", userId), { kycStatus: newStatus });
-            loadUsers();
-            showNotification(`KYC status updated to ${newStatus}`, 'success');
-        };
-        
-        window.adjustBalance = async (userId) => {
-            const amount = parseFloat(prompt("Enter amount to add (use negative to subtract):"));
-            if (isNaN(amount)) return;
-            await updateDoc(doc(db, "users", userId), { withdrawableBalance: increment(amount) });
-            await addDoc(collection(db, "admin_logs"), {
-                adminId: currentAdmin.uid, action: "adjust_balance",
-                targetUserId: userId, details: { amount },
-                timestamp: serverTimestamp()
-            });
-            loadUsers();
-            showNotification(`Balance adjusted by $${amount}`, 'success');
-        };
-        
-        window.loadTickets = async function() {
-            const ticketsSnap = await getDocs(query(collection(db, "support_tickets"), orderBy("createdAt", "desc")));
-            let html = '';
-            let ticketCount = 0;
-            for (const ticketDoc of ticketsSnap.docs) {
-                const t = ticketDoc.data();
-                ticketCount++;
-                const statusColor = t.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : t.status === 'resolved' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800';
-                html += `
-                    <div class="border rounded-lg p-4 mb-3">
-                        <div class="flex justify-between items-start mb-2">
-                            <div>
-                                <h3 class="font-bold">${t.subject}</h3>
-                                <p class="text-sm text-gray-600">From: ${t.userEmail}</p>
-                            </div>
-                            <span class="px-2 py-1 rounded text-xs ${statusColor}">${t.status}</span>
-                        </div>
-                        <p class="text-gray-700 mb-3">${t.message}</p>
-                        <div class="flex gap-2">
-                            <textarea id="reply-${ticketDoc.id}" placeholder="Admin reply..." class="flex-1 border rounded-lg p-2 text-sm" rows="2"></textarea>
-                            <button onclick="replyToTicket('${ticketDoc.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
-                                <i class="fas fa-reply"></i> Reply
-                            </button>
-                        </div>
-                        <div class="mt-2">
-                            <select id="status-${ticketDoc.id}" class="border rounded-lg p-1 text-sm">
-                                <option value="pending" ${t.status === 'pending' ? 'selected' : ''}>Pending</option>
-                                <option value="in_progress" ${t.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
-                                <option value="resolved" ${t.status === 'resolved' ? 'selected' : ''}>Resolved</option>
-                            </select>
-                            <button onclick="updateTicketStatus('${ticketDoc.id}')" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded-lg text-sm ml-2">
-                                Update Status
-                            </button>
-                        </div>
-                    </div>
-                `;
+        // Withdrawals
+        async function loadWithdrawals() {
+            const snap = await getDocs(query(collection(db,"withdrawals"), orderBy("createdAt","desc")));
+            let html='';
+            for(const w of snap.docs) {
+                const data=w.data();
+                const user=await getDoc(doc(db,"users",data.userId));
+                html+=`<div class="admin-card p-3 flex justify-between items-center"><div><b>${user.data()?.email}</b> - $${data.amount} (${data.method})<br><span class="text-xs">${data.status}</span></div><div>${data.status==='pending'? `<button onclick="approveWithdrawal('${w.id}','${data.userId}',${data.amount})" class="bg-green-600 text-white px-2 py-1 rounded">Approve</button> <button onclick="rejectWithdrawal('${w.id}','${data.userId}',${data.amount})" class="bg-red-600 text-white px-2 py-1 rounded">Reject</button>` : ''}</div></div>`;
             }
-            document.getElementById('ticketsList').innerHTML = html || '<p class="text-gray-500 text-center py-8">No tickets found</p>';
-            document.getElementById('ticketCount').innerText = ticketCount;
-        };
-        
-        window.replyToTicket = async (ticketId) => {
-            const replyMsg = document.getElementById(`reply-${ticketId}`).value;
-            if (!replyMsg) {
-                showNotification("Please enter a reply message", 'error');
-                return;
-            }
-            
-            await addDoc(collection(db, "support_tickets", ticketId, "messages"), {
-                senderId: currentAdmin.uid,
-                senderName: "Admin",
-                senderRole: "admin",
-                message: replyMsg,
-                timestamp: serverTimestamp(),
-                isRead: false
-            });
-            
-            await updateDoc(doc(db, "support_tickets", ticketId), { updatedAt: serverTimestamp() });
-            showNotification("Reply sent successfully!", 'success');
-            document.getElementById(`reply-${ticketId}`).value = '';
-            loadTickets();
-        };
-        
-        window.updateTicketStatus = async (ticketId) => {
-            const newStatus = document.getElementById(`status-${ticketId}`).value;
-            await updateDoc(doc(db, "support_tickets", ticketId), {
-                status: newStatus,
-                updatedAt: serverTimestamp()
-            });
-            showNotification(`Ticket status updated to ${newStatus}`, 'success');
-            loadTickets();
-        };
-        
-        window.loadPlans = async function() {
-            const plansSnap = await getDocs(collection(db, "investment_plans"));
-            let html = '';
-            let planCount = 0;
-            plansSnap.forEach(planDoc => {
-                planCount++;
-                const p = planDoc.data();
-                html += `
-                    <div class="border rounded-lg p-4 flex justify-between items-center">
-                        <div>
-                            <h3 class="font-bold">${p.name}</h3>
-                            <p class="text-sm text-gray-600">Min: $${p.minAmount} | ROI: ${p.roiPercent}% | Duration: ${p.durationDays || 30} days</p>
-                            <p class="text-xs text-gray-500 mt-1">${p.productDescription}</p>
-                        </div>
-                        <button onclick="deletePlan('${planDoc.id}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">
-                            <i class="fas fa-trash"></i> Delete
-                        </button>
-                    </div>
-                `;
-            });
-            document.getElementById('plansList').innerHTML = html || '<p class="text-gray-500 text-center py-8">No investment plans</p>';
-            document.getElementById('planCount').innerText = planCount;
-        };
-        
-        window.addPlan = async function() {
-            const name = prompt("Plan name:");
-            if (!name) return;
-            const minAmount = parseFloat(prompt("Minimum investment amount:"));
-            if (isNaN(minAmount)) return;
-            const roiPercent = parseFloat(prompt("ROI percentage:"));
-            if (isNaN(roiPercent)) return;
-            const description = prompt("Plan description:");
-            
-            await addDoc(collection(db, "investment_plans"), {
-                name, minAmount, roiPercent, durationDays: 30, isActive: true,
-                productImageURL: "https://picsum.photos/400/200",
-                productURL: "#", productDescription: description || "New investment plan",
-                maxAmount: null
-            });
-            
-            showNotification("Investment plan added successfully!", 'success');
-            loadPlans();
-        };
-        
-        window.deletePlan = async (planId) => {
-            if (confirm("Are you sure you want to delete this plan?")) {
-                await deleteDoc(doc(db, "investment_plans", planId));
-                showNotification("Plan deleted", 'success');
-                loadPlans();
-            }
-        };
-        
-        window.loadWithdrawals = async function() {
-            const withdrawSnap = await getDocs(query(collection(db, "withdrawals"), orderBy("createdAt", "desc")));
-            let html = '';
-            let pendingCount = 0;
-            for (const withdrawDoc of withdrawSnap.docs) {
-                const w = withdrawDoc.data();
-                if (w.status === 'pending') pendingCount++;
-                const userDoc = await getDoc(doc(db, "users", w.userId));
-                const userEmail = userDoc.exists() ? userDoc.data().email : 'Unknown';
-                
-                html += `
-                    <div class="border rounded-lg p-4">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="font-semibold">User: ${userEmail}</p>
-                                <p class="text-2xl font-bold text-green-600">$${w.amount}</p>
-                                <p class="text-sm text-gray-600">Method: ${w.method}</p>
-                            </div>
-                            <div>
-                                <span class="px-2 py-1 rounded text-xs ${w.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : w.status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-                                    ${w.status}
-                                </span>
-                                <div class="mt-2 space-x-1">
-                                    ${w.status === 'pending' ? `
-                                        <button onclick="approveWithdrawal('${withdrawDoc.id}', '${w.userId}', ${w.amount})" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs">
-                                            Approve
-                                        </button>
-                                        <button onclick="rejectWithdrawal('${withdrawDoc.id}')" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs">
-                                            Reject
-                                        </button>
-                                    ` : ''}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-            document.getElementById('withdrawalsList').innerHTML = html || '<p class="text-gray-500 text-center py-8">No withdrawal requests</p>';
-            document.getElementById('withdrawCount').innerText = pendingCount;
-        };
-        
-        window.approveWithdrawal = async (withdrawId, userId, amount) => {
-            await updateDoc(doc(db, "withdrawals", withdrawId), {
-                status: "approved",
-                processedAt: serverTimestamp()
-            });
-            
-            await updateDoc(doc(db, "users", userId), {
-                withdrawableBalance: increment(-amount),
-                totalWithdrawn: increment(amount)
-            });
-            
-            showNotification("Withdrawal approved!", 'success');
-            loadWithdrawals();
-        };
-        
-        window.rejectWithdrawal = async (withdrawId) => {
-            const withdrawDoc = await getDoc(doc(db, "withdrawals", withdrawId));
-            const amount = withdrawDoc.data().amount;
-            const userId = withdrawDoc.data().userId;
-            
-            await updateDoc(doc(db, "withdrawals", withdrawId), {
-                status: "rejected",
-                processedAt: serverTimestamp()
-            });
-            
-            await updateDoc(doc(db, "users", userId), {
-                withdrawableBalance: increment(amount)
-            });
-            
-            showNotification("Withdrawal rejected, funds returned", 'success');
-            loadWithdrawals();
-        };
-        
-        window.showSection = function(section) {
-            document.querySelectorAll('.admin-section').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`${section}Section`).classList.remove('hidden');
-            
-            const btns = document.querySelectorAll('.nav-btn');
-            btns.forEach(btn => {
-                btn.classList.remove('bg-blue-600', 'text-white');
-                btn.classList.add('bg-gray-200', 'text-gray-700');
-            });
-            if (event && event.target) {
-                event.target.classList.remove('bg-gray-200', 'text-gray-700');
-                event.target.classList.add('bg-blue-600', 'text-white');
-            }
-            
-            if (section === 'users') loadUsers();
-            else if (section === 'tickets') loadTickets();
-            else if (section === 'plans') loadPlans();
-            else if (section === 'withdrawals') loadWithdrawals();
-        };
-        
-        window.logout = async function() {
-            await signOut(auth);
-            window.location.href = "registration.html";
-        };
-        
-        function showNotification(message, type) {
-            const notification = document.createElement('div');
-            notification.className = `fixed bottom-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
-            notification.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2"></i>${message}`;
-            document.body.appendChild(notification);
-            setTimeout(() => notification.remove(), 3000);
+            document.getElementById('withdrawalsAdminList').innerHTML=html||'No withdrawals';
         }
+        window.approveWithdrawal = async (id, uid, amt) => { await updateDoc(doc(db,"withdrawals",id),{status:"approved"}); await updateDoc(doc(db,"users",uid),{withdrawableBalance:increment(-amt), totalWithdrawn:increment(amt)}); loadWithdrawals(); loadDashboardStats(); };
+        window.rejectWithdrawal = async (id, uid, amt) => { await updateDoc(doc(db,"withdrawals",id),{status:"rejected"}); await updateDoc(doc(db,"users",uid),{withdrawableBalance:increment(amt)}); loadWithdrawals(); };
+        
+        // Deposits
+        async function loadDeposits() {
+            const snap = await getDocs(query(collection(db,"deposits"), where("status","==","pending"), orderBy("createdAt","desc")));
+            let html='';
+            for(const d of snap.docs) {
+                const data=d.data();
+                const user=await getDoc(doc(db,"users",data.userId));
+                html+=`<div class="admin-card p-3 flex justify-between"><div>${user.data()?.email} - $${data.amount} (${data.method})<br>Ref: ${data.reference}</div><div><button onclick="approveDeposit('${d.id}','${data.userId}',${data.amount})" class="bg-green-600 text-white px-2 py-1 rounded">Approve</button> <button onclick="rejectDeposit('${d.id}')" class="bg-red-600 text-white px-2 py-1 rounded">Reject</button></div></div>`;
+            }
+            document.getElementById('depositsAdminList').innerHTML=html||'No pending deposits';
+        }
+        window.approveDeposit = async (id, uid, amt) => { await updateDoc(doc(db,"deposits",id),{status:"approved"}); await updateDoc(doc(db,"users",uid),{withdrawableBalance:increment(amt),totalEarned:increment(amt)}); loadDeposits(); loadDashboardStats(); };
+        window.rejectDeposit = async (id) => { await updateDoc(doc(db,"deposits",id),{status:"rejected"}); loadDeposits(); };
+        
+        // Tickets
+        async function loadTickets() {
+            const snap = await getDocs(query(collection(db,"support_tickets"), orderBy("createdAt","desc")));
+            let html='';
+            for(const t of snap.docs) {
+                const data=t.data();
+                const user=await getDoc(doc(db,"users",data.userId));
+                html+=`<div class="admin-card p-3 mb-2"><div class="font-bold">${data.subject}</div><div>From: ${user.data()?.email}</div><div>${data.message.substring(0,100)}</div><div class="mt-2"><textarea id="reply-${t.id}" placeholder="Admin reply" class="border rounded p-1 w-full"></textarea><button onclick="replyTicket('${t.id}')" class="bg-blue-600 text-white px-3 py-1 rounded">Reply</button> <select id="status-${t.id}" class="border rounded p-1"><option ${data.status==='open'?'selected':''}>open</option><option ${data.status==='resolved'?'selected':''}>resolved</option></select><button onclick="updateTicketStatus('${t.id}')" class="bg-gray-600 text-white px-2 py-1 rounded">Update</button></div></div>`;
+            }
+            document.getElementById('ticketsAdminList').innerHTML=html||'No tickets';
+        }
+        window.replyTicket = async (id) => { const msg=document.getElementById(`reply-${id}`).value; if(!msg)return; await addDoc(collection(db,"support_tickets",id,"replies"),{message:msg,isAdmin:true,createdAt:serverTimestamp(),senderName:"Admin"}); document.getElementById(`reply-${id}`).value=''; alert("Reply sent"); };
+        window.updateTicketStatus = async (id) => { const newStatus=document.getElementById(`status-${id}`).value; await updateDoc(doc(db,"support_tickets",id),{status:newStatus}); loadTickets(); };
+        
+        // Transactions (all)
+        async function loadTransactions() {
+            const snap = await getDocs(query(collection(db,"transactions"), orderBy("timestamp","desc"), limit(100)));
+            let html='<table class="w-full"><tr><th>User</th><th>Type</th><th>Amount</th><th>Date</th></tr>';
+            for(const tx of snap.docs) {
+                const d=tx.data();
+                const user=await getDoc(doc(db,"users",d.userId));
+                html+=`<tr><td>${user.data()?.email || d.userId}</td><td>${d.type}</td><td class="${d.amount>0?'text-green-600':'text-red-600'}">$${d.amount.toFixed(2)}</td><td>${d.timestamp?.toDate().toLocaleString()||''}</td></tr>`;
+            }
+            html+='</table>';
+            document.getElementById('allTransactionsList').innerHTML=html;
+        }
+        
+        // Referral stats
+        async function loadReferralStats() {
+            const referralsSnap = await getDocs(collection(db,"referrals"));
+            document.getElementById('referralAdminStats').innerHTML = `<p>Total Referral Records: ${referralsSnap.size}</p>`;
+        }
+        
+        // Leaderboard
+        async function loadLeaderboard() {
+            const users = await getDocs(query(collection(db,"users"), orderBy("totalEarned","desc"), limit(20)));
+            let html='<ol>';
+            users.forEach(u=>{ html+=`<li>${u.data().displayName||u.data().email} - $${(u.data().totalEarned||0).toFixed(2)}</li>`; });
+            html+='</ol>';
+            document.getElementById('leaderboardAdminList').innerHTML=html;
+        }
+        
+        // Admin logs
+        async function loadAdminLogs() {
+            const logs = await getDocs(query(collection(db,"admin_logs"), orderBy("timestamp","desc"), limit(50)));
+            let html='';
+            logs.forEach(l=>{ const d=l.data(); html+=`<div class="border-b py-1">${d.action} by ${d.adminId} on ${d.timestamp?.toDate().toLocaleString()}</div>`; });
+            document.getElementById('adminLogsList').innerHTML=html||'No logs';
+        }
+        
+        // Announcements
+        async function loadAnnouncements() {
+            const snap = await getDocs(collection(db,"announcements"));
+            let html='';
+            snap.forEach(a=>{ const d=a.data(); html+=`<div class="admin-card p-2 mb-2"><b>${d.title}</b><p>${d.content}</p></div>`; });
+            document.getElementById('announcementsList').innerHTML=html||'No announcements';
+        }
+        window.createAnnouncement = async () => { const title=prompt("Title"); if(!title)return; const content=prompt("Content"); await addDoc(collection(db,"announcements"),{title,content,createdAt:serverTimestamp()}); loadAnnouncements(); };
+        
+        // KYC
+        async function loadKYCRequests() {
+            const users = await getDocs(query(collection(db,"users"), where("kycStatus","==","unverified")));
+            let html='';
+            users.forEach(u=>{ const d=u.data(); html+=`<div class="admin-card p-2 flex justify-between"><span>${d.email}</span><button onclick="verifyKYC('${u.id}')" class="bg-green-600 text-white px-2 py-1 rounded">Verify</button></div>`; });
+            document.getElementById('kycRequestsList').innerHTML=html||'No pending KYC';
+        }
+        window.verifyKYC = async (uid) => { await updateDoc(doc(db,"users",uid),{kycStatus:"verified"}); loadKYCRequests(); };
+        
+        // Staff management
+        async function loadStaff() {
+            const users = await getDocs(query(collection(db,"users"), where("role","==","admin")));
+            let html='';
+            users.forEach(u=>{ const d=u.data(); html+=`<div>${d.email} - ${d.displayName}</div>`; });
+            document.getElementById('staffList').innerHTML=html||'No admins';
+        }
+        window.addStaff = async () => { const email=prompt("Admin email"); if(!email)return; // would need to update role via cloud function or manual
+            alert("Functionality: assign admin role via Firebase console or implement cloud function."); };
+        
+        // Financial report
+        async function loadFinancialReport() {
+            const users = await getDocs(collection(db,"users"));
+            let totalBalance=0, totalInvested=0, totalWithdrawn=0;
+            for(const u of users.docs){
+                totalBalance += u.data().withdrawableBalance||0;
+                totalWithdrawn += u.data().totalWithdrawn||0;
+                const wallet=await getDoc(doc(db,"wallets",u.id));
+                if(wallet.exists()) totalInvested += wallet.data().investedBalance||0;
+            }
+            document.getElementById('financialReport').innerHTML = `<p>Total System Balance: $${totalBalance.toFixed(2)}</p><p>Total Invested: $${totalInvested.toFixed(2)}</p><p>Total Withdrawn: $${totalWithdrawn.toFixed(2)}</p>`;
+        }
+        
+        // Export CSV
+        window.exportUsersCSV = async () => {
+            const users = await getDocs(collection(db,"users"));
+            let csv = "Email,Name,Balance,KYC,Suspended\n";
+            for(const u of users.docs){
+                const d=u.data();
+                csv += `"${d.email}","${d.displayName||''}",${d.withdrawableBalance||0},${d.kycStatus},${d.isSuspended}\n`;
+            }
+            const blob = new Blob([csv], {type:"text/csv"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="users.csv"; a.click();
+        };
+        
+        // Wheel config placeholder
+        window.configureWheel = () => { alert("Wheel configuration: extend with custom segments editor."); };
+        window.saveSettings = () => { alert("Settings saved (demo)"); };
+        
+        // Navigation
+        function initAdminNav() {
+            const links = document.querySelectorAll('.sidebar-nav a');
+            const sections = document.querySelectorAll('.content-section');
+            links.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const sectionId = link.getAttribute('data-section');
+                    sections.forEach(sec => sec.classList.remove('active-section'));
+                    document.getElementById(`section-${sectionId}`).classList.add('active-section');
+                    links.forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+                    if(window.innerWidth < 768) closeSidebar();
+                });
+            });
+        }
+        
+        // Sidebar controls
+        const sidebar = document.getElementById('adminSidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        function openSidebar() { sidebar.classList.add('open'); overlay.classList.add('active'); }
+        function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('active'); }
+        document.getElementById('hamburgerBtn').onclick = openSidebar;
+        document.getElementById('closeSidebarBtn').onclick = closeSidebar;
+        overlay.onclick = closeSidebar;
+        document.getElementById('logoutAdminBtn').onclick = async () => { await signOut(auth); window.location.href = "index.html"; };
     </script>
-</head>
-<body class="bg-gray-100">
-    <div class="min-h-screen">
-        <!-- Header -->
-        <header class="bg-gray-900 text-white shadow-lg">
-            <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-                <div class="flex items-center gap-3">
-                    <i class="fas fa-shield-alt text-2xl text-blue-400"></i>
-                    <h1 class="text-xl font-bold">BestPay Admin Console</h1>
-                </div>
-                <div class="flex items-center gap-4">
-                    <span><i class="fas fa-user mr-2"></i><span id="adminName">Admin</span></span>
-                    <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition">
-                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
-                    </button>
-                </div>
-            </div>
-        </header>
-        
-        <div class="container mx-auto px-4 py-6">
-            <!-- Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div class="bg-white rounded-xl shadow-md p-4">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-gray-500 text-sm">Total Users</p>
-                            <p class="text-2xl font-bold" id="userCount">0</p>
-                        </div>
-                        <i class="fas fa-users text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="bg-white rounded-xl shadow-md p-4">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-gray-500 text-sm">Open Tickets</p>
-                            <p class="text-2xl font-bold" id="ticketCount">0</p>
-                        </div>
-                        <i class="fas fa-ticket-alt text-3xl text-yellow-500"></i>
-                    </div>
-                </div>
-                <div class="bg-white rounded-xl shadow-md p-4">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-gray-500 text-sm">Investment Plans</p>
-                            <p class="text-2xl font-bold" id="planCount">0</p>
-                        </div>
-                        <i class="fas fa-chart-line text-3xl text-green-500"></i>
-                    </div>
-                </div>
-                <div class="bg-white rounded-xl shadow-md p-4">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-gray-500 text-sm">Pending Withdrawals</p>
-                            <p class="text-2xl font-bold" id="withdrawCount">0</p>
-                        </div>
-                        <i class="fas fa-hand-holding-usd text-3xl text-purple-500"></i>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Navigation Tabs -->
-            <div class="flex gap-2 mb-6 flex-wrap">
-                <button onclick="showSection('users')" class="nav-btn bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold transition">
-                    <i class="fas fa-users mr-2"></i>User Management
-                </button>
-                <button onclick="showSection('tickets')" class="nav-btn bg-gray-200 text-gray-700 px-6 py-2 rounded-lg font-semibold transition">
-                    <i class="fas fa-headset mr-2"></i>Support Tickets
-                </button>
-                <button onclick="showSection('plans')" class="nav-btn bg-gray-200 text-gray-700 px-6 py-2 rounded-lg font-semibold transition">
-                    <i class="fas fa-chart-line mr-2"></i>Investment Plans
-                </button>
-                <button onclick="showSection('withdrawals')" class="nav-btn bg-gray-200 text-gray-700 px-6 py-2 rounded-lg font-semibold transition">
-                    <i class="fas fa-dollar-sign mr-2"></i>Withdrawals
-                </button>
-            </div>
-            
-            <!-- Users Section -->
-            <div id="usersSection" class="admin-section bg-white rounded-xl shadow-md overflow-hidden">
-                <div class="p-6">
-                    <h2 class="text-xl font-bold mb-4"><i class="fas fa-users text-blue-600 mr-2"></i>User Management</h2>
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="p-3 text-left">Email</th>
-                                    <th class="p-3 text-left">Name</th>
-                                    <th class="p-3 text-left">KYC</th>
-                                    <th class="p-3 text-left">Suspended</th>
-                                    <th class="p-3 text-left">Frozen</th>
-                                    <th class="p-3 text-left">Balance</th>
-                                    <th class="p-3 text-left">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="usersTableBody">
-                                <tr><td colspan="7" class="text-center p-4">Loading...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Tickets Section -->
-            <div id="ticketsSection" class="admin-section hidden bg-white rounded-xl shadow-md p-6">
-                <h2 class="text-xl font-bold mb-4"><i class="fas fa-headset text-blue-600 mr-2"></i>Support Tickets</h2>
-                <div id="ticketsList" class="max-h-[600px] overflow-y-auto">
-                    <p class="text-gray-500 text-center py-8">Loading tickets...</p>
-                </div>
-            </div>
-            
-            <!-- Plans Section -->
-            <div id="plansSection" class="admin-section hidden bg-white rounded-xl shadow-md p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold"><i class="fas fa-chart-line text-green-600 mr-2"></i>Investment Plans</h2>
-                    <button onclick="addPlan()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
-                        <i class="fas fa-plus mr-2"></i>Add New Plan
-                    </button>
-                </div>
-                <div id="plansList" class="space-y-3">
-                    <p class="text-gray-500 text-center py-8">Loading plans...</p>
-                </div>
-            </div>
-            
-            <!-- Withdrawals Section -->
-            <div id="withdrawalsSection" class="admin-section hidden bg-white rounded-xl shadow-md p-6">
-                <h2 class="text-xl font-bold mb-4"><i class="fas fa-hand-holding-usd text-purple-600 mr-2"></i>Withdrawal Requests</h2>
-                <div id="withdrawalsList" class="space-y-3">
-                    <p class="text-gray-500 text-center py-8">Loading withdrawals...</p>
-                </div>
-            </div>
-        </div>
-    </div>
 </body>
 </html>
