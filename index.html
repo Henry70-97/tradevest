@@ -28,13 +28,13 @@
             return Math.random().toString(36).substring(2, 8).toUpperCase();
         }
 
-        // Redirect if already logged in
+        // Redirect if already logged in - FIXED
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const userDoc = await getDoc(doc(db, "users", user.uid));
                 if (userDoc.exists()) {
                     const role = userDoc.data().role;
-                    window.location.href = role === "admin" ? "admin-html" : "dashboard-html";
+                    window.location.href = role === "admin" ? "admin.html" : "dashboard.html";
                 }
             }
         });
@@ -101,7 +101,7 @@
             });
         };
 
-        // ----- Registration Handler -----
+        // ----- Registration Handler - FIXED REDIRECT -----
         window.handleRegister = async () => {
             const name = document.getElementById('regName').value.trim();
             const email = document.getElementById('regEmail').value.trim();
@@ -163,7 +163,7 @@
                 msgEl.innerText = '✅ Registration successful! Redirecting...';
                 msgEl.style.color = 'green';
                 setTimeout(() => {
-                    window.location.href = role === "admin" ? "admin-html" : "dashboard-html";
+                    window.location.href = role === "admin" ? "admin.html" : "dashboard.html";
                 }, 1500);
             } catch (error) {
                 msgEl.innerText = `⚠️ ${error.message}`;
@@ -171,7 +171,7 @@
             }
         };
 
-        // ----- Login Handler -----
+        // ----- Login Handler - FIXED REDIRECT -----
         window.handleLogin = async () => {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
@@ -188,7 +188,7 @@
                 const userDoc = await getDoc(doc(db, "users", userCred.user.uid));
                 if (userDoc.exists()) {
                     const role = userDoc.data().role;
-                    window.location.href = role === "admin" ? "admin-html" : "dashboard-html";
+                    window.location.href = role === "admin" ? "admin.html" : "dashboard.html";
                 } else {
                     msgEl.innerText = 'User data not found. Contact support.';
                     msgEl.style.color = 'red';
