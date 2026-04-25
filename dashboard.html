@@ -3,160 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>BestPay | Open‑Book Dashboard</title>
+    <title>BestPay | User Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* Open-Book card style */
         .book-card {
             background: linear-gradient(145deg, #ffffff 0%, #fef9e8 100%);
             border-radius: 1.25rem;
-            box-shadow: 8px 8px 16px rgba(0,0,0,0.05), -4px -4px 12px rgba(255,255,240,0.7), inset 0 1px 0 rgba(255,255,255,0.8);
-            transition: all 0.2s ease;
-            border: 1px solid rgba(210, 180, 140, 0.3);
+            box-shadow: 8px 8px 16px rgba(0,0,0,0.05), -4px -4px 12px rgba(255,255,240,0.7);
+            border: 1px solid rgba(210,180,140,0.3);
+            transition: transform 0.2s;
         }
-        .book-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 12px 12px 24px rgba(0,0,0,0.08);
-        }
-        /* Sidebar – fixed with high z-index & scroll */
+        .book-card:hover { transform: translateY(-2px); }
         .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 280px;
-            height: 100%;
-            background: white;
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-            z-index: 10000;
-            overflow-y: auto;
-            box-shadow: 2px 0 24px rgba(0,0,0,0.1);
+            position: fixed; top:0; left:0; width:280px; height:100%;
+            background: #1f2937; color: #e5e7eb;
+            transform: translateX(-100%); transition: transform 0.3s;
+            z-index: 10000; overflow-y: auto;
         }
-        .sidebar.open {
-            transform: translateX(0);
-        }
-        /* Overlay – behind sidebar but above content */
-        .overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.4);
-            z-index: 9999;
-            display: none;
-        }
-        .overlay.active {
-            display: block;
-        }
-        /* Sidebar navigation links */
-        .sidebar-nav a {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.7rem 1rem;
-            border-radius: 1rem;
-            transition: all 0.2s;
-            color: #1f2937;
-        }
-        .sidebar-nav a:hover {
-            background: #eef2ff;
-        }
-        .sidebar-nav a.active {
-            background: #4f46e5;
-            color: white;
-        }
-        .sidebar-nav a.active i {
-            color: white;
-        }
-        /* Main content */
-        .content-section {
-            display: none;
-            animation: fadeSlide 0.25s ease;
-        }
-        .content-section.active-section {
-            display: block;
-        }
-        @keyframes fadeSlide {
-            from { opacity: 0; transform: translateY(8px);}
-            to { opacity: 1; transform: translateY(0);}
-        }
-        /* Ensure canvas doesn't block sidebar clicks */
-        canvas {
-            pointer-events: auto;
-        }
+        .sidebar.open { transform: translateX(0); }
+        .sidebar a { display: flex; align-items: center; gap:0.75rem; padding:0.7rem 1rem; border-radius:0.75rem; color:#e5e7eb; }
+        .sidebar a:hover { background:#374151; }
+        .sidebar a.active { background:#4f46e5; color:white; }
+        .overlay { position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:9999; display:none; }
+        .overlay.active { display:block; }
+        .content-section { display: none; animation: fadeIn 0.2s; }
+        .content-section.active-section { display: block; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(6px);} to { opacity:1; transform:translateY(0);} }
+        .loading { text-align: center; color: #6b7280; padding: 1rem; }
+        .empty-message { text-align: center; color: #9ca3af; padding: 2rem; font-style: italic; }
     </style>
 </head>
-<body class="bg-amber-50 font-sans antialiased">
+<body class="bg-amber-50">
 
-    <!-- Overlay for closing sidebar -->
     <div id="sidebarOverlay" class="overlay"></div>
-
-    <!-- Hamburger Sidebar (20+ sections) -->
     <aside id="mainSidebar" class="sidebar">
-        <div class="flex justify-between items-center border-b p-4 sticky top-0 bg-white z-10">
-            <div class="flex items-center gap-2">
-                <i class="fas fa-book-open text-2xl text-indigo-600"></i>
-                <span class="font-bold text-xl">BestPay<span class="text-indigo-500">.Book</span></span>
-            </div>
-            <button id="closeSidebarBtn" class="text-gray-500 hover:text-gray-800"><i class="fas fa-times text-xl"></i></button>
+        <div class="flex justify-between items-center p-4 border-b border-gray-700 sticky top-0 bg-gray-800">
+            <div class="flex items-center gap-2"><i class="fas fa-book-open text-2xl text-indigo-400"></i><span class="font-bold text-xl">BestPay</span></div>
+            <button id="closeSidebarBtn" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
         </div>
         <nav class="sidebar-nav px-3 py-4 space-y-1">
-            <a href="#" data-section="overview"><i class="fas fa-tachometer-alt w-5"></i>📊 Overview</a>
-            <a href="#" data-section="balances"><i class="fas fa-wallet w-5"></i>💰 Balances & Wallet</a>
-            <a href="#" data-section="investments"><i class="fas fa-chart-line w-5"></i>📈 Investments</a>
-            <a href="#" data-section="activeInvestments"><i class="fas fa-clock w-5"></i>⏳ Active Portfolios</a>
-            <a href="#" data-section="transactions"><i class="fas fa-exchange-alt w-5"></i>📜 Transactions</a>
-            <a href="#" data-section="withdrawals"><i class="fas fa-hand-holding-usd w-5"></i>🏦 Withdrawals</a>
-            <a href="#" data-section="deposits"><i class="fas fa-plus-circle w-5"></i>💎 Deposit History</a>
-            <a href="#" data-section="referrals"><i class="fas fa-users w-5"></i>👥 Referral Program</a>
-            <a href="#" data-section="leaderboard"><i class="fas fa-trophy w-5"></i>🏆 Leaderboard</a>
-            <a href="#" data-section="support"><i class="fas fa-headset w-5"></i>🎫 Support Tickets</a>
-            <a href="#" data-section="streak"><i class="fas fa-fire w-5"></i>🔥 Daily Streak</a>
-            <a href="#" data-section="kyc"><i class="fas fa-id-card w-5"></i>🪪 KYC Status</a>
-            <a href="#" data-section="security"><i class="fas fa-shield-alt w-5"></i>🔐 Security & 2FA</a>
-            <a href="#" data-section="notifications"><i class="fas fa-bell w-5"></i>🔔 Notifications</a>
-            <a href="#" data-section="api"><i class="fas fa-key w-5"></i>🔑 API Keys</a>
-            <a href="#" data-section="logs"><i class="fas fa-history w-5"></i>📋 Activity Logs</a>
-            <a href="#" data-section="announcements"><i class="fas fa-bullhorn w-5"></i>📢 Announcements</a>
-            <a href="#" data-section="spin"><i class="fas fa-gamepad w-5"></i>🎡 Prize Wheel</a>
-            <a href="#" data-section="settings"><i class="fas fa-sliders-h w-5"></i>⚙️ Account Settings</a>
-            <a href="#" data-section="inviteFriends"><i class="fas fa-envelope-open-text w-5"></i>✉️ Invite Friends</a>
+            <a href="#" data-section="overview"><i class="fas fa-tachometer-alt w-5"></i> Overview</a>
+            <a href="#" data-section="balances"><i class="fas fa-wallet w-5"></i> Balances</a>
+            <a href="#" data-section="investments"><i class="fas fa-chart-line w-5"></i> Investments</a>
+            <a href="#" data-section="activeInvestments"><i class="fas fa-clock w-5"></i> Active Portfolios</a>
+            <a href="#" data-section="transactions"><i class="fas fa-exchange-alt w-5"></i> Transactions</a>
+            <a href="#" data-section="withdrawals"><i class="fas fa-hand-holding-usd w-5"></i> Withdrawals</a>
+            <a href="#" data-section="deposits"><i class="fas fa-plus-circle w-5"></i> Deposits</a>
+            <a href="#" data-section="referrals"><i class="fas fa-users w-5"></i> Referrals</a>
+            <a href="#" data-section="leaderboard"><i class="fas fa-trophy w-5"></i> Leaderboard</a>
+            <a href="#" data-section="support"><i class="fas fa-headset w-5"></i> Support Tickets</a>
+            <a href="#" data-section="streak"><i class="fas fa-fire w-5"></i> Daily Streak</a>
+            <a href="#" data-section="kyc"><i class="fas fa-id-card w-5"></i> KYC Status</a>
+            <a href="#" data-section="security"><i class="fas fa-shield-alt w-5"></i> Security</a>
+            <a href="#" data-section="notifications"><i class="fas fa-bell w-5"></i> Notifications</a>
+            <a href="#" data-section="api"><i class="fas fa-key w-5"></i> API Keys</a>
+            <a href="#" data-section="logs"><i class="fas fa-history w-5"></i> Activity Logs</a>
+            <a href="#" data-section="announcements"><i class="fas fa-bullhorn w-5"></i> Announcements</a>
+            <a href="#" data-section="spin"><i class="fas fa-gamepad w-5"></i> Prize Wheel</a>
+            <a href="#" data-section="settings"><i class="fas fa-sliders-h w-5"></i> Settings</a>
+            <a href="#" data-section="inviteFriends"><i class="fas fa-envelope-open-text w-5"></i> Invite Friends</a>
         </nav>
-        <div class="border-t p-4 mt-auto">
-            <button id="logoutBtnSidebar" class="flex items-center gap-3 w-full text-left text-red-600 hover:bg-red-50 rounded-xl p-2"><i class="fas fa-sign-out-alt"></i> Logout</button>
-        </div>
+        <div class="border-t border-gray-700 p-4"><button id="logoutBtn" class="flex items-center gap-3 w-full text-left text-red-400 hover:bg-red-900/30 rounded-xl p-2"><i class="fas fa-sign-out-alt"></i> Logout</button></div>
     </aside>
 
-    <!-- Main Content -->
-    <div class="ml-0 transition-all duration-300">
+    <div class="ml-0">
         <header class="bg-white shadow-sm sticky top-0 z-20 px-4 py-3 flex items-center gap-4">
             <button id="hamburgerBtn" class="text-2xl p-1 rounded-md hover:bg-gray-100"><i class="fas fa-bars"></i></button>
-            <h1 class="text-xl font-semibold text-gray-800"><i class="fas fa-book-open text-indigo-500 mr-2"></i>BestPay Open‑Book</h1>
+            <h1 class="text-xl font-semibold text-gray-800"><i class="fas fa-book-open text-indigo-500 mr-2"></i>My Dashboard</h1>
             <div class="flex-1"></div>
             <div class="flex items-center gap-2"><span id="userShort" class="text-sm font-medium"></span><i class="fas fa-user-circle text-2xl text-gray-600"></i></div>
         </header>
-
         <main class="container mx-auto px-4 py-6 space-y-6">
-            <!-- All sections (23 sections) -->
-            <div id="overview" class="content-section active-section"><div class="book-card p-6"><h2 class="text-2xl font-bold">Welcome to your Dashboard</h2><p class="text-gray-600 mt-2">Quick overview below</p><div id="overviewStats" class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4"></div></div></div>
-            <div id="balances" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold border-b pb-2 mb-4">💰 Balances</h3><div id="balanceDetails" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div></div></div>
-            <div id="investments" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold mb-3">📊 Investment Plans</h3><div id="plansContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div></div></div>
-            <div id="activeInvestments" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold mb-3">⏳ Active Investments</h3><div id="activeInvList"></div></div></div>
-            <div id="transactions" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold mb-3">📜 Transaction History</h3><div id="historyList" class="space-y-2 max-h-96 overflow-auto"></div></div></div>
-            <div id="withdrawals" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold mb-3">🏦 Withdrawal Requests</h3><button onclick="requestWithdrawal()" class="mb-4 bg-blue-600 text-white px-4 py-2 rounded-lg">Request New</button><div id="withdrawalsList"></div></div></div>
-            <div id="deposits" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold mb-3">💎 Deposit History</h3><div id="depositsList"></div></div></div>
-            <div id="referrals" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold mb-3">👥 Referral Stats</h3><div id="referralStats"></div><div class="mt-4"><p class="font-mono bg-gray-100 p-2 rounded" id="referralLinkDisplay"></p><button onclick="copyReferralLink()" class="mt-2 bg-indigo-600 text-white px-3 py-1 rounded">Copy Link</button></div></div></div>
-            <div id="leaderboard" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold mb-3">🏆 Top Earners</h3><div id="leaderboardContainer"></div></div></div>
-            <div id="support" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold mb-3">🎫 Support Tickets</h3><button onclick="createTicket()" class="mb-3 bg-green-600 text-white px-3 py-1 rounded">New Ticket</button><div id="supportTicketsList"></div></div></div>
-            <div id="streak" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold mb-3">🔥 Daily Login Streak</h3><div id="streakInfo"></div><button onclick="claimDailyBonus()" class="mt-3 bg-orange-500 text-white px-5 py-2 rounded">Claim Today’s Bonus</button></div></div>
-            <div id="kyc" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold mb-3">🪪 KYC Verification</h3><div id="kycStatusDisplay"></div><button onclick="startKYC()" class="mt-3 bg-indigo-600 text-white px-4 py-2 rounded">Submit KYC</button></div></div>
-            <div id="security" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold mb-3">🔐 Security & 2FA</h3><p>Two‑Factor Authentication (coming soon)</p><button class="mt-2 bg-gray-700 text-white px-4 py-1 rounded">Enable 2FA</button></div></div>
-            <div id="notifications" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold mb-3">🔔 Notifications</h3><div id="notifList">No new notifications</div></div></div>
-            <div id="api" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold mb-3">🔑 API Keys</h3><button class="bg-blue-500 text-white px-3 py-1 rounded">Generate New Key</button></div></div>
-            <div id="logs" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold mb-3">📋 Activity Logs</h3><div id="activityLogs">Last login: today</div></div></div>
-            <div id="announcements" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold mb-3">📢 Platform Announcements</h3><ul class="list-disc pl-5"><li>New investment plan added</li><li>Referral bonus increased to 12%</li></ul></div></div>
-            <div id="spin" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold mb-3">🎡 Prize Wheel</h3><canvas id="wheelCanvas" width="250" height="250" class="mx-auto"></canvas><div class="mt-3 flex gap-2"><input type="number" id="spinStake" value="2" min="2" class="border rounded p-1 w-24"><button id="spinBtnWheel" class="bg-purple-600 text-white px-4 py-1 rounded">SPIN</button></div><p id="spinResultMsg" class="text-sm mt-2"></p></div></div>
-            <div id="settings" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold mb-3">⚙️ Account Settings</h3><p>Change password, email preferences...</p><button class="bg-gray-500 text-white px-4 py-1 rounded">Update Profile</button></div></div>
-            <div id="inviteFriends" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold mb-3">✉️ Invite Friends</h3><p>Share your unique referral code and earn 10% commission.</p><div id="refCodeDisplay" class="bg-gray-100 p-2 font-mono"></div><button onclick="copyReferralCodeOnly()" class="mt-2 bg-cyan-600 text-white px-3 py-1 rounded">Copy Code</button></div></div>
+            <!-- All sections -->
+            <div id="overview" class="content-section active-section"><div class="book-card p-6"><h2 class="text-2xl font-bold">Dashboard Overview</h2><div id="overviewStats" class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4"><div class="loading">Loading...</div></div></div></div>
+            <div id="balances" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">💰 Balances</h3><div id="balanceDetails" class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="loading">Loading...</div></div></div></div>
+            <div id="investments" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">📈 Investment Plans</h3><div id="plansContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="loading">Loading plans...</div></div></div></div>
+            <div id="activeInvestments" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">⏳ My Active Investments</h3><div id="activeInvList" class="space-y-2"><div class="loading">Loading...</div></div></div></div>
+            <div id="transactions" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">📜 Transaction History</h3><div id="historyList" class="space-y-2 max-h-96 overflow-auto"><div class="loading">Loading...</div></div></div></div>
+            <div id="withdrawals" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">🏦 Withdrawal Requests</h3><button onclick="requestWithdrawal()" class="mb-4 bg-blue-600 text-white px-4 py-2 rounded-lg">New Request</button><div id="withdrawalsList"><div class="loading">Loading...</div></div></div></div>
+            <div id="deposits" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">💎 Deposit History</h3><div id="depositsList"><div class="loading">Loading...</div></div></div></div>
+            <div id="referrals" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">👥 Referral Program</h3><div id="referralStats"><div class="loading">Loading...</div></div><div class="mt-4"><p class="font-mono bg-gray-100 p-2 rounded" id="referralLinkDisplay"></p><button onclick="copyReferralLink()" class="mt-2 bg-indigo-600 text-white px-3 py-1 rounded">Copy Link</button></div></div></div>
+            <div id="leaderboard" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">🏆 Top Earners</h3><div id="leaderboardContainer"><div class="loading">Loading...</div></div></div></div>
+            <div id="support" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">🎫 Support Tickets</h3><button onclick="createTicket()" class="mb-3 bg-green-600 text-white px-3 py-1 rounded">New Ticket</button><div id="supportTicketsList"><div class="loading">Loading...</div></div></div></div>
+            <div id="streak" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">🔥 Daily Login Streak</h3><div id="streakInfo"><div class="loading">Loading...</div></div><button onclick="claimDailyBonus()" class="mt-3 bg-orange-500 text-white px-5 py-2 rounded">Claim Today’s Bonus</button></div></div>
+            <div id="kyc" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">🪪 KYC Verification</h3><div id="kycStatusDisplay"><div class="loading">Loading...</div></div><button onclick="startKYC()" class="mt-3 bg-indigo-600 text-white px-4 py-2 rounded">Submit KYC</button></div></div>
+            <div id="security" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">🔐 Security & 2FA</h3><p>Two‑Factor Authentication (coming soon)</p><button class="mt-2 bg-gray-700 text-white px-4 py-1 rounded">Enable 2FA</button></div></div>
+            <div id="notifications" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">🔔 Notifications</h3><div id="notifList">No new notifications</div></div></div>
+            <div id="api" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">🔑 API Keys</h3><button class="bg-blue-500 text-white px-3 py-1 rounded">Generate Key</button></div></div>
+            <div id="logs" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">📋 Activity Logs</h3><div id="activityLogs">Loading...</div></div></div>
+            <div id="announcements" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">📢 Announcements</h3><div id="announcementsList"><div class="loading">Loading...</div></div></div></div>
+            <div id="spin" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">🎡 Prize Wheel</h3><canvas id="wheelCanvas" width="250" height="250" class="mx-auto"></canvas><div class="mt-3 flex gap-2"><input type="number" id="spinStake" value="2" min="2" class="border rounded p-1 w-24"><button id="spinBtnWheel" class="bg-purple-600 text-white px-4 py-1 rounded">SPIN</button></div><p id="spinResultMsg" class="text-sm mt-2"></p></div></div>
+            <div id="settings" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">⚙️ Account Settings</h3><button class="bg-gray-500 text-white px-4 py-1 rounded">Update Profile</button></div></div>
+            <div id="inviteFriends" class="content-section"><div class="book-card p-6"><h3 class="text-xl font-bold">✉️ Invite Friends</h3><p>Share your referral code and earn 10% commission.</p><div id="refCodeDisplay" class="bg-gray-100 p-2 font-mono"></div><button onclick="copyReferralCodeOnly()" class="mt-2 bg-cyan-600 text-white px-3 py-1 rounded">Copy Code</button></div></div>
         </main>
     </div>
 
@@ -190,11 +129,11 @@
             currentUserData = userSnap.data();
             if (currentUserData.role === "admin") { window.location.href = "admin.html"; return; }
             await loadUserData();
-            initSidebarNav();       // ✅ Ensure navigation is attached after DOM
+            initSidebarNav();
             initWheel();
             await refreshAllSections();
         });
-        
+
         async function loadUserData() {
             const walletSnap = await getDoc(doc(db,"wallets",currentUser.uid));
             currentWallet = walletSnap.data() || { investedBalance:0, bonusBalance:0 };
@@ -204,28 +143,95 @@
                 <div class="book-card p-3 text-center"><p class="text-gray-500">Invested</p><p class="text-2xl font-bold">$${currentWallet.investedBalance}</p></div>
                 <div class="book-card p-3 text-center"><p class="text-gray-500">Bonus</p><p class="text-2xl font-bold">$${currentWallet.bonusBalance}</p></div>
                 <div class="book-card p-3 text-center"><p class="text-gray-500">Total Earned</p><p class="text-2xl font-bold">$${(currentUserData.totalEarned||0).toFixed(2)}</p></div>`;
-            document.getElementById('balanceDetails').innerHTML = `<div class="book-card p-3"><span class="font-bold">Withdrawable:</span> $${(currentUserData.withdrawableBalance||0).toFixed(2)}</div><div class="book-card p-3"><span>Invested:</span> $${currentWallet.investedBalance}</div><div class="book-card p-3"><span>Bonus:</span> $${currentWallet.bonusBalance}</div>`;
+            document.getElementById('balanceDetails').innerHTML = `
+                <div class="book-card p-3"><span class="font-bold">Withdrawable:</span> $${(currentUserData.withdrawableBalance||0).toFixed(2)}</div>
+                <div class="book-card p-3"><span>Invested:</span> $${currentWallet.investedBalance}</div>
+                <div class="book-card p-3"><span>Bonus:</span> $${currentWallet.bonusBalance}</div>`;
             const streakSnap = await getDoc(doc(db,"login_streaks",currentUser.uid));
             let streakDays = streakSnap.exists() ? streakSnap.data().currentStreak : 0;
-            document.getElementById('streakInfo').innerHTML = `<p class="text-2xl">🔥 ${streakDays} days streak</p><p class="text-sm">Login daily to increase bonus</p>`;
+            document.getElementById('streakInfo').innerHTML = `<p class="text-2xl">🔥 ${streakDays} days</p><p class="text-sm">Login daily to increase bonus</p>`;
             document.getElementById('kycStatusDisplay').innerHTML = `<span class="px-3 py-1 rounded ${currentUserData.kycStatus==='verified'?'bg-green-100 text-green-800':'bg-yellow-100'}">${currentUserData.kycStatus||'unverified'}</span>`;
             const refCode = currentUserData.referralCode;
             document.getElementById('refCodeDisplay').innerHTML = refCode;
-            document.getElementById('referralLinkDisplay').innerHTML = `${window.location.origin}/registration.html?ref=${refCode}`;
+            document.getElementById('referralLinkDisplay').innerHTML = `${window.location.origin}/index.html?ref=${refCode}`;
+            document.getElementById('activityLogs').innerHTML = `<p>Last login: ${new Date().toLocaleString()}</p>`;
+        }
+
+        async function refreshAllSections() {
+            await loadPlans(); await loadActiveInvestments(); await loadTransactions(); await loadWithdrawals(); await loadDeposits(); await loadReferralStats(); await loadLeaderboard(); await loadTickets(); await loadAnnouncements();
         }
         
-        async function refreshAllSections() {
-            await loadPlans(); await loadActiveInvestments(); await loadTransactions(); await loadWithdrawals(); await loadDeposits(); await loadReferralStats(); await loadLeaderboard(); await loadTickets(); await loadUserData();
+        async function loadPlans() {
+            const qSnap = await getDocs(query(collection(db,"investment_plans"), where("isActive","==",true)));
+            if(qSnap.empty) { document.getElementById('plansContainer').innerHTML = '<div class="empty-message">No investment plans available. Check back later.</div>'; return; }
+            let html=''; qSnap.forEach(d=>{ const p=d.data(); html+=`<div class="book-card p-3"><h4 class="font-bold">${p.name}</h4><p>Min $${p.minAmount} | ROI ${p.roiPercent}%</p><button onclick="investNow('${d.id}',${p.minAmount},${p.roiPercent})" class="mt-2 bg-indigo-600 text-white px-3 py-1 rounded text-sm">Invest from Bonus</button></div>`; });
+            document.getElementById('plansContainer').innerHTML = html;
         }
-        async function loadPlans() { const qSnap = await getDocs(query(collection(db,"investment_plans"), where("isActive","==",true))); let html=''; qSnap.forEach(d=>{ const p=d.data(); html+=`<div class="book-card p-3"><h4 class="font-bold">${p.name}</h4><p>Min $${p.minAmount} | ROI ${p.roiPercent}%</p><button onclick="investNow('${d.id}',${p.minAmount},${p.roiPercent})" class="mt-2 bg-indigo-600 text-white px-3 py-1 rounded text-sm">Invest from Bonus</button></div>`; }); document.getElementById('plansContainer').innerHTML=html||'<p>No plans</p>'; }
         window.investNow = async (planId, minAmt, roi) => { if(currentWallet.bonusBalance < minAmt) return alert("Insufficient bonus"); const end = new Date(); end.setDate(end.getDate()+30); const roiAmt = minAmt * roi/100; await addDoc(collection(db,"investments"),{userId:currentUser.uid,planId,amount:minAmt,startDate:serverTimestamp(),endDate:Timestamp.fromDate(end),status:"active",roiEarned:roiAmt}); await updateDoc(doc(db,"wallets",currentUser.uid),{bonusBalance:increment(-minAmt),investedBalance:increment(minAmt)}); await refreshAllSections(); alert("Investment success"); };
-        async function loadActiveInvestments(){ const q = query(collection(db,"investments"), where("userId","==",currentUser.uid), where("status","==","active")); const snap = await getDocs(q); let html=""; snap.forEach(i=>{ const data=i.data(); html+=`<div class="book-card p-2 flex justify-between"><span>$${data.amount}</span><span>Matures: ${data.endDate?.toDate().toLocaleDateString()}</span><span>+$${data.roiEarned}</span></div>`; }); document.getElementById('activeInvList').innerHTML=html||"No active"; }
-        async function loadTransactions(){ const q = query(collection(db,"transactions"), where("userId","==",currentUser.uid), orderBy("timestamp","desc"), limit(30)); const snap = await getDocs(q); let html=""; snap.forEach(t=>{ const d=t.data(); html+=`<div class="flex justify-between border-b py-2"><span>${d.type}</span><span class="${d.amount>0?'text-green-600':'text-red-600'}">$${d.amount.toFixed(2)}</span></div>`; }); document.getElementById('historyList').innerHTML=html||"No transactions"; }
-        async function loadWithdrawals(){ const q = query(collection(db,"withdrawals"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")); const snap = await getDocs(q); let html=""; snap.forEach(w=>{ const data=w.data(); html+=`<div class="book-card p-2 flex justify-between"><span>$${data.amount} - ${data.method}</span><span class="text-sm ${data.status==='pending'?'text-yellow-600':'text-green-600'}">${data.status}</span></div>`; }); document.getElementById('withdrawalsList').innerHTML=html||"No withdraw requests"; }
-        async function loadDeposits(){ const q = query(collection(db,"deposits"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")); const snap = await getDocs(q); let html=""; snap.forEach(d=>{ const data=d.data(); html+=`<div class="book-card p-2 flex justify-between"><span>$${data.amount} ${data.method}</span><span>${data.status}</span></div>`; }); document.getElementById('depositsList').innerHTML=html||"No deposits"; }
-        async function loadReferralStats(){ const q = query(collection(db,"referrals"), where("referrerId","==",currentUser.uid)); const snap = await getDocs(q); let totalComm=0; snap.forEach(r=>totalComm+= (r.data().commissionEarned||0)); document.getElementById('referralStats').innerHTML=`<p>Total referrals: ${snap.size}</p><p>Commissions: $${totalComm.toFixed(2)}</p>`; }
-        async function loadLeaderboard(){ const q = query(collection(db,"users"), orderBy("totalEarned","desc"), limit(10)); const snap = await getDocs(q); let rank=1, html=""; for(const u of snap.docs){ const data=u.data(); html+=`<div class="flex justify-between border-b py-2"><span>#${rank} ${data.displayName||'User'}</span><span>$${(data.totalEarned||0).toFixed(2)}</span></div>`; rank++; } document.getElementById('leaderboardContainer').innerHTML=html; }
-        async function loadTickets(){ const q = query(collection(db,"support_tickets"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")); const snap = await getDocs(q); let html=""; for(const t of snap.docs){ const data=t.data(); html+=`<div class="book-card p-2 mb-2"><b>${data.subject}</b><p>${data.message.substring(0,60)}</p><span class="text-xs">${data.status}</span></div>`; } document.getElementById('supportTicketsList').innerHTML=html||"No tickets"; }
+        
+        async function loadActiveInvestments() {
+            const q = query(collection(db,"investments"), where("userId","==",currentUser.uid), where("status","==","active"));
+            const snap = await getDocs(q);
+            if(snap.empty) { document.getElementById('activeInvList').innerHTML = '<div class="empty-message">No active investments. Start investing above.</div>'; return; }
+            let html=""; snap.forEach(i=>{ const data=i.data(); html+=`<div class="book-card p-2 flex justify-between"><span>$${data.amount}</span><span>Matures: ${data.endDate?.toDate().toLocaleDateString()}</span><span>+$${data.roiEarned}</span></div>`; });
+            document.getElementById('activeInvList').innerHTML = html;
+        }
+        
+        async function loadTransactions() {
+            const q = query(collection(db,"transactions"), where("userId","==",currentUser.uid), orderBy("timestamp","desc"), limit(30));
+            const snap = await getDocs(q);
+            if(snap.empty) { document.getElementById('historyList').innerHTML = '<div class="empty-message">No transaction history yet.</div>'; return; }
+            let html=""; snap.forEach(t=>{ const d=t.data(); html+=`<div class="flex justify-between border-b py-2"><span>${d.type}</span><span class="${d.amount>0?'text-green-600':'text-red-600'}">$${d.amount.toFixed(2)}</span></div>`; });
+            document.getElementById('historyList').innerHTML = html;
+        }
+        
+        async function loadWithdrawals() {
+            const q = query(collection(db,"withdrawals"), where("userId","==",currentUser.uid), orderBy("createdAt","desc"));
+            const snap = await getDocs(q);
+            if(snap.empty) { document.getElementById('withdrawalsList').innerHTML = '<div class="empty-message">No withdrawal requests yet.</div>'; return; }
+            let html=""; snap.forEach(w=>{ const data=w.data(); html+=`<div class="book-card p-2 flex justify-between"><span>$${data.amount} - ${data.method}</span><span class="text-sm ${data.status==='pending'?'text-yellow-600':'text-green-600'}">${data.status}</span></div>`; });
+            document.getElementById('withdrawalsList').innerHTML = html;
+        }
+        
+        async function loadDeposits() {
+            const q = query(collection(db,"deposits"), where("userId","==",currentUser.uid), orderBy("createdAt","desc"));
+            const snap = await getDocs(q);
+            if(snap.empty) { document.getElementById('depositsList').innerHTML = '<div class="empty-message">No deposit history.</div>'; return; }
+            let html=""; snap.forEach(d=>{ const data=d.data(); html+=`<div class="book-card p-2 flex justify-between"><span>$${data.amount} ${data.method}</span><span>${data.status}</span></div>`; });
+            document.getElementById('depositsList').innerHTML = html;
+        }
+        
+        async function loadReferralStats() {
+            const q = query(collection(db,"referrals"), where("referrerId","==",currentUser.uid));
+            const snap = await getDocs(q);
+            let totalComm=0; snap.forEach(r=>totalComm+= (r.data().commissionEarned||0));
+            document.getElementById('referralStats').innerHTML = `<p>Total referrals: ${snap.size}</p><p>Commissions earned: $${totalComm.toFixed(2)}</p>`;
+        }
+        
+        async function loadLeaderboard() {
+            const q = query(collection(db,"users"), orderBy("totalEarned","desc"), limit(10));
+            const snap = await getDocs(q);
+            if(snap.empty) { document.getElementById('leaderboardContainer').innerHTML = '<div class="empty-message">No users yet.</div>'; return; }
+            let rank=1, html="<ol class='space-y-1'>";
+            for(const u of snap.docs){ const data=u.data(); html+=`<li class="flex justify-between"><span>#${rank} ${data.displayName||'User'}</span><span>$${(data.totalEarned||0).toFixed(2)}</span></li>`; rank++; }
+            html+='</ol>'; document.getElementById('leaderboardContainer').innerHTML = html;
+        }
+        
+        async function loadTickets() {
+            const q = query(collection(db,"support_tickets"), where("userId","==",currentUser.uid), orderBy("createdAt","desc"));
+            const snap = await getDocs(q);
+            if(snap.empty) { document.getElementById('supportTicketsList').innerHTML = '<div class="empty-message">No support tickets. Create one above.</div>'; return; }
+            let html=""; for(const t of snap.docs){ const data=t.data(); html+=`<div class="book-card p-2 mb-2"><b>${data.subject}</b><p>${data.message.substring(0,60)}</p><span class="text-xs">${data.status}</span></div>`; }
+            document.getElementById('supportTicketsList').innerHTML = html;
+        }
+        
+        async function loadAnnouncements() {
+            const snap = await getDocs(query(collection(db,"announcements"), orderBy("createdAt","desc")));
+            if(snap.empty) { document.getElementById('announcementsList').innerHTML = '<div class="empty-message">No announcements yet.</div>'; return; }
+            let html=""; snap.forEach(a=>{ const d=a.data(); html+=`<div class="book-card p-2 mb-2"><b>${d.title}</b><p>${d.content}</p></div>`; });
+            document.getElementById('announcementsList').innerHTML = html;
+        }
+        
         window.createTicket = async()=>{ const sub=prompt("Subject"); if(!sub)return; const msg=prompt("Message"); if(!msg)return; await addDoc(collection(db,"support_tickets"),{userId:currentUser.uid,userEmail:currentUser.email,subject:sub,message:msg,status:"open",createdAt:serverTimestamp()}); loadTickets(); };
         window.requestWithdrawal = async()=>{ const bal=currentUserData.withdrawableBalance||0; if(bal<10) return alert("Min $10"); const amt=parseFloat(prompt(`Balance $${bal}, amount:`)); if(amt<10||amt>bal)return; const method=prompt("Method"); const details=prompt("Details"); await addDoc(collection(db,"withdrawals"),{userId:currentUser.uid,amount:amt,method,paymentDetails:details,status:"pending",createdAt:serverTimestamp()}); refreshAllSections(); };
         window.claimDailyBonus = async()=>{ const today=new Date().toISOString().split('T')[0]; const streakRef=doc(db,"login_streaks",currentUser.uid); const snap=await getDoc(streakRef); let streak=1; if(snap.exists() && snap.data().lastLoginDate===today) return alert("Already claimed"); if(snap.exists() && snap.data().lastLoginDate===new Date(Date.now()-86400000).toISOString().split('T')[0]) streak=(snap.data().currentStreak||0)+1; const bonus=Math.min(1+Math.floor(streak/5),10); await updateDoc(doc(db,"users",currentUser.uid),{withdrawableBalance:increment(bonus),totalEarned:increment(bonus)}); await setDoc(streakRef,{currentStreak:streak,lastLoginDate:today,bonusClaimedToday:true},{merge:true}); alert(`+$${bonus} bonus`); refreshAllSections(); };
@@ -233,48 +239,32 @@
         window.copyReferralLink=()=>{ const link=document.getElementById('referralLinkDisplay').innerText; navigator.clipboard.writeText(link); alert("Copied"); };
         window.copyReferralCodeOnly=()=>{ const code=currentUserData.referralCode; navigator.clipboard.writeText(code); alert("Code copied"); };
         
-        // Wheel logic
+        // Wheel (unchanged, functional)
         function initWheel(){ wheelCanvas=document.getElementById('wheelCanvas'); if(wheelCanvas){ wheelCtx=wheelCanvas.getContext('2d'); drawWheel(); document.getElementById('spinBtnWheel').onclick=spinWheel; } }
         function drawWheel(){ if(!wheelCtx) return; const size=250, center=125, rad=120, angleStep=(Math.PI*2)/wheelSegments.length; wheelCtx.clearRect(0,0,size,size); for(let i=0;i<wheelSegments.length;i++){ const start=i*angleStep+currentRotation, end=start+angleStep; wheelCtx.beginPath(); wheelCtx.moveTo(center,center); wheelCtx.arc(center,center,rad,start,end); wheelCtx.fillStyle=wheelSegments[i].color; wheelCtx.fill(); wheelCtx.save(); wheelCtx.translate(center,center); wheelCtx.rotate(start+angleStep/2); wheelCtx.fillStyle='#1f2937'; wheelCtx.font='bold 12px "Segoe UI"'; wheelCtx.fillText(wheelSegments[i].label, rad-30, 6); wheelCtx.restore(); } wheelCtx.beginPath(); wheelCtx.arc(center,center,12,0,2*Math.PI); wheelCtx.fillStyle='white'; wheelCtx.fill(); }
         async function spinWheel(){ const stake=parseFloat(document.getElementById('spinStake').value); if(stake<2 || stake>(currentUserData.withdrawableBalance||0)) return alert("Insufficient balance or stake <2"); await updateDoc(doc(db,"users",currentUser.uid),{withdrawableBalance:increment(-stake)}); let multi=Math.random()<0.99?(Math.random()<0.6?0:1):[0.07,5,10,'free'][Math.floor(Math.random()*4)]; let win=0; if(multi==='free') win=stake*0.5; else if(typeof multi==='number') win=stake*multi; if(win>0){ await updateDoc(doc(db,"users",currentUser.uid),{withdrawableBalance:increment(win),totalEarned:increment(win)}); await addDoc(collection(db,"transactions"),{userId:currentUser.uid,type:"spin_win",amount:win,description:`${multi}x win`,timestamp:serverTimestamp()}); alert(`You won $${win.toFixed(2)}`); } else alert("No win"); currentRotation+= (Math.random()*Math.PI*2); drawWheel(); await refreshAllSections(); }
         
-        // Sidebar navigation – fixed with event delegation and proper click handling
+        // Sidebar & logout
         function initSidebarNav() {
-            const sidebarLinks = document.querySelectorAll('.sidebar-nav a');
+            const links = document.querySelectorAll('.sidebar-nav a');
             const sections = document.querySelectorAll('.content-section');
-            // Remove any existing listeners to avoid duplicates
-            sidebarLinks.forEach(link => {
-                link.removeEventListener('click', handleNavClick);
-                link.addEventListener('click', handleNavClick);
-            });
-            function handleNavClick(e) {
+            links.forEach(link => link.addEventListener('click', (e) => {
                 e.preventDefault();
-                const targetId = this.getAttribute('data-section');
-                if (!targetId) return;
-                // Switch sections
+                const targetId = link.getAttribute('data-section');
                 sections.forEach(sec => sec.classList.remove('active-section'));
-                const targetSec = document.getElementById(targetId);
-                if (targetSec) targetSec.classList.add('active-section');
-                // Update active class on sidebar
-                sidebarLinks.forEach(l => l.classList.remove('active'));
-                this.classList.add('active');
-                // Close sidebar on mobile after click
-                if (window.innerWidth < 768) closeSidebar();
-            }
+                document.getElementById(targetId).classList.add('active-section');
+                links.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+                if(window.innerWidth < 768) closeSidebar();
+            }));
         }
-        
-        // Sidebar open/close controls
-        const sidebar = document.getElementById('mainSidebar');
-        const overlay = document.getElementById('sidebarOverlay');
-        function openSidebar() { sidebar.classList.add('open'); overlay.classList.add('active'); }
-        function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('active'); }
+        const sidebar = document.getElementById('mainSidebar'), overlay = document.getElementById('sidebarOverlay');
+        function openSidebar(){ sidebar.classList.add('open'); overlay.classList.add('active'); }
+        function closeSidebar(){ sidebar.classList.remove('open'); overlay.classList.remove('active'); }
         document.getElementById('hamburgerBtn').onclick = openSidebar;
         document.getElementById('closeSidebarBtn').onclick = closeSidebar;
         overlay.onclick = closeSidebar;
-        document.getElementById('logoutBtnSidebar').onclick = async () => { await signOut(auth); window.location.href = "registration.html"; };
-        
-        // Initial refresh
-        refreshAllSections();
+        document.getElementById('logoutBtn').onclick = async () => { await signOut(auth); window.location.href = "index.html"; };
     </script>
 </body>
 </html>
