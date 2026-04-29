@@ -39,46 +39,64 @@
         .content-section.active-section { display: block; }
         @keyframes fadeIn { from { opacity:0; transform:translateY(8px);} to { opacity:1; transform:translateY(0);} }
         
-        /* Reduced TV screen (small stripe) */
-        .tradingview-stripe {
+        .tradingview-widget-container {
             width: 100%;
-            height: 180px !important;
-            min-height: 180px;
-            border-radius: 1rem;
+            height: 70vh !important;
+            min-height: 520px;
+            max-height: 75vh;
+            border-radius: 1.25rem;
             overflow: hidden;
             background: #ffffff;
-            margin-bottom: 1rem;
         }
-        .tradingview-stripe iframe, .tradingview-stripe div { height: 180px !important; }
-        
+        @media (max-width: 768px) {
+            .tradingview-widget-container { height: 55vh !important; min-height: 400px; }
+        }
         .number-btn {
             width: 48px; height: 48px; font-weight: bold; background: #eef2ff;
             border-radius: 1rem; display: inline-flex; align-items: center;
             justify-content: center; cursor: pointer; transition: 0.1s;
         }
         .number-btn:hover { background: #c7d2fe; transform: scale(0.96); }
-        .investment-card, .list-item-clickable, .message-card {
+        .investment-card, .list-item-clickable {
             cursor: pointer; transition: 0.05s; border-radius: 0.75rem;
         }
-        .chat-message { background: white; padding: 0.5rem; border-radius: 0.5rem; margin-bottom: 0.5rem; border-left: 3px solid #4f46e5; }
+        .investment-card:hover, .list-item-clickable:hover { background: #f1f5f9; transform: scale(0.99); }
+        .notification {
+            position: fixed; bottom: 24px; right: 24px; background: #1e293b;
+            color: white; padding: 12px 20px; border-radius: 40px; z-index: 1100;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.15); animation: slideIn 0.2s;
+            font-size: 0.9rem;
+        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .modal {
+            display: none; position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.7); z-index: 20000; justify-content: center; align-items: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: white; max-width: 500px; width: 90%; border-radius: 1.5rem;
+            padding: 1.5rem; position: relative; animation: fadeIn 0.2s;
+        }
+        .spinner-small {
+            border: 3px solid #e2e8f0; border-top: 3px solid #4f46e5; border-radius: 50%;
+            width: 24px; height: 24px; animation: spin 0.6s linear infinite; display: inline-block;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .profit-badge { background:#22c55e20; color:#15803d; border-radius: 2rem; padding: 0.2rem 0.8rem; font-weight: bold; }
+        .deposit-method-btn { transition: all 0.2s; }
+        .deposit-method-btn:hover { transform: translateY(-2px); }
+        .video-container { display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.5rem; }
+        .video-small { width: 240px; border-radius: 1rem; overflow: hidden; background: black; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .video-small video { width: 100%; height: auto; max-height: 160px; object-fit: cover; }
         .balance-alert { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 0.75rem; border-radius: 0.75rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
-        .guide-card { background: #e0e7ff; border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; cursor: pointer; }
+        .guide-card { background: #e0e7ff; border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; cursor: pointer; transition: 0.2s; }
+        .guide-card:hover { background: #c7d2fe; transform: scale(0.98); }
         .streak-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; margin: 1rem 0; }
-        .streak-box { background: #f3f4f6; border-radius: 0.75rem; padding: 0.75rem 0.25rem; text-align: center; cursor: pointer; border: 2px solid transparent; }
+        .streak-box { background: #f3f4f6; border-radius: 0.75rem; padding: 1rem 0.5rem; text-align: center; cursor: pointer; transition: 0.2s; border: 2px solid transparent; }
         .streak-box.claimed { background: #d1fae5; border-color: #10b981; cursor: default; opacity: 0.7; }
         .streak-box.available { background: #818cf8; color: white; animation: pulse 1s infinite; }
-        .streak-box.disabled { background: #e5e7eb; cursor: not-allowed; opacity: 0.5; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
-        .notification { position: fixed; bottom: 24px; right: 24px; background: #1e293b; color: white; padding: 12px 20px; border-radius: 40px; z-index: 1100; box-shadow: 0 6px 14px rgba(0,0,0,0.15); animation: slideIn 0.2s; font-size: 0.9rem; }
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); z-index: 20000; justify-content: center; align-items: center; }
-        .modal.active { display: flex; }
-        .modal-content { background: white; max-width: 500px; width: 90%; border-radius: 1.5rem; padding: 1.5rem; position: relative; }
-        .spinner-small { border: 3px solid #e2e8f0; border-top: 3px solid #4f46e5; border-radius: 50%; width: 24px; height: 24px; animation: spin 0.6s linear infinite; display: inline-block; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .video-container { display: flex; gap: 1rem; justify-content: center; margin-bottom: 1rem; }
-        .video-small { width: 220px; border-radius: 1rem; overflow: hidden; background: black; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .video-small video { width: 100%; height: auto; max-height: 140px; object-fit: cover; }
+        .streak-box.disabled { background: #e5e7eb; cursor: not-allowed; opacity: 0.5; }
     </style>
 </head>
 <body class="bg-amber-50">
@@ -95,7 +113,6 @@
             <a data-section="transactions"><i class="fas fa-exchange-alt"></i> Transactions</a>
             <a data-section="withdrawals"><i class="fas fa-hand-holding-usd"></i> Withdrawals</a>
             <a data-section="deposits"><i class="fas fa-plus-circle"></i> Deposits</a>
-            <a data-section="chat"><i class="fas fa-comments"></i> Live Chat</a>
             <a data-section="referrals"><i class="fas fa-users"></i> Referrals</a>
             <a data-section="leaderboard"><i class="fas fa-trophy"></i> Leaderboard</a>
             <a data-section="support"><i class="fas fa-headset"></i> Support</a>
@@ -117,7 +134,7 @@
             <div class="flex items-center gap-2"><span id="userShort" class="text-sm font-medium"></span><i class="fas fa-user-circle text-2xl text-gray-600"></i></div>
         </header>
 
-        <!-- Two mini videos -->
+        <!-- TWO MINI VIDEO PLAYERS (smaller) -->
         <div class="container mx-auto px-4 pt-2">
             <div class="video-container">
                 <div class="video-small"><video src="video.mp4" autoplay muted loop playsinline controls></video></div>
@@ -126,30 +143,32 @@
         </div>
 
         <main class="container mx-auto px-4 py-6 space-y-6">
-            <!-- TRADING SECTION with small stripe chart -->
+            <!-- TRADING SECTION -->
             <div id="trade" class="content-section active-section">
                 <div class="grid lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-2 space-y-4">
                         <div class="guide-card flex items-center justify-between" id="tradeGuideBtn">
-                            <div><i class="fas fa-book-open text-indigo-600 text-2xl mr-3"></i> <strong>📘 Trading Guide</strong> – Quick tutorial</div>
+                            <div><i class="fas fa-book-open text-indigo-600 text-2xl mr-3"></i> <strong>📘 Trading Guide</strong> – Learn how to trade CALL/PUT, stake, multiplier, payout</div>
                             <i class="fas fa-chevron-right"></i>
                         </div>
-                        <!-- STRIPED CHART (small rectangle) -->
-                        <div class="tradingview-stripe card-glass p-1 overflow-hidden">
-                            <div class="tradingview-widget-container__widget" style="height:180px;"></div>
-                            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>{"allow_symbol_change":true,"interval":"1","symbol":"OANDA:EURUSD","theme":"light","autosize":true,"height":180}</script>
-                        </div>
+                        <div class="tradingview-widget-container" style="height:70vh;"><div class="tradingview-widget-container__widget" style="height:100%;"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>{"allow_symbol_change":true,"interval":"1","symbol":"OANDA:EURUSD","theme":"light","autosize":true}</script></div>
                         <div class="card-glass p-4"><div class="flex gap-5 border-b mb-3"><button id="positionsTabBtn" class="px-4 py-2 font-bold text-indigo-600 border-b-2 border-indigo-500">Open Positions</button><button id="historyTabBtn" class="px-4 py-2 font-bold text-gray-500">Trade History</button></div><div id="positionsPanel"><div id="openPositionsList" class="space-y-2 max-h-64 overflow-y-auto"></div></div><div id="historyPanel" class="hidden"><div id="lastTradesList" class="space-y-2 max-h-64 overflow-y-auto"></div><div class="mt-3 flex justify-between"><span>Last 10 P/L:</span><span id="last10Profit" class="profit-badge">$0.00</span><span>Win Rate:</span><span id="winRatePercent" class="font-bold">0%</span></div></div></div>
                     </div>
                     <div class="space-y-4">
                         <div class="card-glass p-4">
-                            <div class="flex justify-between items-center"><span class="font-bold text-lg">💰 Trading Balance</span><button id="topUpBalanceBtn" class="bg-indigo-600 text-white px-3 py-1 rounded-full text-sm"><i class="fas fa-plus-circle"></i> Top Up</button></div>
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-lg">💰 Trading Balance</span>
+                                <button id="topUpBalanceBtn" class="bg-indigo-600 text-white px-3 py-1 rounded-full text-sm flex items-center gap-1"><i class="fas fa-plus-circle"></i> Top Up</button>
+                            </div>
                             <div id="liveBalance" class="text-3xl font-bold text-green-600 mt-2">$0.00</div>
-                            <div id="insufficientAlert" class="balance-alert hidden mt-2"><i class="fas fa-exclamation-triangle text-yellow-600"></i><span class="text-sm">Insufficient balance? <a href="#" id="depositNowLink" class="font-bold underline">Deposit now</a></span></div>
+                            <div id="insufficientAlert" class="balance-alert hidden mt-2">
+                                <i class="fas fa-exclamation-triangle text-yellow-600"></i>
+                                <span class="text-sm">Insufficient balance? <a href="#" id="depositNowLink" class="font-bold underline">Deposit now</a></span>
+                            </div>
                         </div>
                         <div class="card-glass p-4 text-center"><div class="text-sm text-gray-500">EUR/USD Live</div><div class="text-3xl font-bold text-indigo-700" id="livePrice">1.0892</div></div>
                         <div class="card-glass p-4"><div class="font-medium mb-2">Stake Amount (Min $9)</div><div class="grid grid-cols-5 gap-2" id="stakeButtonsContainer"></div><input type="number" id="stakeAmount" class="w-full border rounded-xl p-2 mt-2 text-center" value="10"></div>
-                        <div class="card-glass p-4"><label>Multiplier</label><div class="flex gap-3"><input type="range" id="multiplierSlider" min="1" max="100" value="2"><span id="multiplierValue">x2</span></div><div class="mt-3"><span>Est. Payout:</span> <span id="totalPayout" class="font-bold text-indigo-700">$20.00</span></div></div>
+                        <div class="card-glass p-4"><label>Multiplier</label><div class="flex gap-3"><input type="range" id="multiplierSlider" min="1" max="100" value="2"><span id="multiplierValue">x2</span></div><div class="mt-3 text-center"><span>Est. Payout:</span> <span id="totalPayout" class="font-bold text-indigo-700">$20.00</span></div></div>
                         <div class="grid grid-cols-2 gap-3"><button id="callTradeBtn" class="bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-bold">CALL ▲</button><button id="putTradeBtn" class="bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold">PUT ▼</button></div>
                     </div>
                 </div>
@@ -162,18 +181,19 @@
             <div id="transactions" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">📜 Transaction History</h3><div id="historyList" class="space-y-2"></div></div></div>
             <div id="withdrawals" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">🏦 Withdrawals (Min $1)</h3><button onclick="requestWithdrawal()" class="mb-3 bg-blue-600 text-white px-4 py-2 rounded-lg">Request Withdrawal</button><div id="withdrawalsList" class="space-y-2"></div></div></div>
             
-            <div id="deposits" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">💎 Deposit Funds</h3><div class="text-sm text-gray-600 mb-4">Conversion: $1 USD = 129 KSh</div><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"><button id="mpesaDepositBtn" class="bg-green-600 text-white py-3 rounded-xl"><i class="fas fa-mobile-alt"></i> M-Pesa</button><button id="bankDepositBtn" class="bg-blue-600 text-white py-3 rounded-xl"><i class="fas fa-university"></i> Bank Transfer</button><button id="cryptoDepositBtn" class="bg-purple-600 text-white py-3 rounded-xl"><i class="fab fa-bitcoin"></i> Crypto</button></div><div class="border-t pt-4 text-center"><button id="pendingDepositBtn" class="text-indigo-600 underline"><i class="fas fa-clock"></i> Already deposited but not reflecting?</button></div><div id="depositsList" class="mt-4"></div></div></div>
-            
-            <!-- LIVE CHAT SECTION -->
-            <div id="chat" class="content-section">
+            <div id="deposits" class="content-section">
                 <div class="card-glass p-6">
-                    <h3 class="text-xl font-bold mb-2">💬 Live Community Chat</h3>
-                    <div id="emailVerifyWarning" class="bg-yellow-100 p-3 rounded mb-3 hidden">⚠️ Please verify your email to access chat and streaks. <button id="sendVerifyEmailBtn" class="bg-indigo-600 text-white px-2 py-1 rounded text-sm">Send verification</button></div>
-                    <div class="flex flex-wrap gap-2 mb-3 items-center"><input type="text" id="chatNickname" placeholder="Your nickname" class="border rounded p-2 flex-1"><span class="text-sm text-gray-500">Chat minutes: <span id="chatMinutesDisplay">0</span> min</span></div>
-                    <div class="flex gap-2 mb-3"><button id="buy30min" class="bg-indigo-600 text-white px-3 py-1 rounded text-sm">30 min - $0.40</button><button id="buy60min" class="bg-indigo-600 text-white px-3 py-1 rounded text-sm">60 min - $0.90</button><button id="buy120min" class="bg-indigo-600 text-white px-3 py-1 rounded text-sm">120 min - $1.70</button></div>
-                    <div id="chatMessages" class="h-80 overflow-y-auto bg-gray-50 rounded p-2 mb-2 border"></div>
-                    <div class="flex gap-2"><input type="text" id="chatInput" placeholder="Type a message..." class="flex-1 border rounded p-2" disabled><button id="sendChatBtn" class="bg-indigo-600 text-white px-4 py-2 rounded" disabled>Send</button></div>
-                    <p class="text-xs text-gray-500 mt-2">* Requires verified email & positive chat minutes. Minutes deduct in real-time while chat is open (1 min per 60 sec).</p>
+                    <h3 class="text-xl font-bold mb-3">💎 Deposit Funds</h3>
+                    <div class="text-sm text-gray-600 mb-4">Conversion: $1 USD = 129 KSh</div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <button id="mpesaDepositBtn" class="deposit-method-btn bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2"><i class="fas fa-mobile-alt"></i> M-Pesa</button>
+                        <button id="bankDepositBtn" class="deposit-method-btn bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2"><i class="fas fa-university"></i> Bank Transfer</button>
+                        <button id="cryptoDepositBtn" class="deposit-method-btn bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2"><i class="fab fa-bitcoin"></i> Cryptocurrency</button>
+                    </div>
+                    <div class="border-t pt-4 text-center">
+                        <button id="pendingDepositBtn" class="text-indigo-600 underline hover:text-indigo-800"><i class="fas fa-clock"></i> Already deposited but not reflecting? Click here</button>
+                    </div>
+                    <div id="depositsList" class="mt-4 space-y-2"></div>
                 </div>
             </div>
             
@@ -181,11 +201,11 @@
             <div id="leaderboard" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">🏆 Top Earners</h3><div id="leaderboardContainer" class="space-y-2"></div></div></div>
             <div id="support" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold">🎫 Support Tickets</h3><button onclick="createTicket()" class="bg-green-600 text-white px-3 py-1 rounded mb-3">New Ticket</button><div id="supportTicketsList" class="space-y-2"></div></div></div>
             
-            <!-- STREAK SECTION with email verification gate -->
+            <!-- UPDATED STREAK SECTION WITH BOXES -->
             <div id="streak" class="content-section">
                 <div class="card-glass p-6">
                     <h3 class="text-xl font-bold">🔥 Daily Streak (7 days)</h3>
-                    <div id="streakEmailGate" class="bg-yellow-100 p-3 rounded mb-3 hidden">✅ Streak is only available after email verification. <button id="streakVerifyBtn" class="bg-indigo-600 text-white px-2 py-1 rounded">Verify email now</button></div>
+                    <div class="text-sm text-gray-600 mb-2">Choose one box per day. Total weekly reward: KSh 50 (~$0.39)</div>
                     <div id="streakGrid" class="streak-grid"></div>
                     <div id="streakInfo" class="text-sm mt-2"></div>
                 </div>
@@ -194,75 +214,181 @@
             <div id="kyc" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold">🪪 KYC Status</h3><div id="kycStatusDisplay"></div><button onclick="startKYC()" class="mt-3 bg-indigo-600 text-white px-4 py-2 rounded">Submit KYC</button></div></div>
             <div id="announcements" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">📢 Announcements</h3><div id="announcementsList" class="space-y-3"></div></div></div>
             <div id="spin" class="content-section"><div class="card-glass p-6 text-center"><h3 class="text-xl font-bold">🎡 Prize Wheel</h3><canvas id="wheelCanvas" width="250" height="250" class="mx-auto my-3"></canvas><div><label>Stake ($):</label><input type="number" id="spinStake" value="2" class="border p-1 w-24 rounded"><button id="spinBtnWheel" class="bg-purple-600 text-white px-6 py-2 rounded-lg ml-2">SPIN</button><p id="spinResultMsg" class="mt-2"></p></div></div></div>
-            <div id="settings" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold">⚙️ Settings</h3><div><label>Display Name</label><input id="displayNameInput" class="border p-2 rounded w-full my-2"><button onclick="updateProfile()" class="bg-gray-600 text-white px-4 py-2 rounded w-full">Update Profile</button></div><div class="border-t pt-3 mt-3"><label>Change Email</label><input id="newEmailInput" type="email" class="border p-2 rounded w-full my-2"><button id="updateEmailBtn" class="bg-indigo-600 text-white px-4 py-2 rounded w-full">Update Email</button></div></div></div>
+            
+            <!-- SETTINGS WITH EMAIL UPDATE -->
+            <div id="settings" class="content-section">
+                <div class="card-glass p-6">
+                    <h3 class="text-xl font-bold">⚙️ Settings</h3>
+                    <div class="mb-3"><label class="block text-sm font-medium">Display Name</label><input id="displayNameInput" placeholder="Display Name" class="border p-2 rounded w-full my-2"><button onclick="updateProfile()" class="bg-gray-600 text-white px-4 py-2 rounded w-full">Update Profile</button></div>
+                    <div class="border-t pt-3 mt-3"><label class="block text-sm font-medium">Change Email</label><input id="newEmailInput" type="email" placeholder="New email address" class="border p-2 rounded w-full my-2"><button id="updateEmailBtn" class="bg-indigo-600 text-white px-4 py-2 rounded w-full">Update Email</button><p class="text-xs text-gray-500 mt-1">You'll need to re-authenticate (password) for security.</p></div>
+                </div>
+            </div>
             <div id="contact" class="content-section"><div class="card-glass p-7 text-center"><h2 class="text-2xl font-bold">📞 Contact & Community</h2><div id="socialIconsContainer" class="flex flex-wrap justify-center gap-5 py-4"></div><div id="supportEmailDisplay" class="text-sm text-gray-500"></div></div></div>
         </main>
     </div>
 
-    <!-- MODALS -->
-    <div id="detailModal" class="modal"><div class="modal-content"><div class="flex justify-between"><h3 id="modalTitle" class="text-xl font-bold">Details</h3><button onclick="closeModal()" class="text-2xl">&times;</button></div><div id="modalBody"></div><button onclick="closeModal()" class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded">Close</button></div></div>
-    <div id="reAuthModal" class="modal"><div class="modal-content"><h3>Re-authenticate</h3><input type="password" id="reAuthPassword" placeholder="Password" class="border p-2 w-full my-2"><button id="submitReAuthBtn" class="bg-indigo-600 text-white px-4 py-2 rounded">Confirm</button><button onclick="closeReAuthModal()" class="mt-2 text-gray-500">Cancel</button></div></div>
+    <!-- MODAL -->
+    <div id="detailModal" class="modal"><div class="modal-content"><div class="flex justify-between items-center mb-3"><h3 id="modalTitle" class="text-xl font-bold">Details</h3><button onclick="closeModal()" class="text-gray-500 text-2xl">&times;</button></div><div id="modalBody" class="text-gray-700"></div><button onclick="closeModal()" class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded">Close</button></div></div>
+    <!-- Password re-auth modal (hidden) -->
+    <div id="reAuthModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">Re-authenticate</h3><input type="password" id="reAuthPassword" placeholder="Your password" class="border p-2 rounded w-full mb-3"><button id="submitReAuthBtn" class="bg-indigo-600 text-white px-4 py-2 rounded w-full">Confirm</button><button onclick="closeReAuthModal()" class="mt-2 text-gray-500">Cancel</button></div></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut, updateProfile, updateEmail, sendEmailVerification, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, orderBy, serverTimestamp, addDoc, increment, Timestamp, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signOut, updateProfile as updateAuthProfile, updateEmail, sendEmailVerification, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, orderBy, serverTimestamp, addDoc, increment, Timestamp, setDoc, writeBatch, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         
         const firebaseConfig = { apiKey: "AIzaSyDtGN7KCK0A4fhztLN0CgxsKkGROcO_-vI", authDomain: "bestpay-5b78c.firebaseapp.com", projectId: "bestpay-5b78c", storageBucket: "bestpay-5b78c.firebasestorage.app", messagingSenderId: "583230068716", appId: "1:583230068716:web:3e8d298b4d00b46c8652c9" };
-        const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
-        let currentUser, currentUserData, chatMinutesRemaining = 0, chatTimer = null, chatActive = false;
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
         
-        // Helper functions
+        let currentUser, currentUserData, currentWallet = { investmentFunds:0 };
+        let systemSettings = { minWithdrawal:1, referralCommission:10, social: {}, contactEmail:"support@bestpay.com", exchangeRateKES:129 };
+        let currentPrice = 1.0892, lastTrades = [], priceInterval;
+        const defaultProducts = [{ id: "starter", name: "Starter Plan", minAmount:50, dailyROI:2.0, durationDays:10, totalReturnPercent:20 },{ id: "advanced", name: "Advanced Plan", minAmount:200, dailyROI:2.5, durationDays:20, totalReturnPercent:50 },{ id: "premium", name: "Premium Plan", minAmount:500, dailyROI:3.0, durationDays:30, totalReturnPercent:90 }];
+        let investmentProducts = [...defaultProducts];
+        
+        // Streak logic: 7 boxes, total reward $0.39 (KSh 50). Each box random amount that sums to 0.39.
+        // We'll store streak data in Firestore: currentDay (0-6), claimedDays array, lastClaimDate.
+        async function loadStreak() {
+            if(!currentUser) return;
+            const streakRef = doc(db, "login_streaks", currentUser.uid);
+            const streakSnap = await getDoc(streakRef);
+            let data = streakSnap.exists() ? streakSnap.data() : { currentStreak: 0, lastClaimDate: null, claimedDays: [] };
+            const today = new Date().toDateString();
+            const canClaim = data.lastClaimDate !== today;
+            // Generate random rewards that sum to 0.39 (USD)
+            const rewards = [0.04, 0.05, 0.06, 0.07, 0.05, 0.06, 0.06]; // sum = 0.39
+            // Shuffle for randomness
+            for (let i = rewards.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [rewards[i], rewards[j]] = [rewards[j], rewards[i]]; }
+            let html = '';
+            for (let i = 0; i < 7; i++) {
+                const isClaimed = data.claimedDays && data.claimedDays.includes(i);
+                const isAvailable = canClaim && !isClaimed && (i === (data.currentStreak || 0));
+                let boxClass = 'streak-box disabled';
+                if (isClaimed) boxClass = 'streak-box claimed';
+                else if (isAvailable) boxClass = 'streak-box available';
+                else if (!isClaimed && i !== (data.currentStreak || 0)) boxClass = 'streak-box disabled';
+                html += `<div class="${boxClass}" data-day="${i}" data-reward="${rewards[i]}"><div class="font-bold">Day ${i+1}</div><div class="text-xs">${isClaimed ? 'Claimed' : (isAvailable ? '✨ Ready' : 'Locked')}</div></div>`;
+            }
+            document.getElementById('streakGrid').innerHTML = html;
+            document.getElementById('streakInfo').innerHTML = `Current streak: ${data.currentStreak || 0} days | Last claim: ${data.lastClaimDate || 'Never'}`;
+            // attach click handlers
+            document.querySelectorAll('.streak-box.available').forEach(box => {
+                box.onclick = async () => {
+                    const day = parseInt(box.dataset.day);
+                    const reward = parseFloat(box.dataset.reward);
+                    if (isNaN(reward)) return;
+                    await updateDoc(doc(db,"users",currentUser.uid), { withdrawableBalance: increment(reward) });
+                    await addDoc(collection(db,"transactions"), { userId:currentUser.uid, type:"streak_bonus", amount:reward, description:`Day ${day+1} streak reward`, timestamp:serverTimestamp() });
+                    const updatedClaimed = [...(data.claimedDays || []), day];
+                    await setDoc(streakRef, { currentStreak: data.currentStreak+1, lastClaimDate: today, claimedDays: updatedClaimed }, { merge: true });
+                    showNotification(`🎁 You earned $${reward.toFixed(2)} (≈ KSh ${(reward*129).toFixed(0)})!`, 'success');
+                    await loadUserData();
+                    await loadStreak();
+                };
+            });
+        }
+        
+        // Email update with re-auth
+        function showReAuthModal(callback) {
+            const modal = document.getElementById('reAuthModal');
+            modal.classList.add('active');
+            document.getElementById('submitReAuthBtn').onclick = async () => {
+                const password = document.getElementById('reAuthPassword').value;
+                if (!password) { showNotification("Password required", "error"); return; }
+                const credential = EmailAuthProvider.credential(currentUser.email, password);
+                try {
+                    await reauthenticateWithCredential(currentUser, credential);
+                    closeReAuthModal();
+                    if (callback) await callback();
+                } catch (err) { showNotification("Authentication failed: " + err.message, "error"); }
+            };
+        }
+        window.closeReAuthModal = () => document.getElementById('reAuthModal').classList.remove('active');
+        
+        async function updateUserEmail(newEmail) {
+            if (!newEmail) return showNotification("Enter email", "error");
+            try {
+                await updateEmail(currentUser, newEmail);
+                await updateDoc(doc(db,"users",currentUser.uid), { email: newEmail });
+                showNotification("Email updated! Verification sent.", "success");
+                await sendEmailVerification(currentUser);
+            } catch (err) { showNotification("Error: " + err.message, "error"); }
+        }
+        
+        // Other loaders (shortened for brevity but keep all)
         function showNotification(msg, type='success'){ const d=document.createElement('div'); d.className=`notification ${type==='error'?'bg-red-700':type==='info'?'bg-blue-700':'bg-gray-800'}`; d.innerHTML=msg; document.body.appendChild(d); setTimeout(()=>d.remove(),3000); }
         function showModal(title, content){ document.getElementById('modalTitle').innerText = title; document.getElementById('modalBody').innerHTML = content; document.getElementById('detailModal').classList.add('active'); }
         window.closeModal = () => document.getElementById('detailModal').classList.remove('active');
-        function activateSection(sectionId) { document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active-section')); const target = document.getElementById(sectionId); if(target) target.classList.add('active-section'); }
+        function activateSection(sectionId) { document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active-section')); const target = document.getElementById(sectionId); if (target) { target.classList.add('active-section'); document.querySelectorAll('.sidebar-nav a').forEach(link => link.classList.remove('active')); const activeLink = document.querySelector(`.sidebar-nav a[data-section="${sectionId}"]`); if (activeLink) activeLink.classList.add('active'); } else showNotification(`Section ${sectionId} not found`, 'error'); }
         
-        // Email verification gate & streak/chat enable
-        async function checkEmailVerification() { if(!currentUser) return false; await currentUser.reload(); const verified = currentUser.emailVerified; const streakGate = document.getElementById('streakEmailGate'); const verifyWarning = document.getElementById('emailVerifyWarning'); if(streakGate) streakGate.classList.toggle('hidden', verified); if(verifyWarning) verifyWarning.classList.toggle('hidden', verified); if(!verified && document.getElementById('streakGrid')) document.getElementById('streakGrid').innerHTML = '<div class="text-center p-4">Please verify your email to participate in streaks.</div>'; return verified; }
-        async function sendVerification() { if(currentUser && !currentUser.emailVerified) { await sendEmailVerification(currentUser); showNotification("Verification email sent! Check inbox.", "info"); } }
+        // Quick deposit functions (same as before)
+        async function initiatePayment(method) { try { const paymentLinkDoc = await getDoc(doc(db, "payment_links", method)); if (paymentLinkDoc.exists()) { window.open(paymentLinkDoc.data().url, '_blank'); showNotification(`Redirecting to ${method}...`, 'info'); } else showModal("Payment Instruction", `Manual payment required for ${method}. Use "Already deposited?" button.`); } catch (error) { showNotification("Could not fetch link", "error"); } }
+        function showPendingDepositForm() { const formHtml = `<div class="space-y-3"><label>Amount (USD)</label><input type="number" id="pendingAmount" class="w-full border rounded p-2"><label>Transaction Reference</label><input type="text" id="pendingRef" class="w-full border rounded p-2"><label>Method</label><select id="pendingMethod" class="w-full border rounded p-2"><option>M-Pesa</option><option>Bank Transfer</option><option>Cryptocurrency</option></select><button id="submitPendingBtn" class="bg-indigo-600 text-white w-full py-2 rounded">Submit</button></div>`; showModal("Confirm Offline Deposit", formHtml); document.getElementById('submitPendingBtn').onclick = async () => { const amount = parseFloat(document.getElementById('pendingAmount').value); const reference = document.getElementById('pendingRef').value; const method = document.getElementById('pendingMethod').value; if (isNaN(amount) || amount <= 0 || !reference) return showNotification("Invalid", "error"); await addDoc(collection(db, "pending_deposits"), { userId: currentUser.uid, amount, method, reference, status: "pending_review", createdAt: serverTimestamp() }); showNotification("Deposit request recorded", "success"); closeModal(); await loadDeposits(); }; }
+        async function loadDeposits() { if(!currentUser) return; const container = document.getElementById('depositsList'); container.innerHTML = '<div class="spinner-small"></div>'; const qCompleted = query(collection(db,"deposits"), where("userId","==",currentUser.uid), orderBy("createdAt","desc"), limit(20)); const qPending = query(collection(db,"pending_deposits"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")); const [snapCompleted, snapPending] = await Promise.all([getDocs(qCompleted), getDocs(qPending)]); let html = '<div class="font-semibold">✅ Completed</div>'; snapCompleted.forEach(d=>{ const dep=d.data(); html+=`<div class="p-2 border rounded">$${dep.amount} - ${dep.status}</div>`; }); html += '<div class="font-semibold mt-2">⏳ Pending</div>'; snapPending.forEach(d=>{ const req=d.data(); html+=`<div class="p-2 border rounded bg-yellow-50">$${req.amount} via ${req.method}<br><span class="text-xs">Ref: ${req.reference}</span></div>`; }); container.innerHTML = html; }
         
-        // Streak logic (only if verified)
-        async function loadStreak() { if(!currentUser || !currentUser.emailVerified) return; const streakRef = doc(db, "login_streaks", currentUser.uid); const snap = await getDoc(streakRef); let data = snap.exists() ? snap.data() : { currentStreak: 0, lastClaimDate: null, claimedDays: [] }; const today = new Date().toDateString(); const canClaim = data.lastClaimDate !== today; const rewards = [0.04,0.05,0.06,0.07,0.05,0.06,0.06]; for(let i=rewards.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [rewards[i],rewards[j]] = [rewards[j],rewards[i]]; } let html=''; for(let i=0;i<7;i++){ const claimed = data.claimedDays?.includes(i); const avail = canClaim && !claimed && (i === (data.currentStreak||0)); let cls='streak-box disabled'; if(claimed) cls='streak-box claimed'; else if(avail) cls='streak-box available'; html+=`<div class="${cls}" data-day="${i}" data-reward="${rewards[i]}"><div class="font-bold">Day ${i+1}</div><div class="text-xs">${claimed?'Claimed':avail?'Ready':'Locked'}</div></div>`; } document.getElementById('streakGrid').innerHTML = html; document.getElementById('streakInfo').innerHTML = `Streak: ${data.currentStreak||0} days`; document.querySelectorAll('.streak-box.available').forEach(b=>b.onclick=async()=>{ const day=parseInt(b.dataset.day), reward=parseFloat(b.dataset.reward); await updateDoc(doc(db,"users",currentUser.uid),{ withdrawableBalance: increment(reward) }); await addDoc(collection(db,"transactions"),{ userId:currentUser.uid, type:"streak_bonus", amount:reward, timestamp:serverTimestamp() }); await setDoc(streakRef, { currentStreak: data.currentStreak+1, lastClaimDate: today, claimedDays: [...(data.claimedDays||[]), day] }, { merge: true }); showNotification(`🎁 +$${reward.toFixed(2)}`); loadUserData(); loadStreak(); }); }
+        async function loadBalances() { if(!currentUser) return; const container = document.getElementById('balanceDetails'); container.innerHTML = '<div class="spinner-small"></div>'; const userSnap = await getDoc(doc(db,"users",currentUser.uid)); const walletSnap = await getDoc(doc(db,"wallets",currentUser.uid)); const user = userSnap.data()||{}; const wallet = walletSnap.data()||{}; container.innerHTML = `<div class="flex justify-between p-2">💰 Trading Balance: $${(user.withdrawableBalance||0).toFixed(2)}</div><div>💼 Investment Funds: $${(wallet.investmentFunds||0).toFixed(2)}</div><div>🎁 Bonus: $${(wallet.bonusBalance||0).toFixed(2)}</div><div>📈 Total Earned: $${(user.totalEarned||0).toFixed(2)}</div>`; }
+        async function loadTransactions() { if(!currentUser) return; const container = document.getElementById('historyList'); container.innerHTML = '<div class="spinner-small"></div>'; const q = query(collection(db,"transactions"), where("userId","==",currentUser.uid), orderBy("timestamp","desc"), limit(50)); const snap = await getDocs(q); let html=''; snap.forEach(d=>{ const t=d.data(); html+=`<div class="flex justify-between p-2 border rounded">${t.type}: $${t.amount.toFixed(2)}</div>`; }); container.innerHTML = html || '<div>No transactions</div>'; }
+        async function loadWithdrawals() { if(!currentUser) return; const container = document.getElementById('withdrawalsList'); container.innerHTML = '<div class="spinner-small"></div>'; const q = query(collection(db,"withdrawals"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")); const snap = await getDocs(q); let html=''; snap.forEach(d=>{ const w=d.data(); html+=`<div class="p-2 border rounded">$${w.amount} - ${w.status}</div>`; }); container.innerHTML = html || '<div>No withdrawals</div>'; }
+        async function loadReferrals() { if(!currentUserData) return; const refsQuery = query(collection(db,"referrals"), where("referrerId","==",currentUser.uid)); const refSnap = await getDocs(refsQuery); let totalComm=0; refSnap.forEach(r=> totalComm+=(r.data().commissionEarned||0)); document.getElementById('referralStats').innerHTML = `<div>Total referrals: ${refSnap.size}</div><div>Commission: $${totalComm.toFixed(2)}</div>`; document.getElementById('referralLinkDisplay').innerHTML = `${window.location.origin}/index.html?ref=${currentUserData?.referralCode || ''}`; }
+        async function loadLeaderboard() { const q = query(collection(db,"users"), orderBy("totalEarned","desc"), limit(10)); const snap = await getDocs(q); let rank=1, html=''; snap.forEach(d=>{ const u=d.data(); html+=`<div class="flex justify-between p-2">${rank++}. ${u.displayName||'User'} - $${(u.totalEarned||0).toFixed(2)}</div>`; }); document.getElementById('leaderboardContainer').innerHTML = html; }
+        async function loadSupportTickets() { if(!currentUser) return; const q = query(collection(db,"support_tickets"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")); const snap = await getDocs(q); let html=''; snap.forEach(d=>{ const t=d.data(); html+=`<div class="p-2 border rounded">${t.subject} - ${t.status}</div>`; }); document.getElementById('supportTicketsList').innerHTML = html || '<div>No tickets</div>'; }
+        async function loadAnnouncements() { const snap = await getDocs(query(collection(db,"announcements"), orderBy("createdAt","desc"), limit(20))); let html=''; snap.forEach(d=>{ const a=d.data(); html+=`<div class="p-3 border rounded"><b>${a.title}</b><br>${a.content.substring(0,100)}</div>`; }); document.getElementById('announcementsList').innerHTML = html; }
+        async function loadKYC() { document.getElementById('kycStatusDisplay').innerHTML = `<span class="px-2 py-1 rounded ${currentUserData?.kycStatus==='verified'?'bg-green-100':'bg-yellow-100'}">${currentUserData?.kycStatus||'unverified'}</span>`; }
+        async function loadContact() { const social=systemSettings.social||{}; let h=''; if(social.whatsapp) h+=`<a href="${social.whatsapp}" target="_blank" class="text-2xl"><i class="fab fa-whatsapp text-green-600"></i></a>`; if(social.telegram) h+=`<a href="${social.telegram}" target="_blank" class="text-2xl"><i class="fab fa-telegram text-blue-500"></i></a>`; document.getElementById('socialIconsContainer').innerHTML = h || '<p>No links</p>'; document.getElementById('supportEmailDisplay').innerText = systemSettings.contactEmail; }
+        async function loadSettings() { document.getElementById('displayNameInput').value = currentUserData?.displayName || ''; document.getElementById('newEmailInput').value = currentUser.email; }
         
-        // Chat: purchase minutes, timer, send messages
-        async function updateChatMinutesDisplay() { if(!currentUser) return; const userDoc = await getDoc(doc(db,"users",currentUser.uid)); chatMinutesRemaining = userDoc.data()?.chatMinutes || 0; document.getElementById('chatMinutesDisplay').innerText = chatMinutesRemaining; if(chatMinutesRemaining <= 0) { document.getElementById('chatInput').disabled = true; document.getElementById('sendChatBtn').disabled = true; if(chatTimer) clearInterval(chatTimer); chatActive=false; } else { document.getElementById('chatInput').disabled = false; document.getElementById('sendChatBtn').disabled = false; if(chatActive && !chatTimer) startChatTimer(); } }
-        function startChatTimer() { if(chatTimer) clearInterval(chatTimer); chatTimer = setInterval(async () => { if(!currentUser || chatMinutesRemaining <= 0) { clearInterval(chatTimer); chatTimer=null; updateChatMinutesDisplay(); return; } await updateDoc(doc(db,"users",currentUser.uid), { chatMinutes: increment(-1/60) }); chatMinutesRemaining -= 1/60; document.getElementById('chatMinutesDisplay').innerText = Math.max(0, chatMinutesRemaining).toFixed(1); if(chatMinutesRemaining <= 0) { clearInterval(chatTimer); chatTimer=null; document.getElementById('chatInput').disabled=true; document.getElementById('sendChatBtn').disabled=true; showNotification("Chat minutes exhausted. Please purchase more.", "info"); } }, 60000); }
-        async function buyChatMinutes(minutes, cost) { if(!currentUser) return; if(!currentUser.emailVerified) return showNotification("Verify email first", "error"); const balance = currentUserData?.withdrawableBalance || 0; if(balance < cost) return showNotification("Insufficient balance", "error"); await updateDoc(doc(db,"users",currentUser.uid), { withdrawableBalance: increment(-cost), chatMinutes: increment(minutes) }); await addDoc(collection(db,"transactions"), { userId:currentUser.uid, type:"chat_minutes", amount:-cost, description:`${minutes} min chat`, timestamp:serverTimestamp() }); showNotification(`Added ${minutes} chat minutes`); await loadUserData(); await updateChatMinutesDisplay(); }
-        async function sendChatMessage() { if(!currentUser || !currentUser.emailVerified) return showNotification("Verify email first", "error"); const nickname = document.getElementById('chatNickname').value.trim() || "Guest"; if(chatMinutesRemaining <= 0) return showNotification("No chat minutes left", "error"); const message = document.getElementById('chatInput').value.trim(); if(!message) return; await addDoc(collection(db,"chat_messages"), { userId:currentUser.uid, nickname, message, timestamp:serverTimestamp() }); document.getElementById('chatInput').value = ''; }
-        function listenChatMessages() { const q = query(collection(db,"chat_messages"), orderBy("timestamp","desc"), limit(100)); onSnapshot(q, (snap) => { const container = document.getElementById('chatMessages'); let html=''; snap.docs.reverse().forEach(d=>{ const msg=d.data(); html+=`<div class="chat-message"><b>${msg.nickname}</b>: ${msg.message}<div class="text-xs text-gray-400">${msg.timestamp?.toDate().toLocaleTimeString()}</div></div>`; }); container.innerHTML = html; container.scrollTop = container.scrollHeight; }); }
+        async function loadSectionData(sectionId) { if(!currentUser) return; const loaders = { balances: loadBalances, transactions: loadTransactions, withdrawals: loadWithdrawals, deposits: loadDeposits, referrals: loadReferrals, leaderboard: loadLeaderboard, support: loadSupportTickets, announcements: loadAnnouncements, streak: loadStreak, kyc: loadKYC, contact: loadContact, settings: loadSettings }; if(loaders[sectionId]) await loaders[sectionId](); else if(sectionId === 'investments') await loadInvestmentSection(); else if(sectionId === 'trade') { loadOpenPositions(); loadLastTrades(); } }
         
-        // Other existing loaders (shortened but keep baseline)
-        async function loadUserData() { if(!currentUser) return; const userRef=doc(db,"users",currentUser.uid), walletRef=doc(db,"wallets",currentUser.uid); const [uSnap,wSnap] = await Promise.all([getDoc(userRef),getDoc(walletRef)]); if(!uSnap.exists()) await setDoc(userRef,{ withdrawableBalance:0, totalEarned:0, displayName:currentUser.displayName||"", chatMinutes:0 }); if(!wSnap.exists()) await setDoc(walletRef,{ investmentFunds:0, totalInvestmentEarned:0, bonusBalance:0 }); const freshUser=await getDoc(userRef); currentUserData=freshUser.data(); document.getElementById('liveBalance').innerText=`$${(currentUserData?.withdrawableBalance||0).toFixed(2)}`; document.getElementById('userShort').innerText=currentUserData?.displayName?.split(' ')[0]||currentUser.email.split('@')[0]; await updateChatMinutesDisplay(); }
-        async function loadBalances() { const u=await getDoc(doc(db,"users",currentUser.uid)); const w=await getDoc(doc(db,"wallets",currentUser.uid)); document.getElementById('balanceDetails').innerHTML = `<div>💰 Trading: $${(u.data()?.withdrawableBalance||0).toFixed(2)}</div><div>💼 Investment: $${(w.data()?.investmentFunds||0).toFixed(2)}</div>`; }
-        async function loadTransactions() { const qSnap = await getDocs(query(collection(db,"transactions"), where("userId","==",currentUser.uid), orderBy("timestamp","desc"), limit(20))); let html=''; qSnap.forEach(d=>{ const t=d.data(); html+=`<div class="flex justify-between p-2 border rounded">${t.type}: $${t.amount.toFixed(2)}</div>`; }); document.getElementById('historyList').innerHTML=html||'No transactions'; }
-        async function loadWithdrawals() { const snap=await getDocs(query(collection(db,"withdrawals"), where("userId","==",currentUser.uid), orderBy("createdAt","desc"))); let html=''; snap.forEach(d=>{ const w=d.data(); html+=`<div class="p-2 border rounded">$${w.amount} - ${w.status}</div>`; }); document.getElementById('withdrawalsList').innerHTML=html; }
-        async function loadDeposits() { const snap=await getDocs(query(collection(db,"deposits"), where("userId","==",currentUser.uid), orderBy("createdAt","desc"))); let html=''; snap.forEach(d=>{ const dep=d.data(); html+=`<div>$${dep.amount} - ${dep.status}</div>`; }); document.getElementById('depositsList').innerHTML=html; }
-        function initStakeButtons() { const cont=document.getElementById('stakeButtonsContainer'); for(let i=0;i<=9;i++){ const btn=document.createElement('button'); btn.innerText=i; btn.className='number-btn'; btn.onclick=()=>{ document.getElementById('stakeAmount').value+=i; let stake=parseFloat(document.getElementById('stakeAmount').value)||10; document.getElementById('totalPayout').innerText=`$${(stake*document.getElementById('multiplierSlider').value).toFixed(2)}`; }; cont.appendChild(btn); } }
-        async function executeTrade(direction) { let stake=parseFloat(document.getElementById('stakeAmount').value); if(stake<9) return showNotification("Min $9","error"); if(stake>(currentUserData?.withdrawableBalance||0)) return showNotification("Insufficient","error"); await updateDoc(doc(db,"users",currentUser.uid),{ withdrawableBalance: increment(-stake) }); await addDoc(collection(db,"binary_trades"),{ userId:currentUser.uid, direction, amount:stake, multiplier:parseInt(document.getElementById('multiplierSlider').value), entryPrice:currentPrice, expiry:Timestamp.fromDate(new Date(Date.now()+60000)), status:"open" }); showNotification(`Trade placed`,'info'); }
-        let currentPrice=1.0892; function startPriceSimulation(){ setInterval(()=>{ currentPrice+=(Math.random()-0.5)*0.001; document.getElementById('livePrice').innerText=currentPrice.toFixed(5); },2000); }
+        async function loadInvestmentSection() { const walletSnap=await getDoc(doc(db,"wallets",currentUser.uid)); currentWallet=walletSnap.data()||{ investmentFunds:0, totalInvestmentEarned:0 }; document.getElementById('investmentFundsDisplay').innerText=`$${(currentWallet.investmentFunds||0).toFixed(2)}`; document.getElementById('quickWithdrawable').innerText=`$${(currentUserData?.withdrawableBalance||0).toFixed(2)}`; document.getElementById('totalInvestmentEarnings').innerText=`$${(currentWallet.totalInvestmentEarned||0).toFixed(2)}`; await loadActiveInvestments(); await updatePendingEarnings(); renderProducts(); }
+        async function loadActiveInvestments(){ const q=query(collection(db,"user_investments"), where("userId","==",currentUser.uid), where("status","==","active")); const snap=await getDocs(q); let html=''; snap.forEach(d=>{ const inv=d.data(); html+=`<div class="p-2 border rounded">${inv.productName} - $${inv.amount}</div>`; }); document.getElementById('activeInvestmentsList').innerHTML=html||'<div>No active investments</div>'; }
+        async function updatePendingEarnings(){ const q=query(collection(db,"user_investments"), where("userId","==",currentUser.uid), where("status","==","active")); const snap=await getDocs(q); let total=0; snap.forEach(d=>{ const inv=d.data(); const daysLeft=Math.max(0,Math.ceil((inv.endDate.toDate()-new Date())/86400000)); total+=inv.amount*(inv.dailyROI/100)*daysLeft; }); document.getElementById('pendingEarningsInfo').innerHTML=`$${total.toFixed(2)}`; }
+        function renderProducts(){ const container=document.getElementById('productsContainer'); container.innerHTML=investmentProducts.map(p=>`<div class="card-glass p-4"><h4>${p.name}</h4><p>Min $${p.minAmount} | ${p.dailyROI}% daily</p><input type="number" id="amount-${p.id}" placeholder="Amount" class="border rounded p-1 w-full"><button onclick="buyProduct('${p.id}')" class="bg-indigo-600 text-white p-1 rounded w-full mt-2">Invest</button></div>`).join(''); window.buyProduct=async(id)=>{ const p=investmentProducts.find(pr=>pr.id===id); const amount=parseFloat(document.getElementById(`amount-${id}`).value); if(isNaN(amount)||amount<p.minAmount) return showNotification(`Minimum $${p.minAmount}`,'error'); if(amount>currentWallet.investmentFunds) return showNotification("Insufficient funds",'error'); await updateDoc(doc(db,"wallets",currentUser.uid),{ investmentFunds: increment(-amount) }); await addDoc(collection(db,"user_investments"),{ userId:currentUser.uid, productId:p.id, productName:p.name, amount, dailyROI:p.dailyROI, durationDays:p.durationDays, totalReturnPercent:p.totalReturnPercent, startDate:Timestamp.now(), endDate:Timestamp.fromDate(new Date(Date.now()+p.durationDays*86400000)), status:"active", createdAt:serverTimestamp() }); showNotification(`Invested $${amount}`); await loadInvestmentSection(); }; }
         
-        window.requestWithdrawal=async()=>{ const bal=currentUserData?.withdrawableBalance||0; if(bal<1) return showNotification("Min $1","error"); const amt=parseFloat(prompt("Amount")); if(amt>=1 && amt<=bal){ await addDoc(collection(db,"withdrawals"),{ userId:currentUser.uid, amount:amt, status:"pending", createdAt:serverTimestamp() }); showNotification("Requested"); } };
-        window.createTicket=async()=>{ const subj=prompt("Subject"); if(subj) await addDoc(collection(db,"support_tickets"),{ userId:currentUser.uid, subject:subj, message:prompt("Message"), status:"open", createdAt:serverTimestamp() }); };
-        window.updateProfile=async()=>{ const newName=document.getElementById('displayNameInput').value; if(newName) await updateProfile(currentUser,{ displayName:newName }); await updateDoc(doc(db,"users",currentUser.uid),{ displayName:newName }); showNotification("Updated"); };
-        window.copyReferralLink=()=>{ navigator.clipboard.writeText(window.location.origin+'/index.html?ref='+(currentUserData?.referralCode||'')); showNotification("Copied"); };
+        async function executeTrade(direction){ let stake=parseFloat(document.getElementById('stakeAmount').value)||10; if(stake < 9) return showNotification("Minimum $9", "error"); const balance=currentUserData?.withdrawableBalance||0; if(stake>balance) return showNotification("Insufficient balance", "error"); await updateDoc(doc(db,"users",currentUser.uid),{ withdrawableBalance: increment(-stake) }); await addDoc(collection(db,"transactions"),{ userId:currentUser.uid, type:"trade_stake", amount:-stake, description:`${direction} trade`, timestamp:serverTimestamp() }); await loadUserData(); const entryPrice=currentPrice; const tradeRef=await addDoc(collection(db,"binary_trades"),{ userId:currentUser.uid, direction, amount:stake, multiplier:parseInt(document.getElementById('multiplierSlider').value), entryPrice, expiry:Timestamp.fromDate(new Date(Date.now()+60000)), status:"open", createdAt:serverTimestamp() }); setTimeout(async()=>{ const snap=await getDoc(tradeRef); if(!snap.exists()||snap.data().status!=="open")return; const isWin=(direction==='call'&&currentPrice>entryPrice)||(direction==='put'&&currentPrice<entryPrice); const profit=isWin?stake*parseInt(document.getElementById('multiplierSlider').value):0; await updateDoc(tradeRef,{ status:isWin?'won':'lost', profit }); if(isWin){ await updateDoc(doc(db,"users",currentUser.uid),{ withdrawableBalance:increment(profit), totalEarned:increment(profit) }); showNotification(`WIN! +$${profit}`,'success'); } else showNotification(`LOSS! -$${stake}`,'error'); await loadUserData(); await loadOpenPositions(); await loadLastTrades(); },60000); await loadOpenPositions(); }
+        async function loadOpenPositions(){ const q=query(collection(db,"binary_trades"), where("userId","==",currentUser.uid), where("status","==","open")); const snap=await getDocs(q); let html=''; snap.forEach(t=>{ const d=t.data(); html+=`<div class="bg-gray-100 p-2 rounded">${d.direction} $${d.amount}</div>`; }); document.getElementById('openPositionsList').innerHTML=html||'No open positions'; }
+        async function loadLastTrades(){ if(!currentUser) return; const q=query(collection(db,"binary_trades"), where("userId","==",currentUser.uid), orderBy("createdAt","desc"), limit(10)); const snap=await getDocs(q); lastTrades=[]; snap.forEach(d=>{ const data=d.data(); lastTrades.push({ direction:data.direction, stake:data.amount, profit:data.profit||0, time:data.createdAt?.toDate()||new Date() }); }); updateLastTradesUI(); }
+        function updateLastTradesUI(){ const container=document.getElementById('lastTradesList'); let totalP=0,wins=0; let html=''; for(let t of lastTrades){ totalP+=t.profit; if(t.profit>0) wins++; html+=`<div class="flex justify-between text-sm">${t.direction.toUpperCase()} $${t.stake} <span class="${t.profit>0?'text-green-600':'text-red-600'}">$${t.profit}</span></div>`; } container.innerHTML=html||'No trades'; document.getElementById('last10Profit').innerHTML=`$${totalP.toFixed(2)}`; document.getElementById('winRatePercent').innerHTML=lastTrades.length?((wins/lastTrades.length)*100).toFixed(1)+'%':'0%'; }
         
-        async function loadInvestmentSection() { /* minimal stub */ }
-        function initSidebar(){ const hamburger=document.getElementById('hamburgerBtn'), sidebar=document.getElementById('mainSidebar'), overlay=document.getElementById('sidebarOverlay'), closeBtn=document.getElementById('closeSidebarBtn'); hamburger.onclick=()=>{ sidebar.classList.add('open'); overlay.classList.add('active'); }; closeBtn.onclick=()=>{ sidebar.classList.remove('open'); overlay.classList.remove('active'); }; overlay.onclick=()=>{ sidebar.classList.remove('open'); overlay.classList.remove('active'); }; document.querySelectorAll('.sidebar-nav a').forEach(link=>{ link.onclick=async(e)=>{ e.preventDefault(); const sec=link.getAttribute('data-section'); activateSection(sec); if(sec==='streak'){ await checkEmailVerification(); loadStreak(); } if(sec==='chat'){ await checkEmailVerification(); updateChatMinutesDisplay(); if(chatMinutesRemaining>0 && !chatTimer) startChatTimer(); chatActive=true; } }; }); }
+        async function loadUserData() { const userRef = doc(db, "users", currentUser.uid); const walletRef = doc(db, "wallets", currentUser.uid); const [userSnap, walletSnap] = await Promise.all([getDoc(userRef), getDoc(walletRef)]); if (!userSnap.exists()) await setDoc(userRef, { withdrawableBalance: 0, totalEarned: 0, displayName: currentUser.displayName || "", kycStatus: "unverified" }); if (!walletSnap.exists()) await setDoc(walletRef, { investmentFunds: 0, totalInvestmentEarned: 0, bonusBalance: 0 }); const freshUser = await getDoc(userRef); const freshWallet = await getDoc(walletRef); currentUserData = freshUser.data(); currentWallet = freshWallet.data(); document.getElementById('liveBalance').innerText = `$${(currentUserData?.withdrawableBalance || 0).toFixed(2)}`; document.getElementById('userShort').innerText = currentUserData?.displayName?.split(' ')[0] || currentUser.email.split('@')[0]; await loadLastTrades(); }
         
-        // Event bindings
+        window.requestWithdrawal=async()=>{ const min=systemSettings.minWithdrawal, bal=currentUserData?.withdrawableBalance||0; if(bal<min) return showNotification(`Min $${min}`,'error'); const amt=parseFloat(prompt(`Amount (max $${bal})`)); if(amt<min||amt>bal)return; await addDoc(collection(db,"withdrawals"),{ userId:currentUser.uid, amount:amt, status:"pending", createdAt:serverTimestamp() }); showNotification("Withdrawal requested"); await loadSectionData('withdrawals'); };
+        window.createTicket=async()=>{ const subj=prompt("Subject"); if(!subj)return; const msg=prompt("Message"); await addDoc(collection(db,"support_tickets"),{ userId:currentUser.uid, subject:subj, message:msg, status:"open", createdAt:serverTimestamp() }); showNotification("Ticket created"); await loadSectionData('support'); };
+        window.startKYC=()=>showNotification("KYC demo","info");
+        window.updateProfile=async()=>{ const newName=document.getElementById('displayNameInput').value; if(newName && currentUser) { await updateAuthProfile(currentUser, { displayName: newName }); await updateDoc(doc(db,"users",currentUser.uid),{ displayName: newName }); showNotification("Profile updated"); await loadUserData(); } };
+        window.copyReferralLink=()=>{ navigator.clipboard.writeText(document.getElementById('referralLinkDisplay').innerText); showNotification("Copied"); };
+        window.downloadTradeHistory=()=>{ const csv=["Direction,Stake,Profit,Time",...lastTrades.map(t=>`${t.direction},${t.stake},${t.profit},${t.time.toLocaleString()}`)].join("\n"); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv])); a.download="trade_history.csv"; a.click(); };
+        
+        function initSpinWheel(){ const canvas=document.getElementById('wheelCanvas'); if(!canvas)return; const ctx=canvas.getContext('2d'); const segments=[{label:"$5",value:5},{label:"$2",value:2},{label:"$10",value:10},{label:"$1",value:1},{label:"$50",value:50},{label:"Try Again",value:0}]; let spinning=false; function drawWheel(angle=0){ const size=250,center=size/2,radius=size/2-10,angleStep=(Math.PI*2)/segments.length; ctx.clearRect(0,0,size,size); for(let i=0;i<segments.length;i++){ const startAngle=i*angleStep+angle; ctx.beginPath(); ctx.fillStyle=`hsl(${i*60},70%,60%)`; ctx.moveTo(center,center); ctx.arc(center,center,radius,startAngle,startAngle+angleStep); ctx.fill(); ctx.save(); ctx.translate(center,center); ctx.rotate(startAngle+angleStep/2); ctx.fillStyle="white"; ctx.font="bold 14px sans-serif"; ctx.fillText(segments[i].label,radius-35,8); ctx.restore(); } } drawWheel(); document.getElementById('spinBtnWheel').onclick=async()=>{ if(spinning)return; const stake=parseFloat(document.getElementById('spinStake').value)||2; if(stake> (currentUserData?.withdrawableBalance||0)) return showNotification("Insufficient balance",'error'); spinning=true; await updateDoc(doc(db,"users",currentUser.uid),{ withdrawableBalance:increment(-stake) }); await addDoc(collection(db,"transactions"),{ userId:currentUser.uid, type:"spin_stake", amount:-stake, description:"Spin", timestamp:serverTimestamp() }); const randomIndex=Math.floor(Math.random()*segments.length); const prize=segments[randomIndex].value; let spinAngle=0; const targetAngle=randomIndex*(Math.PI*2/segments.length)+Math.PI*4; const startTime=performance.now(); function animate(now){ const elapsed=now-startTime; if(elapsed<1000){ spinAngle=Math.min(targetAngle, (elapsed/1000)*targetAngle); drawWheel(spinAngle); requestAnimationFrame(animate); }else{ drawWheel(targetAngle% (Math.PI*2)); if(prize>0){ updateDoc(doc(db,"users",currentUser.uid),{ withdrawableBalance:increment(prize) }); addDoc(collection(db,"transactions"),{ userId:currentUser.uid, type:"spin_win", amount:prize, description:`Won $${prize}`, timestamp:serverTimestamp() }); showNotification(`🎉 Won $${prize}!`,'success'); } else showNotification("Better luck next time!",'info'); loadUserData(); document.getElementById('spinResultMsg').innerHTML=prize>0?`Won $${prize}!`:`No prize`; spinning=false; } } requestAnimationFrame(animate); }; } initSpinWheel();
+        
+        async function loadSystemSettings(){ const snap=await getDoc(doc(db,"settings","system")); if(snap.exists()) systemSettings={...systemSettings,...snap.data()}; }
+        async function loadInvestmentProducts(){ const snap=await getDoc(doc(db,"investmentConfig","products")); if(snap.exists()) investmentProducts=snap.data().list; else await setDoc(doc(db,"investmentConfig","products"),{list:defaultProducts}); }
+        
+        function initSidebar() { const hamburger = document.getElementById('hamburgerBtn'); const sidebar = document.getElementById('mainSidebar'); const overlay = document.getElementById('sidebarOverlay'); const closeBtn = document.getElementById('closeSidebarBtn'); const openSidebar = () => { sidebar.classList.add('open'); overlay.classList.add('active'); }; const closeSidebar = () => { sidebar.classList.remove('open'); overlay.classList.remove('active'); }; hamburger.onclick = openSidebar; closeBtn.onclick = closeSidebar; overlay.onclick = closeSidebar; document.querySelectorAll('.sidebar-nav a').forEach(link => { link.onclick = async (e) => { e.preventDefault(); const sectionId = link.getAttribute('data-section'); activateSection(sectionId); await loadSectionData(sectionId); if(window.innerWidth < 768) closeSidebar(); }; }); document.querySelector('.sidebar-nav a[data-section="trade"]').classList.add('active'); }
+        
+        function startPriceSimulation(){ if(priceInterval) clearInterval(priceInterval); priceInterval=setInterval(()=>{ currentPrice+=(Math.random()-0.5)*0.0012; currentPrice=Math.max(1.05,Math.min(1.15,currentPrice)); document.getElementById('livePrice').innerText=currentPrice.toFixed(5); },2000); }
+        
         document.getElementById('callTradeBtn').onclick=()=>executeTrade('call'); document.getElementById('putTradeBtn').onclick=()=>executeTrade('put');
         document.getElementById('multiplierSlider').oninput=()=>{ document.getElementById('multiplierValue').innerText=`x${document.getElementById('multiplierSlider').value}`; let stake=parseFloat(document.getElementById('stakeAmount').value)||10; document.getElementById('totalPayout').innerText=`$${(stake*document.getElementById('multiplierSlider').value).toFixed(2)}`; };
         document.getElementById('stakeAmount').oninput=()=>{ let stake=parseFloat(document.getElementById('stakeAmount').value)||10; document.getElementById('totalPayout').innerText=`$${(stake*document.getElementById('multiplierSlider').value).toFixed(2)}`; };
-        document.getElementById('topUpBalanceBtn').onclick=()=>activateSection('deposits'); document.getElementById('topUpNewFundsBtn').onclick=()=>activateSection('deposits'); document.getElementById('depositNowLink').onclick=(e)=>{ e.preventDefault(); activateSection('deposits'); };
-        document.getElementById('tradeGuideBtn').onclick=()=>showModal("Trading Guide","CALL if price goes UP, PUT if DOWN. Stake min $9. Multiplier boosts profit. Win = Stake × Multiplier. Loss = -Stake.");
-        document.getElementById('updateEmailBtn').onclick=()=>{ const newEmail=document.getElementById('newEmailInput').value; if(newEmail && newEmail!==currentUser.email){ const modal=document.getElementById('reAuthModal'); modal.classList.add('active'); document.getElementById('submitReAuthBtn').onclick=async()=>{ const pwd=document.getElementById('reAuthPassword').value; const cred=EmailAuthProvider.credential(currentUser.email,pwd); await reauthenticateWithCredential(currentUser,cred); await updateEmail(currentUser,newEmail); showNotification("Email updated"); closeReAuthModal(); }; } }; window.closeReAuthModal=()=>document.getElementById('reAuthModal').classList.remove('active');
-        document.getElementById('sendVerifyEmailBtn')?.addEventListener('click',sendVerification); document.getElementById('streakVerifyBtn')?.addEventListener('click',sendVerification);
-        document.getElementById('buy30min').onclick=()=>buyChatMinutes(30,0.4); document.getElementById('buy60min').onclick=()=>buyChatMinutes(60,0.9); document.getElementById('buy120min').onclick=()=>buyChatMinutes(120,1.7);
-        document.getElementById('sendChatBtn').onclick=sendChatMessage; document.getElementById('chatInput').addEventListener('keypress',(e)=>{ if(e.key==='Enter') sendChatMessage(); });
-        listenChatMessages();
+        document.getElementById('positionsTabBtn').onclick=()=>{ document.getElementById('positionsPanel').classList.remove('hidden'); document.getElementById('historyPanel').classList.add('hidden'); loadOpenPositions(); };
+        document.getElementById('historyTabBtn').onclick=()=>{ document.getElementById('positionsPanel').classList.add('hidden'); document.getElementById('historyPanel').classList.remove('hidden'); };
+        document.getElementById('topUpFromBalanceBtn').onclick=async()=>{ const bal=currentUserData?.withdrawableBalance||0; if(bal<=0) return showNotification("No balance",'error'); const amt=parseFloat(prompt(`Transfer (max $${bal.toFixed(2)})`)); if(amt>0&&amt<=bal){ await updateDoc(doc(db,"users",currentUser.uid),{ withdrawableBalance: increment(-amt) }); await updateDoc(doc(db,"wallets",currentUser.uid),{ investmentFunds: increment(amt) }); showNotification(`$${amt} moved`); await loadInvestmentSection(); await loadUserData(); } };
+        document.getElementById('topUpNewFundsBtn').onclick=()=>activateSection('deposits');
+        document.getElementById('topUpBalanceBtn').onclick=()=>activateSection('deposits');
+        document.getElementById('depositNowLink').onclick=(e)=>{ e.preventDefault(); activateSection('deposits'); };
+        document.getElementById('tradeGuideBtn').onclick=()=>showModal("📘 Trading Guide", "<b>CALL</b> = price up, <b>PUT</b> = price down. Stake min $9. Multiplier increases profit. Trade expires in 60s. Win = Stake × Multiplier. Loss = -Stake.");
+        document.getElementById('updateEmailBtn').onclick=()=>{ const newEmail = document.getElementById('newEmailInput').value; if(newEmail && newEmail !== currentUser.email) showReAuthModal(()=>updateUserEmail(newEmail)); else showNotification("Email unchanged", "info"); };
         
-        onAuthStateChanged(auth, async(user)=>{ if(!user){ window.location.href="index.html"; return; } currentUser=user; await loadUserData(); await checkEmailVerification(); initSidebar(); startPriceSimulation(); initStakeButtons(); loadBalances(); loadTransactions(); loadWithdrawals(); loadDeposits(); loadInvestmentSection(); if(currentUser.emailVerified) loadStreak(); document.getElementById('logoutBtn').onclick=async()=>{ await signOut(auth); window.location.href="index.html"; }; });
+        function initStakeButtons(){ const cont=document.getElementById('stakeButtonsContainer'); for(let i=0;i<=9;i++){ const btn=document.createElement('button'); btn.innerText=i; btn.className='number-btn'; btn.onclick=()=>{ document.getElementById('stakeAmount').value+=i; let stake=parseFloat(document.getElementById('stakeAmount').value)||10; document.getElementById('totalPayout').innerText=`$${(stake*document.getElementById('multiplierSlider').value).toFixed(2)}`; }; cont.appendChild(btn); } }
+        
+        document.getElementById('mpesaDepositBtn').onclick = () => initiatePayment('mpesa');
+        document.getElementById('bankDepositBtn').onclick = () => initiatePayment('bank_transfer');
+        document.getElementById('cryptoDepositBtn').onclick = () => initiatePayment('crypto');
+        document.getElementById('pendingDepositBtn').onclick = () => showPendingDepositForm();
+        
+        onAuthStateChanged(auth, async(user)=>{ if(!user){ window.location.href="index.html"; return; } currentUser=user; try { await loadSystemSettings(); await loadInvestmentProducts(); await loadUserData(); await loadInvestmentSection(); await loadSectionData('trade'); await loadStreak(); } catch(err) { console.error(err); showNotification("Data error", "error"); } initSidebar(); startPriceSimulation(); initStakeButtons(); document.getElementById('logoutBtn').onclick=async()=>{ await signOut(auth); window.location.href="index.html"; }; });
     </script>
 </body>
 </html>
