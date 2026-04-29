@@ -101,7 +101,7 @@
         </main>
     </div>
 
-    <!-- Modal for editing Investment Plan -->
+    <!-- Modal for Editing Investment Plan -->
     <div id="planModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-xl max-w-md w-full p-6">
             <h3 class="text-xl font-bold mb-4" id="planModalTitle">Add Investment Plan</h3>
@@ -109,7 +109,7 @@
             <div class="space-y-3">
                 <input type="text" id="planName" placeholder="Plan Name" class="w-full border rounded p-2">
                 <input type="number" id="planMinAmount" placeholder="Minimum Amount" class="w-full border rounded p-2">
-                <input type="number" id="planRoi" placeholder="ROI %" class="w-full border rounded p-2">
+                <input type="number" id="planRoi" placeholder="ROI % (daily or total? use daily)" class="w-full border rounded p-2">
                 <input type="number" id="planDuration" placeholder="Duration (days)" class="w-full border rounded p-2">
                 <input type="text" id="planImageURL" placeholder="Product Image URL" class="w-full border rounded p-2">
                 <textarea id="planDescription" placeholder="Plan Description" rows="3" class="w-full border rounded p-2"></textarea>
@@ -160,12 +160,10 @@
             if (!userDoc.exists() || userDoc.data().role !== "admin") { window.location.href = "dashboard.html"; return; }
             currentAdmin = user;
             document.getElementById('adminName').innerText = userDoc.data().displayName || user.email;
-            // Load only dashboard stats first
             await loadDashboardStats();
             setupNavigation();
         });
         
-        // Helper for admin logs
         async function addAdminLog(action, targetUserId = null, details = {}) {
             try {
                 await addDoc(collection(db, "admin_logs"), {
@@ -179,7 +177,7 @@
             } catch(e) { console.error("Log failed", e); }
         }
         
-        // ======================= DASHBOARD =======================
+        // DASHBOARD
         async function loadDashboardStats() {
             const container = document.getElementById('adminStats');
             container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
@@ -200,14 +198,14 @@
             } catch (error) { container.innerHTML = `<div class="empty-message">Error: ${error.message}</div>`; }
         }
         
-        // ======================= USERS =======================
+        // USERS (with wallet adjustment)
         async function loadUsers() {
             const container = document.getElementById('usersTable');
             container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
             try {
                 const usersSnap = await getDocs(collection(db,"users"));
                 if (usersSnap.empty) { container.innerHTML = '<div class="empty-message">No users found.</div>'; return; }
-                let html = '<table><thead><tr><th>Email</th><th>Name</th><th>Balance</th><th>KYC</th><th>Suspended</th><th>Actions</th></tr></thead><tbody>';
+                let html = '<table><thead><tr><th>Email</th><th>Name</th><th>Balance (Withdrawable)</th><th>KYC</th><th>Suspended</th><th>Actions</th></tr></thead><tbody>';
                 for (const u of usersSnap.docs) {
                     const data = u.data();
                     if (data.role === 'admin') continue;
@@ -215,7 +213,7 @@
                         <td>${data.email}</td>
                         <td>${data.displayName || '-'}</td>
                         <td>$${(data.withdrawableBalance || 0).toFixed(2)}</td>
-                        <td>${data.kycStatus}</td>
+                        <td>${data.kycStatus || 'unverified'}</td>
                         <td>${data.isSuspended ? 'Yes' : 'No'}</td>
                         <td>
                             <button onclick="window.toggleSuspend('${u.id}', ${data.isSuspended})" class="bg-yellow-500 text-white px-2 py-1 rounded text-xs">Toggle Susp</button>
@@ -227,21 +225,28 @@
                 container.innerHTML = html;
             } catch (error) { container.innerHTML = `<div class="empty-message">Error: ${error.message}</div>`; }
         }
+        
         window.toggleSuspend = async (uid, current) => {
             await updateDoc(doc(db,"users",uid),{isSuspended:!current});
             await addAdminLog("toggle_suspend", uid, {newState: !current});
             loadUsers();
         };
+        
+        // Adjust withdrawable balance (affects both trading and account balance)
         window.adjustBalance = async (uid) => {
-            const amt = parseFloat(prompt("Amount (+/-):"));
+            const amt = parseFloat(prompt("Enter amount to add or subtract (use negative value to deduct):"));
             if (!isNaN(amt)) {
-                await updateDoc(doc(db,"users",uid),{withdrawableBalance:increment(amt), totalEarned:increment(amt)});
+                await updateDoc(doc(db,"users",uid),{
+                    withdrawableBalance: increment(amt),
+                    totalEarned: increment(amt)
+                });
                 await addAdminLog("adjust_balance", uid, {amount: amt});
                 loadUsers();
+                alert(`Balance updated by $${amt}. Refresh user page to see changes.`);
             }
         };
         
-        // ======================= INVESTMENT PLANS =======================
+        // INVESTMENT PLANS
         async function loadPlans() {
             const container = document.getElementById('plansListAdmin');
             container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
@@ -252,7 +257,7 @@
                 snap.forEach(p => {
                     const d = p.data();
                     html += `<div class="border rounded p-3 flex flex-wrap justify-between items-center gap-2">
-                                <div class="flex-1"><img src="${d.productImageURL || 'https://via.placeholder.com/50'}" class="w-12 h-12 object-cover rounded inline mr-2"><b>${d.name}</b> - Min $${d.minAmount} - ROI ${d.roiPercent}% - ${d.durationDays}d<br><span class="text-xs text-gray-500">${d.productDescription?.substring(0,60)}</span></div>
+                                <div class="flex-1"><img src="${d.productImageURL || 'https://via.placeholder.com/50'}" class="w-12 h-12 object-cover rounded inline mr-2"><b>${d.name}</b> - Min $${d.minAmount} - Daily ROI ${d.roiPercent}% - ${d.durationDays}d<br><span class="text-xs text-gray-500">${d.productDescription?.substring(0,60)}</span></div>
                                 <div>
                                     <button onclick="window.editPlan('${p.id}')" class="bg-blue-500 text-white px-2 py-1 rounded text-sm">Edit</button>
                                     <button onclick="window.deletePlan('${p.id}')" class="bg-red-600 text-white px-2 py-1 rounded text-sm">Delete</button>
@@ -263,6 +268,7 @@
                 container.innerHTML = html;
             } catch (error) { container.innerHTML = `<div class="empty-message">Error: ${error.message}</div>`; }
         }
+        
         window.showPlanModal = (plan = null) => {
             const modal = document.getElementById('planModal');
             if (plan) {
@@ -331,7 +337,7 @@
             }
         };
         
-        // ======================= USER INVESTMENTS =======================
+        // USER INVESTMENTS (View only)
         async function loadAllInvestments() {
             const container = document.getElementById('allInvestmentsList');
             container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
@@ -342,13 +348,13 @@
                 for (const inv of snap.docs) {
                     const d = inv.data();
                     const user = await getDoc(doc(db,"users",d.userId));
-                    html += `<div class="admin-card flex justify-between items-center"><span>${user.data()?.email || d.userId}</span><span>$${d.amount}</span><span>ROI: $${d.roiEarned}</span><span>Matures: ${d.endDate?.toDate().toLocaleDateString()}</span></div>`;
+                    html += `<div class="admin-card flex justify-between items-center"><span>${user.data()?.email || d.userId}</span><span>$${d.amount}</span><span>ROI: $${d.roiEarned || 0}</span><span>Matures: ${d.endDate?.toDate().toLocaleDateString()}</span></div>`;
                 }
                 container.innerHTML = html;
             } catch (error) { container.innerHTML = `<div class="empty-message">Error: ${error.message}</div>`; }
         }
         
-        // ======================= WITHDRAWALS =======================
+        // WITHDRAWALS
         async function loadWithdrawals() {
             const container = document.getElementById('withdrawalsAdminList');
             container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
@@ -360,7 +366,7 @@
                     const data = w.data();
                     const user = await getDoc(doc(db,"users",data.userId));
                     html += `<div class="admin-card flex flex-wrap justify-between items-center gap-2">
-                                <div><b>${user.data()?.email}</b> - $${data.amount} (${data.method})<br><span class="text-xs">${data.status} | ${data.createdAt?.toDate().toLocaleString()}</span></div>
+                                <div><b>${user.data()?.email}</b> - $${data.amount}<br><span class="text-xs">${data.status} | ${data.createdAt?.toDate().toLocaleString()}</span></div>
                                 ${data.status === 'pending' ? `
                                 <div>
                                     <button onclick="window.approveWithdrawal('${w.id}','${data.userId}',${data.amount})" class="bg-green-600 text-white px-2 py-1 rounded">Approve</button>
@@ -379,12 +385,13 @@
         };
         window.rejectWithdrawal = async (id, uid, amt) => {
             await updateDoc(doc(db,"withdrawals",id),{status:"rejected", processedAt: serverTimestamp()});
+            // return balance to user
             await updateDoc(doc(db,"users",uid),{withdrawableBalance:increment(amt)});
             await addAdminLog("reject_withdrawal", uid, {amount: amt});
             loadWithdrawals();
         };
         
-        // ======================= DEPOSITS =======================
+        // DEPOSITS
         async function loadDeposits() {
             const container = document.getElementById('depositsAdminList');
             container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
@@ -396,7 +403,7 @@
                     const data = d.data();
                     const user = await getDoc(doc(db,"users",data.userId));
                     html += `<div class="admin-card flex flex-wrap justify-between items-center gap-2">
-                                <div><b>${user.data()?.email}</b> - $${data.amount} (${data.method})<br><span class="text-xs">Ref: ${data.reference}</span></div>
+                                <div><b>${user.data()?.email}</b> - $${data.amount} (${data.method})</div>
                                 <div>
                                     <button onclick="window.approveDeposit('${d.id}','${data.userId}',${data.amount})" class="bg-green-600 text-white px-2 py-1 rounded">Approve</button>
                                     <button onclick="window.rejectDeposit('${d.id}')" class="bg-red-600 text-white px-2 py-1 rounded">Reject</button>
@@ -404,7 +411,7 @@
                             </div>`;
                 }
                 container.innerHTML = html;
-            } catch (error) { container.innerHTML = `<div class="empty-message">Error: ${error.message}<br>Hint: Create Firestore composite index for deposits (status, createdAt desc).</div>`; }
+            } catch (error) { container.innerHTML = `<div class="empty-message">Error: ${error.message}</div>`; }
         }
         window.approveDeposit = async (id, uid, amt) => {
             await updateDoc(doc(db,"deposits",id),{status:"approved"});
@@ -418,7 +425,7 @@
             loadDeposits();
         };
         
-        // ======================= SUPPORT TICKETS =======================
+        // SUPPORT TICKETS
         async function loadTickets() {
             const container = document.getElementById('ticketsAdminList');
             container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
@@ -463,7 +470,7 @@
             loadTickets();
         };
         
-        // ======================= TRANSACTIONS =======================
+        // TRANSACTIONS
         async function loadTransactions() {
             const container = document.getElementById('allTransactionsList');
             container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
@@ -471,7 +478,7 @@
                 const q = query(collection(db,"transactions"), orderBy("timestamp","desc"), limit(100));
                 const snap = await getDocs(q);
                 if (snap.empty) { container.innerHTML = '<div class="empty-message">No transactions.</div>'; return; }
-                let html = '</table><thead><tr><th>User</th><th>Type</th><th>Amount</th><th>Date</th></tr></thead><tbody>';
+                let html = '<table><thead><tr><th>User</th><th>Type</th><th>Amount</th><th>Date</th></tr></thead><tbody>';
                 for (const tx of snap.docs) {
                     const d = tx.data();
                     const user = await getDoc(doc(db,"users",d.userId));
@@ -487,7 +494,7 @@
             } catch (error) { container.innerHTML = `<div class="empty-message">Error: ${error.message}</div>`; }
         }
         
-        // ======================= REFERRALS =======================
+        // REFERRALS
         async function loadReferralStats() {
             const container = document.getElementById('referralAdminStats');
             container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
@@ -499,7 +506,7 @@
             } catch (error) { container.innerHTML = `<div class="empty-message">Error: ${error.message}</div>`; }
         }
         
-        // ======================= LEADERBOARD =======================
+        // LEADERBOARD
         async function loadLeaderboard() {
             const container = document.getElementById('leaderboardAdminList');
             container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
@@ -513,7 +520,7 @@
             } catch (error) { container.innerHTML = `<div class="empty-message">Error: ${error.message}</div>`; }
         }
         
-        // ======================= ADMIN LOGS =======================
+        // ADMIN LOGS
         async function loadAdminLogs() {
             const container = document.getElementById('adminLogsList');
             container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
@@ -529,7 +536,7 @@
             } catch (error) { container.innerHTML = `<div class="empty-message">Error: ${error.message}</div>`; }
         }
         
-        // ======================= ANNOUNCEMENTS =======================
+        // ANNOUNCEMENTS
         async function loadAnnouncements() {
             const container = document.getElementById('announcementsList');
             container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
@@ -562,7 +569,7 @@
             loadAnnouncements();
         };
         
-        // ======================= KYC REQUESTS =======================
+        // KYC REQUESTS
         async function loadKYCRequests() {
             const container = document.getElementById('kycRequestsList');
             container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
@@ -583,7 +590,7 @@
             loadKYCRequests();
         };
         
-        // ======================= SPIN CONFIG =======================
+        // SPIN CONFIG
         let currentWheelSegments = [];
         async function loadSpinConfig() {
             const container = document.getElementById('spinConfigEditor');
@@ -620,7 +627,7 @@
             });
             html += `<button onclick="window.addSegment()" class="mt-3 bg-green-600 text-white px-3 py-1 rounded">+ Add Segment</button></div>`;
             document.getElementById('spinConfigEditor').innerHTML = html;
-            // attach live update listeners
+            // Attach live updates (plain JS event delegation)
             document.querySelectorAll('#spinConfigEditor input[data-field]').forEach(input => {
                 input.addEventListener('change', (e) => {
                     const idx = parseInt(e.target.dataset.index);
@@ -651,7 +658,7 @@
             alert("Spin wheel configuration saved!");
         };
         
-        // ======================= SYSTEM SETTINGS (FULL) =======================
+        // SYSTEM SETTINGS
         let currentSettings = {};
         async function loadSystemSettings() {
             const container = document.getElementById('systemSettingsForm');
@@ -723,10 +730,10 @@
             await setDoc(doc(db,"settings","system"), newSettings, { merge: true });
             await addAdminLog("update_system_settings");
             alert("System settings saved!");
-            loadSystemSettings(); // refresh
+            loadSystemSettings();
         };
         
-        // ======================= EXPORT =======================
+        // EXPORT
         window.exportUsersCSV = async () => {
             const users = await getDocs(collection(db,"users"));
             let csv = "Email,Name,WithdrawableBalance,TotalEarned,KYC,Suspended,Role,CreatedAt\n";
@@ -738,7 +745,7 @@
             await addAdminLog("export_users_csv");
         };
         
-        // ======================= NAVIGATION =======================
+        // NAVIGATION & SIDEBAR
         function setupNavigation() {
             const links = document.querySelectorAll('.sidebar-nav a');
             const sections = document.querySelectorAll('.content-section');
@@ -770,17 +777,14 @@
                         case 'kyc': await loadKYCRequests(); break;
                         case 'spinConfig': await loadSpinConfig(); break;
                         case 'settings': await loadSystemSettings(); break;
-                        // export is static
                     }
                     if (window.innerWidth < 768) closeSidebar();
                 });
             });
-            // set dashboard active
             const dashLink = document.querySelector('.sidebar-nav a[data-section="dashboard"]');
             if (dashLink) dashLink.classList.add('active');
         }
         
-        // Sidebar controls
         const sidebar = document.getElementById('adminSidebar'), overlay = document.getElementById('sidebarOverlay');
         function openSidebar(){ sidebar.classList.add('open'); overlay.classList.add('active'); }
         function closeSidebar(){ sidebar.classList.remove('open'); overlay.classList.remove('active'); }
@@ -789,7 +793,7 @@
         overlay.onclick = closeSidebar;
         document.getElementById('logoutAdminBtn').onclick = async () => { await signOut(auth); window.location.href = "index.html"; };
         
-        // Expose global functions
+        // Expose globally
         window.toggleSuspend = window.toggleSuspend;
         window.adjustBalance = window.adjustBalance;
         window.approveWithdrawal = window.approveWithdrawal;
