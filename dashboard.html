@@ -86,8 +86,8 @@
         .deposit-method-btn { transition: all 0.2s; }
         .deposit-method-btn:hover { transform: translateY(-2px); }
         .video-container { display: flex; justify-content: center; margin-bottom: 1.5rem; }
-        .video-rectangle { width: 400px; border-radius: 1rem; overflow: hidden; background: black; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin: 0 auto; }
-        .video-rectangle video { width: 100%; height: auto; max-height: 220px; object-fit: cover; }
+        .video-rectangle { width: 100%; max-width: 400px; border-radius: 1rem; overflow: hidden; background: black; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin: 0 auto; }
+        .video-rectangle video { width: 100%; height: auto; aspect-ratio: 16/9; object-fit: cover; }
         .balance-alert { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 0.75rem; border-radius: 0.75rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
         .guide-card { background: #e0e7ff; border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; cursor: pointer; transition: 0.2s; }
         .guide-card:hover { background: #c7d2fe; transform: scale(0.98); }
@@ -97,11 +97,10 @@
         .streak-box.available { background: #818cf8; color: white; animation: pulse 1s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
         .streak-box.disabled { background: #e5e7eb; cursor: not-allowed; opacity: 0.5; }
-        .chat-messages { height: 400px; overflow-y: auto; background: white; border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; }
+        .chat-messages { height: 400px; overflow-y: auto; background: white; border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; border: 1px solid #e5e7eb; }
         .chat-message { margin-bottom: 0.5rem; padding: 0.5rem; border-bottom: 1px solid #e5e7eb; }
         .chat-timer { font-size: 1.2rem; font-weight: bold; color: #4f46e5; }
-        .kyc-upload-area { border: 2px dashed #cbd5e1; border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; text-align: center; cursor: pointer; transition: 0.2s; }
-        .kyc-upload-area:hover { background: #f1f5f9; }
+        .kyc-upload-area { background: #f9fafb; border: 2px dashed #cbd5e1; border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; }
     </style>
 </head>
 <body class="bg-amber-50">
@@ -140,12 +139,10 @@
             <div class="flex items-center gap-2"><span id="userShort" class="text-sm font-medium"></span><i class="fas fa-user-circle text-2xl text-gray-600"></i></div>
         </header>
 
-        <!-- SINGLE RECTANGULAR VIDEO -->
+        <!-- SINGLE VIDEO RECTANGLE -->
         <div class="container mx-auto px-4 pt-2">
             <div class="video-container">
-                <div class="video-rectangle">
-                    <video src="video.mp4" autoplay muted loop playsinline controls></video>
-                </div>
+                <div class="video-rectangle"><video src="video.mp4" autoplay muted loop playsinline controls></video></div>
             </div>
         </div>
 
@@ -155,7 +152,7 @@
                 <div class="grid lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-2 space-y-4">
                         <div class="guide-card flex items-center justify-between" id="tradeGuideBtn">
-                            <div><i class="fas fa-book-open text-indigo-600 text-2xl mr-3"></i> <strong>📘 Trading Guide</strong> – Learn how to trade CALL/PUT</div>
+                            <div><i class="fas fa-book-open text-indigo-600 text-2xl mr-3"></i> <strong>📘 Trading Guide</strong> – How to trade CALL/PUT</div>
                             <i class="fas fa-chevron-right"></i>
                         </div>
                         <div class="tradingview-widget-container" style="height:70vh;"><div class="tradingview-widget-container__widget" style="height:100%;"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>{"allow_symbol_change":true,"interval":"1","symbol":"OANDA:EURUSD","theme":"light","autosize":true}</script></div>
@@ -211,7 +208,7 @@
                 </div>
             </div>
             
-            <!-- LIVE CHAT SECTION -->
+            <!-- LIVE CHAT -->
             <div id="chat" class="content-section">
                 <div class="card-glass p-6">
                     <h3 class="text-xl font-bold mb-3">💬 Live Global Chat</h3>
@@ -235,35 +232,28 @@
                 </div>
             </div>
             
-            <!-- KYC SECTION with image upload simulation -->
+            <!-- KYC SECTION WITH IMAGE UPLOAD (FACE PORTRAIT + ID) -->
             <div id="kyc" class="content-section">
                 <div class="card-glass p-6">
                     <h3 class="text-xl font-bold mb-3">🪪 KYC Verification</h3>
-                    <div id="kycStatusDisplay" class="mb-3"></div>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block font-medium mb-1">Face Portrait (Image URL)</label>
-                            <div class="kyc-upload-area" id="faceUploadArea">
-                                <i class="fas fa-camera text-2xl text-gray-400"></i>
-                                <p class="text-sm">Click to generate image URL via external service</p>
-                            </div>
-                            <input type="text" id="faceImageUrl" class="w-full border rounded p-2 mt-1" placeholder="Image URL will appear here" readonly>
-                        </div>
-                        <div>
-                            <label class="block font-medium mb-1">Identification Document (ID / Maisha Card / Passport)</label>
-                            <div class="kyc-upload-area" id="idUploadArea">
-                                <i class="fas fa-id-card text-2xl text-gray-400"></i>
-                                <p class="text-sm">Click to generate image URL via external service</p>
-                            </div>
-                            <input type="text" id="idImageUrl" class="w-full border rounded p-2 mt-1" placeholder="Image URL will appear here" readonly>
-                            <select id="idTypeSelect" class="w-full border rounded p-2 mt-2">
-                                <option value="national_id">National ID</option>
-                                <option value="maisha_card">Maisha Card</option>
-                                <option value="passport">Passport</option>
-                            </select>
-                        </div>
-                        <button id="submitKycBtn" class="bg-indigo-600 text-white px-4 py-2 rounded w-full">Submit KYC</button>
+                    <div class="mb-4"><span class="font-medium">Current Status:</span> <span id="kycStatusDisplay" class="px-2 py-1 rounded bg-yellow-100">unverified</span></div>
+                    <div class="kyc-upload-area">
+                        <label class="block font-medium mb-2">📸 Face Portrait (Image URL)</label>
+                        <input type="text" id="facePortraitUrl" class="w-full border rounded p-2 mb-2" placeholder="Paste image URL">
+                        <button id="generateFaceUrlBtn" class="bg-gray-600 text-white px-3 py-1 rounded text-sm">Generate URL (www.link.com)</button>
                     </div>
+                    <div class="kyc-upload-area">
+                        <label class="block font-medium mb-2">🆔 Identification Document</label>
+                        <select id="idType" class="w-full border rounded p-2 mb-2">
+                            <option value="national_id">National ID / Maisha Card</option>
+                            <option value="passport">Passport</option>
+                            <option value="drivers_license">Driver's License</option>
+                        </select>
+                        <input type="text" id="idImageUrl" class="w-full border rounded p-2 mb-2" placeholder="Paste document image URL">
+                        <button id="generateIdUrlBtn" class="bg-gray-600 text-white px-3 py-1 rounded text-sm">Generate URL (www.link.com)</button>
+                    </div>
+                    <button id="submitKycBtn" class="bg-indigo-600 text-white px-4 py-2 rounded w-full mt-3">Submit KYC for Review</button>
+                    <div id="kycMessage" class="mt-3 text-sm text-gray-600"></div>
                 </div>
             </div>
             
@@ -296,7 +286,7 @@
         const db = getFirestore(app);
         
         let currentUser, currentUserData, currentWallet = { investmentFunds:0 };
-        let systemSettings = { minWithdrawal:1, contactEmail:"support@bestpay.com" };
+        let systemSettings = { minWithdrawal:1, referralCommission:10, contactEmail:"support@bestpay.com" };
         let currentPrice = 1.0892, lastTrades = [], priceInterval;
         let chatMinutesRemaining = 0, chatTimerInterval = null;
         const defaultProducts = [{ id: "starter", name: "Starter Plan", minAmount:50, dailyROI:2.0, durationDays:10, totalReturnPercent:20 }];
@@ -318,42 +308,161 @@
             }
         }
         
-        // KYC: generate image URL via popup (mock link.com)
-        function openImagePicker(callback) {
-            const popup = window.open('https://www.link.com', 'ImagePicker', 'width=600,height=400,scrollbars=yes');
-            // Simulate receiving a URL after user action. In reality, link.com would return a callback.
-            // For demo, we'll listen for a message (simulated after 3 seconds).
-            const fakeTimer = setTimeout(() => {
-                if(popup && !popup.closed) popup.close();
-                const fakeUrl = "https://placekitten.com/800/600?rand=" + Math.random();
-                callback(fakeUrl);
-                showNotification("Mock image URL generated", "info");
-            }, 3000);
-            // cleanup if popup closed early
-            const interval = setInterval(() => {
-                if(popup.closed) { clearInterval(interval); clearTimeout(fakeTimer); callback(null); }
-            }, 500);
-        }
-        
-        async function submitKYC() {
-            const faceUrl = document.getElementById('faceImageUrl').value;
-            const idUrl = document.getElementById('idImageUrl').value;
-            const idType = document.getElementById('idTypeSelect').value;
-            if(!faceUrl || !idUrl) return showNotification("Please generate both image URLs", "error");
-            await updateDoc(doc(db,"users",currentUser.uid), {
-                kycStatus: "pending_review",
-                kycData: { faceUrl, idUrl, idType, submittedAt: serverTimestamp() }
+        // Streak with email verification
+        async function loadStreak() {
+            if(!currentUser) return;
+            const isVerified = currentUser.emailVerified;
+            const alertDiv = document.getElementById('streakEmailAlert');
+            const gridDiv = document.getElementById('streakGrid');
+            if (!isVerified) {
+                alertDiv.classList.remove('hidden');
+                gridDiv.innerHTML = '<div class="text-center p-4 bg-yellow-50 rounded">Please verify your email to claim daily streak rewards.</div>';
+                document.getElementById('sendVerifyEmailBtn').onclick = async () => { await sendEmailVerification(currentUser); showNotification("Verification email sent!", "info"); };
+                return;
+            }
+            alertDiv.classList.add('hidden');
+            const streakRef = doc(db, "login_streaks", currentUser.uid);
+            const streakSnap = await getDoc(streakRef);
+            let data = streakSnap.exists() ? streakSnap.data() : { currentStreak: 0, lastClaimDate: null, claimedDays: [] };
+            const today = new Date().toDateString();
+            const canClaim = data.lastClaimDate !== today;
+            const rewards = [0.04, 0.05, 0.06, 0.07, 0.05, 0.06, 0.06];
+            for (let i = rewards.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [rewards[i], rewards[j]] = [rewards[j], rewards[i]]; }
+            let html = '';
+            for (let i = 0; i < 7; i++) {
+                const isClaimed = data.claimedDays && data.claimedDays.includes(i);
+                const isAvailable = canClaim && !isClaimed && (i === (data.currentStreak || 0));
+                let boxClass = 'streak-box disabled';
+                if (isClaimed) boxClass = 'streak-box claimed';
+                else if (isAvailable) boxClass = 'streak-box available';
+                html += `<div class="${boxClass}" data-day="${i}" data-reward="${rewards[i]}"><div class="font-bold">Day ${i+1}</div><div class="text-xs">${isClaimed ? 'Claimed' : (isAvailable ? '✨ Ready' : 'Locked')}</div></div>`;
+            }
+            gridDiv.innerHTML = html;
+            document.getElementById('streakInfo').innerHTML = `Current streak: ${data.currentStreak || 0} days | Last claim: ${data.lastClaimDate || 'Never'}`;
+            document.querySelectorAll('.streak-box.available').forEach(box => {
+                box.onclick = async () => {
+                    const day = parseInt(box.dataset.day);
+                    const reward = parseFloat(box.dataset.reward);
+                    await updateDoc(doc(db,"users",currentUser.uid), { withdrawableBalance: increment(reward) });
+                    await addDoc(collection(db,"transactions"), { userId:currentUser.uid, type:"streak_bonus", amount:reward, description:`Day ${day+1}`, timestamp:serverTimestamp() });
+                    const updatedClaimed = [...(data.claimedDays || []), day];
+                    await setDoc(streakRef, { currentStreak: data.currentStreak+1, lastClaimDate: today, claimedDays: updatedClaimed }, { merge: true });
+                    showNotification(`🎁 Earned $${reward.toFixed(2)}`, 'success');
+                    await loadUserData(); await loadStreak();
+                };
             });
-            showNotification("KYC documents submitted. Awaiting verification.", "success");
-            await loadKYC();
         }
         
-        // Other existing functions (abbreviated but functional)
-        async function loadKYC() { 
-            const status = currentUserData?.kycStatus || "unverified";
-            document.getElementById('kycStatusDisplay').innerHTML = `<span class="px-3 py-1 rounded ${status==='verified'?'bg-green-100 text-green-800':'bg-yellow-100'}">${status}</span>`;
+        // CHAT SYSTEM
+        async function loadChat() {
+            if(!currentUser) return;
+            const userRef = doc(db, "users", currentUser.uid);
+            const userSnap = await getDoc(userRef);
+            chatMinutesRemaining = userSnap.data()?.chatMinutesRemaining || 0;
+            document.getElementById('chatMinutesRemaining').innerText = Math.floor(chatMinutesRemaining);
+            const chatInput = document.getElementById('chatInput');
+            const sendBtn = document.getElementById('sendChatBtn');
+            if (chatMinutesRemaining > 0) {
+                chatInput.disabled = false; sendBtn.disabled = false;
+                if (!chatTimerInterval) startChatTimer();
+            } else { chatInput.disabled = true; sendBtn.disabled = true; if(chatTimerInterval) clearInterval(chatTimerInterval); chatTimerInterval=null; }
+            const nickname = userSnap.data()?.chatNickname || currentUser.displayName || currentUser.email.split('@')[0];
+            document.getElementById('chatNickname').value = nickname;
+            const q = query(collection(db, "chat_messages"), orderBy("timestamp", "desc"), limit(100));
+            onSnapshot(q, (snap) => {
+                const container = document.getElementById('chatMessages');
+                let html = '';
+                snap.docs.reverse().forEach(doc => {
+                    const msg = doc.data();
+                    html += `<div class="chat-message"><b>${escapeHtml(msg.nickname)}</b> <span class="text-xs text-gray-400">${msg.timestamp?.toDate().toLocaleTimeString()}</span><br>${escapeHtml(msg.text)}</div>`;
+                });
+                container.innerHTML = html;
+                container.scrollTop = container.scrollHeight;
+            });
         }
-        // Placeholder for other loaders (same as before but trimmed for brevity; they work similarly)
+        function escapeHtml(str) { return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+        async function buyChatMinutes() {
+            const select = document.getElementById('buyMinutesSelect');
+            const minutes = parseInt(select.value);
+            let cost = 0;
+            if (minutes === 30) cost = 0.4;
+            else if (minutes === 60) cost = 0.9;
+            else if (minutes === 120) cost = 1.7;
+            const balance = currentUserData?.withdrawableBalance || 0;
+            if (balance < cost) return showNotification("Insufficient trading balance", "error");
+            await updateDoc(doc(db,"users",currentUser.uid), { withdrawableBalance: increment(-cost), chatMinutesRemaining: increment(minutes) });
+            await addDoc(collection(db,"transactions"), { userId:currentUser.uid, type:"chat_minutes", amount:-cost, description:`Purchased ${minutes} chat minutes`, timestamp:serverTimestamp() });
+            showNotification(`Purchased ${minutes} chat minutes!`, "success");
+            await loadUserData(); await loadChat();
+        }
+        function startChatTimer() {
+            if (chatTimerInterval) clearInterval(chatTimerInterval);
+            chatTimerInterval = setInterval(async () => {
+                if (chatMinutesRemaining <= 0) {
+                    clearInterval(chatTimerInterval);
+                    chatTimerInterval = null;
+                    document.getElementById('chatInput').disabled = true;
+                    document.getElementById('sendChatBtn').disabled = true;
+                    showNotification("Chat minutes exhausted. Please buy more.", "info");
+                    return;
+                }
+                chatMinutesRemaining -= 0.0166667;
+                if (chatMinutesRemaining < 0) chatMinutesRemaining = 0;
+                document.getElementById('chatMinutesRemaining').innerText = Math.floor(chatMinutesRemaining);
+                if (Math.floor(Date.now() / 1000) % 30 === 0) {
+                    await updateDoc(doc(db,"users",currentUser.uid), { chatMinutesRemaining: Math.max(0, chatMinutesRemaining) });
+                }
+            }, 1000);
+        }
+        async function sendChatMessage() {
+            if (chatMinutesRemaining <= 0) return showNotification("No chat minutes left", "error");
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+            const nickname = document.getElementById('chatNickname').value.trim() || currentUser.displayName || "Anonymous";
+            await addDoc(collection(db, "chat_messages"), { userId: currentUser.uid, nickname: nickname, text: text, timestamp: serverTimestamp() });
+            input.value = '';
+            await updateDoc(doc(db,"users",currentUser.uid), { chatNickname: nickname });
+        }
+        
+        // KYC with image URL submission
+        async function submitKYC() {
+            const faceUrl = document.getElementById('facePortraitUrl').value.trim();
+            const idType = document.getElementById('idType').value;
+            const idUrl = document.getElementById('idImageUrl').value.trim();
+            if (!faceUrl || !idUrl) {
+                showNotification("Please provide both face portrait and ID image URLs", "error");
+                return;
+            }
+            // Save KYC request
+            await setDoc(doc(db, "kyc_requests", currentUser.uid), {
+                userId: currentUser.uid,
+                facePortraitUrl: faceUrl,
+                idType: idType,
+                idDocumentUrl: idUrl,
+                status: "pending",
+                submittedAt: serverTimestamp()
+            });
+            await updateDoc(doc(db, "users", currentUser.uid), { kycStatus: "pending" });
+            document.getElementById('kycMessage').innerHTML = "✅ KYC submitted successfully. Admin will review.";
+            document.getElementById('kycStatusDisplay').innerHTML = '<span class="px-2 py-1 rounded bg-yellow-100">pending</span>';
+            showNotification("KYC submitted for review", "success");
+        }
+        
+        // Generate URL helper (opens www.link.com in new tab)
+        function generateImageUrl(fieldId) {
+            // Open a popup or new tab to www.link.com (simulated)
+            const newWindow = window.open('https://www.link.com', '_blank', 'width=800,height=600');
+            if (newWindow) {
+                // In real scenario, user would upload and get URL. Here we simulate that after 3 seconds we can set a dummy URL.
+                // But for demo, we'll just instruct.
+                showNotification("After uploading, copy the image URL and paste into the field.", "info");
+            } else {
+                showNotification("Popup blocked. Please allow popups for this site.", "error");
+            }
+        }
+        
+        // Other loaders (simplified but functional)
         async function loadBalances() { if(!currentUser) return; const userSnap=await getDoc(doc(db,"users",currentUser.uid)); const walletSnap=await getDoc(doc(db,"wallets",currentUser.uid)); const user=userSnap.data()||{}, wallet=walletSnap.data()||{}; document.getElementById('balanceDetails').innerHTML = `<div>Trading: $${(user.withdrawableBalance||0).toFixed(2)}</div><div>Investment: $${(wallet.investmentFunds||0).toFixed(2)}</div>`; }
         async function loadTransactions() { if(!currentUser) return; const q=query(collection(db,"transactions"), where("userId","==",currentUser.uid), orderBy("timestamp","desc"), limit(20)); const snap=await getDocs(q); let html=''; snap.forEach(d=>{ const t=d.data(); html+=`<div>${t.type}: $${t.amount.toFixed(2)}</div>`; }); document.getElementById('historyList').innerHTML=html||'No transactions'; }
         async function loadWithdrawals() { if(!currentUser) return; const q=query(collection(db,"withdrawals"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")); const snap=await getDocs(q); let html=''; snap.forEach(d=>{ const w=d.data(); html+=`<div>$${w.amount} - ${w.status}</div>`; }); document.getElementById('withdrawalsList').innerHTML=html||'No withdrawals'; }
@@ -362,12 +471,9 @@
         async function loadLeaderboard() { const q=query(collection(db,"users"), orderBy("totalEarned","desc"), limit(10)); const snap=await getDocs(q); let rank=1, html=''; snap.forEach(d=>{ const u=d.data(); html+=`<div>${rank++}. ${u.displayName||'User'} - $${(u.totalEarned||0).toFixed(2)}</div>`; }); document.getElementById('leaderboardContainer').innerHTML=html; }
         async function loadSupportTickets() { if(!currentUser) return; const q=query(collection(db,"support_tickets"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")); const snap=await getDocs(q); let html=''; snap.forEach(d=>{ const t=d.data(); html+=`<div>${t.subject} - ${t.status}</div>`; }); document.getElementById('supportTicketsList').innerHTML=html||'No tickets'; }
         async function loadAnnouncements() { const snap=await getDocs(query(collection(db,"announcements"), orderBy("createdAt","desc"), limit(10))); let html=''; snap.forEach(d=>{ const a=d.data(); html+=`<div><b>${a.title}</b><br>${a.content.substring(0,100)}</div>`; }); document.getElementById('announcementsList').innerHTML=html; }
+        async function loadKYC() { if(!currentUser) return; const userSnap=await getDoc(doc(db,"users",currentUser.uid)); const kycStatus = userSnap.data()?.kycStatus || "unverified"; document.getElementById('kycStatusDisplay').innerHTML = `<span class="px-2 py-1 rounded ${kycStatus==='verified'?'bg-green-100':kycStatus==='pending'?'bg-yellow-100':'bg-red-100'}">${kycStatus}</span>`; }
         async function loadContact() { document.getElementById('socialIconsContainer').innerHTML=''; document.getElementById('supportEmailDisplay').innerText=systemSettings.contactEmail; }
         async function loadSettings() { document.getElementById('displayNameInput').value=currentUserData?.displayName||''; document.getElementById('newEmailInput').value=currentUser.email; }
-        async function loadSectionData(sectionId) { if(!currentUser) return; const l = { balances:loadBalances, transactions:loadTransactions, withdrawals:loadWithdrawals, deposits:loadDeposits, referrals:loadReferrals, leaderboard:loadLeaderboard, support:loadSupportTickets, streak:loadStreak, kyc:loadKYC, announcements:loadAnnouncements, contact:loadContact, settings:loadSettings, chat:loadChat, investments:loadInvestmentSection };
-            if(l[sectionId]) await l[sectionId]();
-            if(sectionId==='trade') { loadOpenPositions(); loadLastTrades(); }
-        }
         async function loadInvestmentSection() { const walletSnap=await getDoc(doc(db,"wallets",currentUser.uid)); currentWallet=walletSnap.data()||{investmentFunds:0}; document.getElementById('investmentFundsDisplay').innerText=`$${(currentWallet.investmentFunds||0).toFixed(2)}`; document.getElementById('quickWithdrawable').innerText=`$${(currentUserData?.withdrawableBalance||0).toFixed(2)}`; }
         async function loadOpenPositions() { const q=query(collection(db,"binary_trades"), where("userId","==",currentUser.uid), where("status","==","open")); const snap=await getDocs(q); let html=''; snap.forEach(t=>{ html+=`<div>${t.data().direction} $${t.data().amount}</div>`; }); document.getElementById('openPositionsList').innerHTML=html||'No open positions'; }
         async function loadLastTrades(){ const q=query(collection(db,"binary_trades"), where("userId","==",currentUser.uid), orderBy("createdAt","desc"), limit(10)); const snap=await getDocs(q); lastTrades=[]; snap.forEach(d=>{ const data=d.data(); lastTrades.push({ direction:data.direction, stake:data.amount, profit:data.profit||0 }); }); let totalP=0,wins=0; let html=''; lastTrades.forEach(t=>{ totalP+=t.profit; if(t.profit>0) wins++; html+=`<div>${t.direction} $${t.stake} ${t.profit>0?'+'+t.profit:t.profit}</div>`; }); document.getElementById('lastTradesList').innerHTML=html||'No trades'; document.getElementById('last10Profit').innerHTML=`$${totalP.toFixed(2)}`; document.getElementById('winRatePercent').innerHTML=lastTrades.length?((wins/lastTrades.length)*100).toFixed(1)+'%':'0%'; }
@@ -377,15 +483,9 @@
         window.createTicket=async()=>{ const subj=prompt("Subject"); if(subj) await addDoc(collection(db,"support_tickets"),{ userId:currentUser.uid, subject:subj, message:prompt("Message"), status:"open", createdAt:serverTimestamp() }); };
         window.updateProfile=async()=>{ const name=document.getElementById('displayNameInput').value; if(name) await updateAuthProfile(currentUser,{displayName:name}); await updateDoc(doc(db,"users",currentUser.uid),{displayName:name}); showNotification("Updated"); };
         window.copyReferralLink=()=>{ navigator.clipboard.writeText(document.getElementById('referralLinkDisplay').innerText); showNotification("Copied"); };
+        function initSpinWheel() { const btn=document.getElementById('spinBtnWheel'); if(btn) btn.onclick=()=>showNotification("Wheel demo","info"); } initSpinWheel();
         
-        // Streak
-        async function loadStreak() { /* same as before but skip for brevity, it's intact */ showNotification("Streak loaded", "info"); }
-        // Chat
-        async function loadChat() { /* same as before */ }
-        async function buyChatMinutes() { /* same */ }
-        async function sendChatMessage() { /* same */ }
-        
-        // Init
+        async function loadSectionData(sectionId) { if(!currentUser) return; if(sectionId==='balances') await loadBalances(); if(sectionId==='transactions') await loadTransactions(); if(sectionId==='withdrawals') await loadWithdrawals(); if(sectionId==='deposits') await loadDeposits(); if(sectionId==='referrals') await loadReferrals(); if(sectionId==='leaderboard') await loadLeaderboard(); if(sectionId==='support') await loadSupportTickets(); if(sectionId==='streak') await loadStreak(); if(sectionId==='kyc') await loadKYC(); if(sectionId==='announcements') await loadAnnouncements(); if(sectionId==='contact') await loadContact(); if(sectionId==='settings') await loadSettings(); if(sectionId==='chat') await loadChat(); if(sectionId==='investments') await loadInvestmentSection(); if(sectionId==='trade') { loadOpenPositions(); loadLastTrades(); } }
         async function initPayment(method){ showModal("Payment", `Redirect to ${method} link (simulated)`); }
         function showPendingDepositForm(){ showModal("Offline Deposit", `<input id="pendingAmount" placeholder="Amount"><input id="pendingRef" placeholder="Ref"><button onclick="alert('Submitted')">Submit</button>`); }
         async function loadSystemSettings(){ const snap=await getDoc(doc(db,"settings","system")); if(snap.exists()) systemSettings={...systemSettings,...snap.data()}; }
@@ -406,10 +506,10 @@
         document.getElementById('bankDepositBtn').onclick=()=>initPayment('bank');
         document.getElementById('cryptoDepositBtn').onclick=()=>initPayment('crypto');
         document.getElementById('pendingDepositBtn').onclick=showPendingDepositForm;
-        document.getElementById('tradeGuideBtn').onclick=()=>showModal("Trading Guide", "CALL = price up, PUT = price down. Min $9.");
+        document.getElementById('tradeGuideBtn').onclick=()=>showModal("Trading Guide", "CALL = price up, PUT = price down. Win = Stake × Multiplier. Loss = -Stake. Min $9.");
         document.getElementById('submitKycBtn').onclick=submitKYC;
-        document.getElementById('faceUploadArea').onclick=()=>openImagePicker((url)=>{ if(url) document.getElementById('faceImageUrl').value = url; });
-        document.getElementById('idUploadArea').onclick=()=>openImagePicker((url)=>{ if(url) document.getElementById('idImageUrl').value = url; });
+        document.getElementById('generateFaceUrlBtn').onclick=()=>generateImageUrl('face');
+        document.getElementById('generateIdUrlBtn').onclick=()=>generateImageUrl('id');
         
         function showReAuthModal(callback) { const modal=document.getElementById('reAuthModal'); modal.classList.add('active'); document.getElementById('submitReAuthBtn').onclick=async()=>{ const pwd=document.getElementById('reAuthPassword').value; const cred=EmailAuthProvider.credential(currentUser.email, pwd); try{ await reauthenticateWithCredential(currentUser, cred); modal.classList.remove('active'); if(callback) await callback(); }catch(e){ showNotification("Auth failed", "error"); } }; }
         
