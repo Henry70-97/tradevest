@@ -85,6 +85,12 @@
         .profit-badge { background:#22c55e20; color:#15803d; border-radius: 2rem; padding: 0.2rem 0.8rem; font-weight: bold; }
         .deposit-method-btn { transition: all 0.2s; }
         .deposit-method-btn:hover { transform: translateY(-2px); }
+        .video-grid { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 1.5rem; }
+        .video-item { flex: 1; min-width: 180px; background: black; border-radius: 1rem; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .video-item video { width: 100%; height: auto; max-height: 200px; object-fit: cover; }
+        .balance-alert { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 0.75rem; border-radius: 0.75rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .guide-card { background: #e0e7ff; border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; cursor: pointer; transition: 0.2s; }
+        .guide-card:hover { background: #c7d2fe; transform: scale(0.98); }
     </style>
 </head>
 <body class="bg-amber-50">
@@ -122,16 +128,41 @@
             <div class="flex items-center gap-2"><span id="userShort" class="text-sm font-medium"></span><i class="fas fa-user-circle text-2xl text-gray-600"></i></div>
         </header>
 
+        <!-- THREE MINI VIDEO PLAYERS -->
+        <div class="container mx-auto px-4 pt-2">
+            <div class="video-grid">
+                <div class="video-item"><video src="video.mp4" autoplay muted loop playsinline controls></video></div>
+                <div class="video-item"><video src="video.mp4" autoplay muted loop playsinline controls></video></div>
+                <div class="video-item"><video src="video.mp4" autoplay muted loop playsinline controls></video></div>
+            </div>
+        </div>
+
         <main class="container mx-auto px-4 py-6 space-y-6">
-            <!-- TRADING SECTION -->
+            <!-- TRADING SECTION (UPDATED) -->
             <div id="trade" class="content-section active-section">
                 <div class="grid lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-2 space-y-4">
-                        <div class="card-glass p-1 overflow-hidden"><div class="tradingview-widget-container" style="height:70vh;"><div class="tradingview-widget-container__widget" style="height:100%;"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>{"allow_symbol_change":true,"interval":"1","symbol":"OANDA:EURUSD","theme":"light","autosize":true}</script></div></div>
+                        <!-- Trade Guide Button -->
+                        <div class="guide-card flex items-center justify-between" id="tradeGuideBtn">
+                            <div><i class="fas fa-book-open text-indigo-600 text-2xl mr-3"></i> <strong>📘 Trading Guide</strong> – Learn how to trade CALL/PUT, stake, multiplier, payout</div>
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                        <div class="tradingview-widget-container" style="height:70vh;"><div class="tradingview-widget-container__widget" style="height:100%;"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>{"allow_symbol_change":true,"interval":"1","symbol":"OANDA:EURUSD","theme":"light","autosize":true}</script></div>
                         <div class="card-glass p-4"><div class="flex gap-5 border-b mb-3"><button id="positionsTabBtn" class="px-4 py-2 font-bold text-indigo-600 border-b-2 border-indigo-500">Open Positions</button><button id="historyTabBtn" class="px-4 py-2 font-bold text-gray-500">Trade History</button></div><div id="positionsPanel"><div id="openPositionsList" class="space-y-2 max-h-64 overflow-y-auto"></div></div><div id="historyPanel" class="hidden"><div id="lastTradesList" class="space-y-2 max-h-64 overflow-y-auto"></div><div class="mt-3 flex justify-between"><span>Last 10 P/L:</span><span id="last10Profit" class="profit-badge">$0.00</span><span>Win Rate:</span><span id="winRatePercent" class="font-bold">0%</span></div></div></div>
                     </div>
                     <div class="space-y-4">
-                        <div class="card-glass p-4"><div class="flex justify-between"><span class="font-bold">💰 Trading Balance</span><span id="liveBalance" class="text-2xl font-bold text-green-600">$0.00</span></div><div class="flex gap-2 mt-3"><button onclick="downloadTradeHistory()" class="flex-1 bg-green-600 text-white py-2 rounded-xl text-sm"><i class="fas fa-download"></i> History</button><button onclick="showDepositModal()" class="flex-1 bg-blue-600 text-white py-2 rounded-xl"><i class="fas fa-plus-circle"></i> Deposit</button></div></div>
+                        <!-- Trading Balance Card with Top Up -->
+                        <div class="card-glass p-4">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-lg">💰 Trading Balance</span>
+                                <button id="topUpBalanceBtn" class="bg-indigo-600 text-white px-3 py-1 rounded-full text-sm flex items-center gap-1"><i class="fas fa-plus-circle"></i> Top Up</button>
+                            </div>
+                            <div id="liveBalance" class="text-3xl font-bold text-green-600 mt-2">$0.00</div>
+                            <div id="insufficientAlert" class="balance-alert hidden mt-2">
+                                <i class="fas fa-exclamation-triangle text-yellow-600"></i>
+                                <span class="text-sm">Insufficient balance? <a href="#" id="depositNowLink" class="font-bold underline">Deposit now</a> to start trading.</span>
+                            </div>
+                        </div>
                         <div class="card-glass p-4 text-center"><div class="text-sm text-gray-500">EUR/USD Live</div><div class="text-3xl font-bold text-indigo-700" id="livePrice">1.0892</div></div>
                         <div class="card-glass p-4"><div class="font-medium mb-2">Stake Amount (Min $9)</div><div class="grid grid-cols-5 gap-2" id="stakeButtonsContainer"></div><input type="number" id="stakeAmount" class="w-full border rounded-xl p-2 mt-2 text-center" value="10"></div>
                         <div class="card-glass p-4"><label>Multiplier</label><div class="flex gap-3"><input type="range" id="multiplierSlider" min="1" max="100" value="2"><span id="multiplierValue">x2</span></div><div class="mt-3 text-center"><span>Est. Payout:</span> <span id="totalPayout" class="font-bold text-indigo-700">$20.00</span></div></div>
@@ -140,15 +171,13 @@
                 </div>
             </div>
 
-            <!-- INVESTMENTS SECTION -->
+            <!-- INVESTMENTS SECTION (updated new deposit redirect) -->
             <div id="investments" class="content-section"><div class="space-y-6"><div class="grid md:grid-cols-2 gap-5"><div class="card-glass p-5"><h2 class="text-2xl font-bold">Investment Dashboard</h2></div><div class="card-glass p-5"><div>Investment Wallet</div><div id="investmentFundsDisplay" class="text-3xl font-bold text-indigo-700">$0.00</div><div>Trading Balance (Withdrawable)</div><div id="quickWithdrawable" class="text-xl font-semibold text-green-600">$0.00</div></div></div><div><h3 class="text-xl font-bold mb-3">Investment Products</h3><div id="productsContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div></div><div><h3 class="text-xl font-bold mb-3">Active Investments</h3><div id="activeInvestmentsList" class="space-y-3"></div></div><div class="grid md:grid-cols-2 gap-5"><div class="card-glass p-5"><h3 class="font-bold">💰 Total Investment Earnings</h3><div id="totalInvestmentEarnings" class="text-3xl font-bold text-green-600">$0.00</div></div><div class="card-glass p-5"><h3 class="font-bold">⏳ Pending Earnings</h3><div id="pendingEarningsInfo" class="text-xl font-semibold">$0.00</div></div></div><div class="card-glass p-5"><div class="flex gap-3"><button id="topUpFromBalanceBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-xl">From Trading Balance</button><button id="topUpNewFundsBtn" class="bg-emerald-600 text-white px-4 py-2 rounded-xl">New Deposit</button></div></div></div></div>
             
-            <!-- BALANCES SECTION -->
             <div id="balances" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">💰 Balance Overview</h3><div id="balanceDetails" class="space-y-2"></div></div></div>
             <div id="transactions" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">📜 Transaction History</h3><div id="historyList" class="space-y-2"></div></div></div>
             <div id="withdrawals" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">🏦 Withdrawals</h3><button onclick="requestWithdrawal()" class="mb-3 bg-blue-600 text-white px-4 py-2 rounded-lg">Request Withdrawal</button><div id="withdrawalsList" class="space-y-2"></div></div></div>
             
-            <!-- DEPOSITS SECTION (UPDATED) -->
             <div id="deposits" class="content-section">
                 <div class="card-glass p-6">
                     <h3 class="text-xl font-bold mb-3">💎 Deposit Funds</h3>
@@ -177,7 +206,7 @@
         </main>
     </div>
 
-    <!-- MODAL for pending deposit / forms -->
+    <!-- MODAL -->
     <div id="detailModal" class="modal"><div class="modal-content"><div class="flex justify-between items-center mb-3"><h3 id="modalTitle" class="text-xl font-bold">Details</h3><button onclick="closeModal()" class="text-gray-500 text-2xl">&times;</button></div><div id="modalBody" class="text-gray-700"></div><button onclick="closeModal()" class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded">Close</button></div></div>
 
     <script type="module">
@@ -196,7 +225,6 @@
         const defaultProducts = [{ id: "starter", name: "Starter Plan", minAmount:50, dailyROI:2.0, durationDays:10, totalReturnPercent:20 },{ id: "advanced", name: "Advanced Plan", minAmount:200, dailyROI:2.5, durationDays:20, totalReturnPercent:50 },{ id: "premium", name: "Premium Plan", minAmount:500, dailyROI:3.0, durationDays:30, totalReturnPercent:90 }];
         let investmentProducts = [...defaultProducts];
 
-        // Helper functions
         function showNotification(msg, type='success'){ const d=document.createElement('div'); d.className=`notification ${type==='error'?'bg-red-700':type==='info'?'bg-blue-700':'bg-gray-800'}`; d.innerHTML=msg; document.body.appendChild(d); setTimeout(()=>d.remove(),3000); }
         function showModal(title, content){ document.getElementById('modalTitle').innerText = title; document.getElementById('modalBody').innerHTML = content; document.getElementById('detailModal').classList.add('active'); }
         window.closeModal = () => document.getElementById('detailModal').classList.remove('active');
@@ -216,7 +244,23 @@
             }
         }
 
-        // Deposit methods: fetch payment link from Firestore and redirect
+        // Trade Guide
+        function showTradeGuide() {
+            const guideContent = `
+                <div class="space-y-3">
+                    <h4 class="font-bold text-lg">📈 How to Trade on BestPay</h4>
+                    <p><strong>1. Choose direction:</strong> <span class="text-green-600">CALL (▲)</span> if you think price will go UP within 60 seconds, or <span class="text-red-600">PUT (▼)</span> if you think price will go DOWN.</p>
+                    <p><strong>2. Set Stake:</strong> Minimum $9. Use number pad or type manually.</p>
+                    <p><strong>3. Multiplier:</strong> Higher multiplier = higher potential profit, but risk increases. Payout = Stake × Multiplier.</p>
+                    <p><strong>4. Trade expiry:</strong> Each trade lasts 60 seconds. Win condition: price at expiry vs entry price.</p>
+                    <p><strong>5. Profit:</strong> If correct, you win Stake × Multiplier. If wrong, you lose the stake.</p>
+                    <p><strong>💡 Tip:</strong> Start with small stake, low multiplier. Check your balance before trading.</p>
+                </div>
+            `;
+            showModal("📘 Trading Guide", guideContent);
+        }
+
+        // Deposit methods
         async function initiatePayment(method) {
             try {
                 const paymentLinkDoc = await getDoc(doc(db, "payment_links", method));
@@ -225,7 +269,6 @@
                     window.open(url, '_blank');
                     showNotification(`Redirecting to ${method} payment page...`, 'info');
                 } else {
-                    // Fallback for demo: show manual instructions
                     showModal("Payment Instruction", `For ${method}, please send funds to our official account. After payment, use "Already deposited?" button to confirm.`);
                 }
             } catch (error) {
@@ -234,7 +277,6 @@
             }
         }
 
-        // Show pending deposit form (already deposited but not reflecting)
         function showPendingDepositForm() {
             const formHtml = `
                 <div class="space-y-3">
@@ -274,7 +316,6 @@
             };
         }
 
-        // Updated loadDeposits to show both completed and pending
         async function loadDeposits() { 
             if(!currentUser) return;
             const container = document.getElementById('depositsList');
@@ -291,7 +332,7 @@
             container.innerHTML = html;
         }
 
-        // Other loaders (unchanged but ensure consistency)
+        // OTHER LOADERS (unchanged but ensure they exist)
         async function loadBalances() { if(!currentUser) return; const container = document.getElementById('balanceDetails'); container.innerHTML = '<div class="flex justify-center py-4"><div class="spinner-small"></div> Loading...</div>'; const userSnap = await getDoc(doc(db,"users",currentUser.uid)); const walletSnap = await getDoc(doc(db,"wallets",currentUser.uid)); const user = userSnap.data()||{}; const wallet = walletSnap.data()||{}; container.innerHTML = `<div class="flex justify-between p-2 bg-gray-50 rounded"><span>💰 Trading Balance (Withdrawable):</span><span class="font-bold">$${(user.withdrawableBalance||0).toFixed(2)}</span></div><div class="flex justify-between p-2"><span>💼 Investment Funds:</span><span>$${(wallet.investmentFunds||0).toFixed(2)}</span></div><div class="flex justify-between p-2"><span>🎁 Bonus:</span><span>$${(wallet.bonusBalance||0).toFixed(2)}</span></div><div class="flex justify-between p-2"><span>📈 Total Earned:</span><span>$${(user.totalEarned||0).toFixed(2)}</span></div>`; }
         async function loadTransactions() { if(!currentUser) return; const container = document.getElementById('historyList'); container.innerHTML = '<div class="flex justify-center py-4"><div class="spinner-small"></div> Loading...</div>'; const q = query(collection(db,"transactions"), where("userId","==",currentUser.uid), orderBy("timestamp","desc"), limit(50)); const snap = await getDocs(q); let html=''; snap.forEach(d=>{ const t=d.data(); html+=`<div class="list-item-clickable p-3 border rounded bg-white flex justify-between" onclick="showModal('Transaction','<b>Type:</b> ${t.type}<br><b>Amount:</b> $${Math.abs(t.amount).toFixed(2)}<br><b>Description:</b> ${t.description||''}<br><b>Date:</b> ${t.timestamp?.toDate().toLocaleString()||'now'}')"><span>${t.type}</span><span class="${t.amount>=0?'text-green-600':'text-red-600'}">$${t.amount.toFixed(2)}</span></div>`; }); container.innerHTML = html || '<div class="text-gray-400 p-4 text-center">No transactions yet</div>'; }
         async function loadWithdrawals() { if(!currentUser) return; const container = document.getElementById('withdrawalsList'); container.innerHTML = '<div class="flex justify-center py-4"><div class="spinner-small"></div> Loading...</div>'; const q = query(collection(db,"withdrawals"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")); const snap = await getDocs(q); let html=''; snap.forEach(d=>{ const w=d.data(); html+=`<div class="list-item-clickable p-3 border rounded bg-white" onclick="showModal('Withdrawal','Amount: $${w.amount}<br>Status: ${w.status}<br>Date: ${w.createdAt?.toDate().toLocaleString()}')"><div class="flex justify-between"><span>$${w.amount}</span><span class="px-2 py-0.5 rounded ${w.status==='pending'?'bg-yellow-100':'bg-green-100'}">${w.status}</span></div></div>`; }); container.innerHTML = html || '<div class="text-gray-400 p-4">No withdrawal requests</div>'; }
@@ -318,7 +359,7 @@
         async function updatePendingEarnings(){ const q=query(collection(db,"user_investments"), where("userId","==",currentUser.uid), where("status","==","active")); const snap=await getDocs(q); let totalPending=0; snap.forEach(d=>{ const inv=d.data(); const daysLeft=Math.max(0,Math.ceil((inv.endDate.toDate()-new Date())/86400000)); totalPending+=inv.amount*(inv.dailyROI/100)*daysLeft; }); document.getElementById('pendingEarningsInfo').innerHTML=`$${totalPending.toFixed(2)} expected`; }
         function renderProducts(){ const container=document.getElementById('productsContainer'); container.innerHTML=investmentProducts.map(p=>`<div class="card-glass p-4"><h4 class="font-bold text-lg">${p.name}</h4><p>Min $${p.minAmount} | Daily ${p.dailyROI}%</p><p>${p.durationDays}d | Total +${p.totalReturnPercent}%</p><input type="number" id="amount-${p.id}" placeholder="Amount" class="border rounded p-1 w-full my-2"><button onclick="buyProduct('${p.id}')" class="bg-indigo-600 text-white px-3 py-1 rounded w-full">Invest</button></div>`).join(''); window.buyProduct=async(id)=>{ const p=investmentProducts.find(pr=>pr.id===id); const amount=parseFloat(document.getElementById(`amount-${id}`).value); if(isNaN(amount)||amount<p.minAmount) return showNotification(`Minimum $${p.minAmount}`,'error'); if(amount>currentWallet.investmentFunds) return showNotification("Insufficient investment funds",'error'); await updateDoc(doc(db,"wallets",currentUser.uid),{ investmentFunds: increment(-amount) }); await addDoc(collection(db,"user_investments"),{ userId:currentUser.uid, productId:p.id, productName:p.name, amount, dailyROI:p.dailyROI, durationDays:p.durationDays, totalReturnPercent:p.totalReturnPercent, startDate:Timestamp.now(), endDate:Timestamp.fromDate(new Date(Date.now()+p.durationDays*86400000)), status:"active", createdAt:serverTimestamp() }); showNotification(`Invested $${amount} into ${p.name}.`); await loadInvestmentSection(); }; }
 
-        async function executeTrade(direction){ let stake=parseFloat(document.getElementById('stakeAmount').value)||10; if(stake < 9) { showNotification("Minimum trade stake is $9", "error"); return; } const multiplier=parseInt(document.getElementById('multiplierSlider').value); const balance=currentUserData?.withdrawableBalance||0; if(stake>balance) return showNotification("Insufficient trading balance",'error'); await updateDoc(doc(db,"users",currentUser.uid),{ withdrawableBalance: increment(-stake) }); await addDoc(collection(db,"transactions"),{ userId:currentUser.uid, type:"trade_stake", amount:-stake, description:`${direction} trade`, timestamp:serverTimestamp() }); await loadUserData(); const entryPrice=currentPrice; const tradeRef=await addDoc(collection(db,"binary_trades"),{ userId:currentUser.uid, direction, amount:stake, multiplier, entryPrice, expiry:Timestamp.fromDate(new Date(Date.now()+60000)), status:"open", createdAt:serverTimestamp() }); setTimeout(async()=>{ const snap=await getDoc(tradeRef); if(!snap.exists()||snap.data().status!=="open")return; const isWin=(direction==='call'&&currentPrice>entryPrice)||(direction==='put'&&currentPrice<entryPrice); const profit=isWin?stake*multiplier:0; await updateDoc(tradeRef,{ status:isWin?'won':'lost', profit, finalPrice:currentPrice }); if(isWin){ await updateDoc(doc(db,"users",currentUser.uid),{ withdrawableBalance:increment(profit), totalEarned:increment(profit) }); showNotification(`WIN! +$${profit}`,'success'); } else showNotification(`LOSS! -$${stake}`,'error'); await loadUserData(); await loadOpenPositions(); await loadLastTrades(); },60000); await loadOpenPositions(); }
+        async function executeTrade(direction){ let stake=parseFloat(document.getElementById('stakeAmount').value)||10; if(stake < 9) { showNotification("Minimum trade stake is $9", "error"); return; } const multiplier=parseInt(document.getElementById('multiplierSlider').value); const balance=currentUserData?.withdrawableBalance||0; if(stake>balance) { showNotification("Insufficient trading balance. Please deposit or top up.", "error"); document.getElementById('insufficientAlert').classList.remove('hidden'); return; } document.getElementById('insufficientAlert').classList.add('hidden'); await updateDoc(doc(db,"users",currentUser.uid),{ withdrawableBalance: increment(-stake) }); await addDoc(collection(db,"transactions"),{ userId:currentUser.uid, type:"trade_stake", amount:-stake, description:`${direction} trade`, timestamp:serverTimestamp() }); await loadUserData(); const entryPrice=currentPrice; const tradeRef=await addDoc(collection(db,"binary_trades"),{ userId:currentUser.uid, direction, amount:stake, multiplier, entryPrice, expiry:Timestamp.fromDate(new Date(Date.now()+60000)), status:"open", createdAt:serverTimestamp() }); showNotification(`Trade placed: ${direction.toUpperCase()} $${stake}`, "info"); setTimeout(async()=>{ const snap=await getDoc(tradeRef); if(!snap.exists()||snap.data().status!=="open")return; const isWin=(direction==='call'&&currentPrice>entryPrice)||(direction==='put'&&currentPrice<entryPrice); const profit=isWin?stake*multiplier:0; await updateDoc(tradeRef,{ status:isWin?'won':'lost', profit, finalPrice:currentPrice }); if(isWin){ await updateDoc(doc(db,"users",currentUser.uid),{ withdrawableBalance:increment(profit), totalEarned:increment(profit) }); showNotification(`WIN! +$${profit}`,'success'); } else showNotification(`LOSS! -$${stake}`,'error'); await loadUserData(); await loadOpenPositions(); await loadLastTrades(); },60000); await loadOpenPositions(); }
         async function loadOpenPositions(){ const q=query(collection(db,"binary_trades"), where("userId","==",currentUser.uid), where("status","==","open")); const snap=await getDocs(q); let html=''; snap.forEach(t=>{ const d=t.data(); const remaining=Math.max(0,Math.ceil((d.expiry.toDate()-Date.now())/1000)); html+=`<div class="bg-gray-100 p-2 rounded flex justify-between"><span><b>${d.direction}</b> $${d.amount}</span><span>expires ${remaining}s</span></div>`; }); document.getElementById('openPositionsList').innerHTML=html||'<div class="text-center p-4">No open positions</div>'; }
         async function loadLastTrades(){ if(!currentUser) return; const q=query(collection(db,"binary_trades"), where("userId","==",currentUser.uid), orderBy("createdAt","desc"), limit(10)); const snap=await getDocs(q); lastTrades=[]; snap.forEach(d=>{ const data=d.data(); lastTrades.push({ direction:data.direction, stake:data.amount, profit:data.profit||0, time:data.createdAt?.toDate()||new Date() }); }); updateLastTradesUI(); }
         function updateLastTradesUI(){ const container=document.getElementById('lastTradesList'); let totalP=0,wins=0; let html=''; for(let t of lastTrades){ totalP+=t.profit; if(t.profit>0) wins++; html+=`<div class="list-item-clickable flex justify-between text-sm border-b py-1" onclick="showModal('Trade','Direction: ${t.direction}<br>Stake: $${t.stake}<br>Profit: $${t.profit}<br>Time: ${t.time.toLocaleString()}')"><span>${t.direction.toUpperCase()} $${t.stake}</span><span class="${t.profit>0?'text-green-600':'text-red-600'}">$${t.profit}</span></div>`; } container.innerHTML=html||'No trades'; document.getElementById('last10Profit').innerHTML=`$${totalP.toFixed(2)}`; const wr=lastTrades.length?(wins/lastTrades.length*100).toFixed(1):0; document.getElementById('winRatePercent').innerHTML=`${wr}%`; }
@@ -333,6 +374,8 @@
             currentUserData = freshUser.data(); currentWallet = freshWallet.data();
             document.getElementById('liveBalance').innerText = `$${(currentUserData?.withdrawableBalance || 0).toFixed(2)}`;
             document.getElementById('userShort').innerText = currentUserData?.displayName?.split(' ')[0] || currentUser.email.split('@')[0];
+            if((currentUserData?.withdrawableBalance || 0) < 9) document.getElementById('insufficientAlert').classList.remove('hidden');
+            else document.getElementById('insufficientAlert').classList.add('hidden');
             await loadLastTrades();
         }
 
@@ -343,8 +386,7 @@
         window.updateProfile=async()=>{ const newName=document.getElementById('displayNameInput').value; if(newName && currentUser) { await updateAuthProfile(currentUser, { displayName: newName }); await updateDoc(doc(db,"users",currentUser.uid),{ displayName: newName }); showNotification("Profile updated"); await loadUserData(); } };
         window.copyReferralLink=()=>{ navigator.clipboard.writeText(document.getElementById('referralLinkDisplay').innerText); showNotification("Link copied"); };
         window.downloadTradeHistory=()=>{ const csv=["Direction,Stake,Profit,Time",...lastTrades.map(t=>`${t.direction},${t.stake},${t.profit},${t.time.toLocaleString()}`)].join("\n"); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv])); a.download="trade_history.csv"; a.click(); };
-        window.showDepositModal=()=>{ activateSection('deposits'); };
-
+        
         // Spin wheel (unchanged but uses trading balance)
         function initSpinWheel(){ const canvas=document.getElementById('wheelCanvas'); if(!canvas)return; const ctx=canvas.getContext('2d'); const segments=[{label:"$5",value:5},{label:"$2",value:2},{label:"$10",value:10},{label:"$1",value:1},{label:"$50",value:50},{label:"Try Again",value:0}]; let spinning=false; function drawWheel(angle=0){ const size=250,center=size/2,radius=size/2-10,angleStep=(Math.PI*2)/segments.length; ctx.clearRect(0,0,size,size); for(let i=0;i<segments.length;i++){ const startAngle=i*angleStep+angle; ctx.beginPath(); ctx.fillStyle=`hsl(${i*60},70%,60%)`; ctx.moveTo(center,center); ctx.arc(center,center,radius,startAngle,startAngle+angleStep); ctx.fill(); ctx.save(); ctx.translate(center,center); ctx.rotate(startAngle+angleStep/2); ctx.fillStyle="white"; ctx.font="bold 14px sans-serif"; ctx.fillText(segments[i].label,radius-35,8); ctx.restore(); } } drawWheel(); document.getElementById('spinBtnWheel').onclick=async()=>{ if(spinning)return; const stake=parseFloat(document.getElementById('spinStake').value)||2; if(stake> (currentUserData?.withdrawableBalance||0)) return showNotification("Insufficient trading balance",'error'); spinning=true; await updateDoc(doc(db,"users",currentUser.uid),{ withdrawableBalance:increment(-stake) }); await addDoc(collection(db,"transactions"),{ userId:currentUser.uid, type:"spin_stake", amount:-stake, description:"Prize Wheel spin", timestamp:serverTimestamp() }); const randomIndex=Math.floor(Math.random()*segments.length); const prize=segments[randomIndex].value; let spinAngle=0; const targetAngle=randomIndex*(Math.PI*2/segments.length)+Math.PI*4; const startTime=performance.now(); function animate(now){ const elapsed=now-startTime; if(elapsed<1000){ spinAngle=Math.min(targetAngle, (elapsed/1000)*targetAngle); drawWheel(spinAngle); requestAnimationFrame(animate); }else{ drawWheel(targetAngle% (Math.PI*2)); if(prize>0){ updateDoc(doc(db,"users",currentUser.uid),{ withdrawableBalance:increment(prize) }); addDoc(collection(db,"transactions"),{ userId:currentUser.uid, type:"spin_win", amount:prize, description:`Won $${prize}`, timestamp:serverTimestamp() }); showNotification(`🎉 You won $${prize}!`,'success'); } else showNotification("Better luck next time!",'info'); loadUserData(); document.getElementById('spinResultMsg').innerHTML=prize>0?`🎉 Won $${prize}!`:`😢 No prize`; spinning=false; } } requestAnimationFrame(animate); }; } initSpinWheel();
 
@@ -369,7 +411,11 @@
         document.getElementById('positionsTabBtn').onclick=()=>{ document.getElementById('positionsPanel').classList.remove('hidden'); document.getElementById('historyPanel').classList.add('hidden'); loadOpenPositions(); };
         document.getElementById('historyTabBtn').onclick=()=>{ document.getElementById('positionsPanel').classList.add('hidden'); document.getElementById('historyPanel').classList.remove('hidden'); };
         document.getElementById('topUpFromBalanceBtn').onclick=async()=>{ const bal=currentUserData?.withdrawableBalance||0; if(bal<=0) return showNotification("No balance",'error'); const amt=parseFloat(prompt(`Transfer (max $${bal.toFixed(2)})`)); if(amt>0&&amt<=bal){ await updateDoc(doc(db,"users",currentUser.uid),{ withdrawableBalance: increment(-amt) }); await updateDoc(doc(db,"wallets",currentUser.uid),{ investmentFunds: increment(amt) }); showNotification(`$${amt} moved to investment funds`); await loadInvestmentSection(); await loadUserData(); } };
-        document.getElementById('topUpNewFundsBtn').onclick=async()=>{ const amt=parseFloat(prompt("Deposit amount:")); if(amt>0){ await updateDoc(doc(db,"users",currentUser.uid),{ withdrawableBalance: increment(amt) }); await addDoc(collection(db,"deposits"),{ userId:currentUser.uid, amount:amt, method:"Manual", status:"completed", createdAt:serverTimestamp() }); showNotification(`$${amt} added`); await loadUserData(); } };
+        document.getElementById('topUpNewFundsBtn').onclick=()=>{ activateSection('deposits'); };
+        document.getElementById('topUpBalanceBtn').onclick=()=>{ activateSection('deposits'); };
+        document.getElementById('depositNowLink').onclick=(e)=>{ e.preventDefault(); activateSection('deposits'); };
+        document.getElementById('tradeGuideBtn').onclick=showTradeGuide;
+        
         function initStakeButtons(){ const cont=document.getElementById('stakeButtonsContainer'); for(let i=0;i<=9;i++){ const btn=document.createElement('button'); btn.innerText=i; btn.className='number-btn'; btn.onclick=()=>{ document.getElementById('stakeAmount').value+=i; let stake=parseFloat(document.getElementById('stakeAmount').value)||10; document.getElementById('totalPayout').innerText=`$${(stake*document.getElementById('multiplierSlider').value).toFixed(2)}`; }; cont.appendChild(btn); } }
         
         // Deposit buttons
