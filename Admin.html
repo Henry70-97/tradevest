@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>BestPay | Admin Console</title>
+    <title>BestPay | Admin Console (Full Control)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -20,14 +20,13 @@
         .loading-spinner { text-align:center; padding:2rem; }
         .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #4f46e5; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .empty-message { text-align:center; color:#9ca3af; padding:2rem; font-style:italic; }
+        .notification { position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: white; padding: 10px 20px; border-radius: 40px; z-index: 1100; }
+        button:disabled { opacity:0.6; cursor:not-allowed; }
         table { width:100%; border-collapse: collapse; }
-        th, td { text-align:left; padding:0.75rem; border-bottom:1px solid #e5e7eb; }
+        th, td { text-align:left; padding:0.5rem; border-bottom:1px solid #e5e7eb; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; z-index: 20000; }
         .modal.active { display: flex; }
         .modal-content { background: white; max-width: 500px; width: 90%; border-radius: 1rem; padding: 1.5rem; }
-        .notification { position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: white; padding: 10px 20px; border-radius: 40px; z-index: 1100; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        button:disabled { opacity:0.6; cursor:not-allowed; }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -37,18 +36,22 @@
             <div class="flex items-center gap-2"><i class="fas fa-shield-alt text-2xl text-indigo-400"></i><span class="font-bold text-xl">BestPay Admin</span></div>
             <button id="closeSidebarBtn" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
         </div>
-        <nav class="sidebar-nav px-3 py-4 space-y-1">
+        <nav class="sidebar-nav px-3 py-4 space-y-1" id="sidebarNav">
             <a data-section="dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
             <a data-section="users"><i class="fas fa-users"></i> Users</a>
+            <a data-section="binaryTrades"><i class="fas fa-chart-line"></i> Binary Trades</a>
+            <a data-section="tradingSettings"><i class="fas fa-sliders-h"></i> Trading Settings</a>
             <a data-section="investments"><i class="fas fa-chart-line"></i> Investment Plans</a>
             <a data-section="activeInvestments"><i class="fas fa-clock"></i> User Investments</a>
             <a data-section="withdrawals"><i class="fas fa-hand-holding-usd"></i> Withdrawals</a>
+            <a data-section="withdrawalSettings"><i class="fas fa-cog"></i> Withdrawal Settings</a>
             <a data-section="deposits"><i class="fas fa-plus-circle"></i> Deposits</a>
             <a data-section="paymentLinks"><i class="fas fa-link"></i> Payment Links</a>
             <a data-section="chatManagement"><i class="fas fa-comments"></i> Chat Management</a>
             <a data-section="tickets"><i class="fas fa-ticket-alt"></i> Support Tickets</a>
             <a data-section="transactions"><i class="fas fa-exchange-alt"></i> Transactions</a>
             <a data-section="referrals"><i class="fas fa-users"></i> Referrals</a>
+            <a data-section="referralSettings"><i class="fas fa-percent"></i> Referral Settings</a>
             <a data-section="leaderboard"><i class="fas fa-trophy"></i> Leaderboard</a>
             <a data-section="adminLogs"><i class="fas fa-history"></i> Admin Logs</a>
             <a data-section="announcements"><i class="fas fa-bullhorn"></i> Announcements</a>
@@ -64,7 +67,7 @@
     <div class="ml-0">
         <header class="bg-white shadow-sm sticky top-0 z-20 px-4 py-3 flex items-center gap-4">
             <button id="hamburgerBtn" class="text-2xl"><i class="fas fa-bars"></i></button>
-            <h1 class="text-xl font-semibold">Admin Control Panel</h1>
+            <h1 class="text-xl font-semibold">Admin Control Panel (Full Control)</h1>
             <div class="flex-1"></div><span id="adminName" class="text-sm"></span>
         </header>
         <main class="container mx-auto px-4 py-6 space-y-6" id="mainContent">
@@ -85,14 +88,15 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        
         let currentAdmin = null;
-        function showNotification(msg, type='success'){ const d=document.createElement('div'); d.className=`notification ${type==='error'?'bg-red-700':'bg-gray-800'}`; d.innerHTML=msg; document.body.appendChild(d); setTimeout(()=>d.remove(),3000); }
         
-        // Helper to set loading state
-        function setLoading(container, isLoading) {
-            if (isLoading) container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
-        }
+        function showNotification(msg, type='success'){ const d=document.createElement('div'); d.className=`notification ${type==='error'?'bg-red-700':'bg-gray-800'}`; d.innerHTML=msg; document.body.appendChild(d); setTimeout(()=>d.remove(),3000); }
+        function setLoading(container, isLoading) { if(isLoading) container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>'; }
+        async function addAdminLog(action, targetUserId = null, details = {}) { try { await addDoc(collection(db, "admin_logs"), { adminId: currentAdmin.uid, adminEmail: currentAdmin.email, action, targetUserId, details, timestamp: serverTimestamp() }); } catch(e) { console.error(e); } }
+        
+        // Helper to close modals
+        function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); }
+        function showModal(modalId) { document.getElementById(modalId).classList.add('active'); }
         
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = "index.html"; return; }
@@ -104,28 +108,23 @@
             setupNavigation();
         });
         
-        async function addAdminLog(action, targetUserId = null, details = {}) {
-            try { await addDoc(collection(db, "admin_logs"), { adminId: currentAdmin.uid, adminEmail: currentAdmin.email, action, targetUserId, details, timestamp: serverTimestamp() }); } catch(e) { console.error(e); }
-        }
-        
-        // ===================== DASHBOARD =====================
+        // ========== DASHBOARD ==========
         async function loadDashboard() {
             const container = document.getElementById('mainContent');
-            if (!container) return;
             setLoading(container, true);
             try {
-                const [usersSnap, pendingWithdrawalsSnap, pendingDepositsSnap, pendingKYCSnap] = await Promise.all([
+                const [usersSnap, pendingWithdrawalsSnap, pendingDepositsSnap, pendingKYCSnap, activeTradesSnap] = await Promise.all([
                     getDocs(collection(db,"users")),
                     getDocs(query(collection(db,"withdrawals"), where("status","==","pending"))),
                     getDocs(query(collection(db,"pending_deposits"), where("status","==","pending_review"))),
-                    getDocs(query(collection(db,"kyc_requests"), where("status","==","pending")))
+                    getDocs(query(collection(db,"kyc_requests"), where("status","==","pending"))),
+                    getDocs(query(collection(db,"binary_trades"), where("status","==","active")))
                 ]);
-                const stats = [usersSnap.size, pendingWithdrawalsSnap.size, pendingDepositsSnap.size, pendingKYCSnap.size];
-                container.innerHTML = `<div class="admin-card"><h2 class="text-xl font-bold mb-3">Dashboard Stats</h2><div class="grid grid-cols-2 md:grid-cols-4 gap-4"><div class="bg-indigo-100 p-4 rounded text-center"><div class="text-2xl font-bold">${stats[0]}</div><div>Total Users</div></div><div class="bg-yellow-100 p-4 rounded text-center"><div class="text-2xl font-bold">${stats[1]}</div><div>Pending Withdrawals</div></div><div class="bg-blue-100 p-4 rounded text-center"><div class="text-2xl font-bold">${stats[2]}</div><div>Pending Deposits</div></div><div class="bg-purple-100 p-4 rounded text-center"><div class="text-2xl font-bold">${stats[3]}</div><div>KYC Pending</div></div></div></div>`;
-            } catch(e) { container.innerHTML = `<div class="admin-card text-red-500">Error loading dashboard: ${e.message}</div>`; }
+                container.innerHTML = `<div class="admin-card"><h2 class="text-xl font-bold mb-3">Dashboard Stats</h2><div class="grid grid-cols-2 md:grid-cols-5 gap-4"><div class="bg-indigo-100 p-4 rounded text-center"><div class="text-2xl font-bold">${usersSnap.size}</div><div>Total Users</div></div><div class="bg-yellow-100 p-4 rounded text-center"><div class="text-2xl font-bold">${pendingWithdrawalsSnap.size}</div><div>Pending Withdrawals</div></div><div class="bg-blue-100 p-4 rounded text-center"><div class="text-2xl font-bold">${pendingDepositsSnap.size}</div><div>Pending Deposits</div></div><div class="bg-purple-100 p-4 rounded text-center"><div class="text-2xl font-bold">${pendingKYCSnap.size}</div><div>KYC Pending</div></div><div class="bg-orange-100 p-4 rounded text-center"><div class="text-2xl font-bold">${activeTradesSnap.size}</div><div>Active Trades</div></div></div></div>`;
+            } catch(e) { container.innerHTML = `<div class="admin-card text-red-500">Error: ${e.message}</div>`; }
         }
         
-        // ===================== USERS =====================
+        // ========== USERS MANAGEMENT ==========
         async function loadUsers() {
             const container = document.getElementById('mainContent');
             setLoading(container, true);
@@ -143,17 +142,92 @@
                         <td>${(data.chatMinutes || 0).toFixed(1)} min</td>
                         <td>${data.kycStatus || 'unverified'}</td>
                         <td>${data.isSuspended ? 'Yes' : 'No'}</td>
-                        <td><button onclick="window.toggleSuspend('${u.id}', ${data.isSuspended})" class="bg-yellow-500 text-white px-2 py-1 rounded text-xs m-1">Suspend</button><button onclick="window.adjustBalance('${u.id}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs m-1">Adjust $</button><button onclick="window.adjustChatMinutes('${u.id}')" class="bg-purple-500 text-white px-2 py-1 rounded text-xs m-1">Add Chat Min</button></td>
+                        <td>
+                            <button onclick="window.toggleSuspend('${u.id}', ${data.isSuspended})" class="bg-yellow-500 text-white px-2 py-1 rounded text-xs m-1">Suspend</button>
+                            <button onclick="window.adjustRealBalance('${u.id}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs m-1">Adj Real $</button>
+                            <button onclick="window.adjustDemoBalance('${u.id}')" class="bg-green-500 text-white px-2 py-1 rounded text-xs m-1">Adj Demo $</button>
+                            <button onclick="window.adjustChatMinutes('${u.id}')" class="bg-purple-500 text-white px-2 py-1 rounded text-xs m-1">Add Chat Min</button>
+                        </td>
                     </tr>`;
                 }
                 container.innerHTML = html + '</tbody></table></div>';
             } catch(e) { container.innerHTML = `<div class="admin-card text-red-500">Error: ${e.message}</div>`; }
         }
-        window.toggleSuspend = async (uid, current) => { await updateDoc(doc(db,"users",uid),{isSuspended:!current}); await addAdminLog("toggle_suspend", uid); loadUsers(); showNotification(`User suspended: ${!current}`); };
-        window.adjustBalance = async (uid) => { const amt = parseFloat(prompt("Amount (+/-):")); if(!isNaN(amt)){ await updateDoc(doc(db,"users",uid),{ realBalance: increment(amt), totalEarned: increment(amt>0?amt:0) }); addAdminLog("adjust_balance",uid,{amount:amt}); loadUsers(); showNotification(`Balance updated by $${amt}`); } };
+        window.toggleSuspend = async (uid, current) => { await updateDoc(doc(db,"users",uid),{isSuspended:!current}); addAdminLog("toggle_suspend", uid); loadUsers(); showNotification(`User suspended: ${!current}`); };
+        window.adjustRealBalance = async (uid) => { const amt = parseFloat(prompt("Amount (+/-):")); if(!isNaN(amt)){ await updateDoc(doc(db,"users",uid),{ realBalance: increment(amt), totalEarned: increment(amt>0?amt:0) }); addAdminLog("adjust_balance",uid,{amount:amt}); loadUsers(); showNotification(`Real balance changed by $${amt}`); } };
+        window.adjustDemoBalance = async (uid) => { const amt = parseFloat(prompt("Set new demo balance:")); if(!isNaN(amt) && amt>=0){ await updateDoc(doc(db,"users",uid),{ demoBalance: amt }); addAdminLog("set_demo_balance",uid,{amount:amt}); loadUsers(); showNotification(`Demo balance set to $${amt}`); } };
         window.adjustChatMinutes = async (uid) => { const mins = parseFloat(prompt("Add chat minutes:")); if(!isNaN(mins)){ await updateDoc(doc(db,"users",uid),{ chatMinutes: increment(mins) }); addAdminLog("adjust_chat_minutes",uid,{amount:mins}); loadUsers(); showNotification(`Added ${mins} chat minutes`); } };
         
-        // ===================== INVESTMENT PLANS =====================
+        // ========== BINARY TRADES ==========
+        async function loadBinaryTrades() {
+            const container = document.getElementById('mainContent');
+            setLoading(container, true);
+            try {
+                const tradesSnap = await getDocs(query(collection(db,"binary_trades"), orderBy("createdAt","desc"), limit(200)));
+                let html = '<div class="admin-card overflow-x-auto"><h3 class="text-lg font-bold mb-3">📊 Binary Trades (All)</h3><table class="min-w-full"><thead><tr><th>User</th><th>Direction</th><th>Stake</th><th>Multiplier</th><th>Entry</th><th>Exit Price</th><th>Result</th><th>Profit</th><th>Status</th><th>Created</th><th>Action</th></tr></thead><tbody>';
+                for (const trade of tradesSnap.docs) {
+                    const t = trade.data();
+                    const userSnap = await getDoc(doc(db,"users",t.userId));
+                    const email = userSnap.exists() ? userSnap.data().email : t.userId;
+                    html += `<tr>
+                        <td>${email}</td>
+                        <td>${t.direction?.toUpperCase()}</td>
+                        <td>$${t.amount}</td>
+                        <td>${t.multiplier}x</td>
+                        <td>${t.entryPrice?.toFixed(5)}</td>
+                        <td>${t.closePrice?.toFixed(5) || '-'}</td>
+                        <td>${t.result || '-'}</td>
+                        <td class="${(t.profit||0)>=0?'text-green-600':'text-red-600'}">$${(t.profit||0).toFixed(2)}</td>
+                        <td>${t.status}</td>
+                        <td>${t.createdAt?.toDate().toLocaleString()}</td>
+                        <td>${t.status === 'active' ? `<button onclick="window.forceCloseTrade('${trade.id}','${t.userId}',${t.amount})" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Force Close</button>` : ''}</td>
+                    </tr>`;
+                }
+                container.innerHTML = html + '</tbody></table></div>';
+            } catch(e) { container.innerHTML = `<div class="admin-card text-red-500">Error: ${e.message}</div>`; }
+        }
+        window.forceCloseTrade = async (tradeId, userId, stake) => {
+            if(confirm(`Force close trade? User will lose $${stake}.`)) {
+                const tradeRef = doc(db,"binary_trades",tradeId);
+                const tradeSnap = await getDoc(tradeRef);
+                if(tradeSnap.exists() && tradeSnap.data().status === "active") {
+                    await updateDoc(tradeRef, { status:"closed", result:"admin_force_close", profit: -stake, closePrice: null });
+                    await updateDoc(doc(db,"users",userId), { realBalance: increment(-stake) });
+                    addAdminLog("force_close_trade", userId, { tradeId, stake });
+                    showNotification(`Trade force closed, user lost $${stake}`);
+                    loadBinaryTrades();
+                }
+            }
+        };
+        
+        // ========== TRADING SETTINGS ==========
+        async function loadTradingSettings() {
+            const container = document.getElementById('mainContent');
+            try {
+                const settingsDoc = await getDoc(doc(db,"settings","trading"));
+                const data = settingsDoc.exists() ? settingsDoc.data() : { minStakeBeginner:6, minStakeExpert:9, maxMultiplier:10, defaultDemoBalance:10000 };
+                let html = `<div class="admin-card"><h3 class="text-lg font-bold mb-3">⚙️ Trading Settings (Global)</h3>
+                    <div class="space-y-3"><label>Beginner Min Stake ($):</label><input type="number" id="minStakeBeginner" value="${data.minStakeBeginner}" class="border p-2 rounded w-full">
+                    <label>Expert Min Stake ($):</label><input type="number" id="minStakeExpert" value="${data.minStakeExpert}" class="border p-2 rounded w-full">
+                    <label>Max Multiplier (x):</label><input type="number" id="maxMultiplier" value="${data.maxMultiplier}" class="border p-2 rounded w-full">
+                    <label>Default Demo Balance ($):</label><input type="number" id="defaultDemoBalance" value="${data.defaultDemoBalance}" class="border p-2 rounded w-full">
+                    <button onclick="window.saveTradingSettings()" class="bg-indigo-600 text-white px-4 py-2 rounded mt-3">Save Settings</button></div></div>`;
+                container.innerHTML = html;
+            } catch(e) { container.innerHTML = `<div class="admin-card text-red-500">Error: ${e.message}</div>`; }
+        }
+        window.saveTradingSettings = async () => {
+            const settings = {
+                minStakeBeginner: parseFloat(document.getElementById('minStakeBeginner').value),
+                minStakeExpert: parseFloat(document.getElementById('minStakeExpert').value),
+                maxMultiplier: parseFloat(document.getElementById('maxMultiplier').value),
+                defaultDemoBalance: parseFloat(document.getElementById('defaultDemoBalance').value)
+            };
+            await setDoc(doc(db,"settings","trading"), settings);
+            addAdminLog("update_trading_settings");
+            showNotification("Trading settings saved");
+        };
+        
+        // ========== INVESTMENT PLANS ==========
         async function loadPlans() {
             const container = document.getElementById('mainContent');
             setLoading(container, true);
@@ -179,7 +253,7 @@
         window.editPlan = async (id) => { const snap = await getDoc(doc(db,"investment_plans",id)); if(snap.exists()){ const d=snap.data(); document.getElementById('planId').value=id; document.getElementById('planName').value=d.name; document.getElementById('planMinAmount').value=d.minAmount; document.getElementById('planRoi').value=d.dailyROI; document.getElementById('planDuration').value=d.durationDays; document.getElementById('planDescription').value=d.description; document.getElementById('planActive').checked=d.active; document.getElementById('planModal').classList.add('active'); } };
         window.deletePlan = async (id) => { if(confirm("Delete plan?")){ await deleteDoc(doc(db,"investment_plans",id)); loadPlans(); addAdminLog("delete_plan"); } };
         
-        // ===================== USER INVESTMENTS =====================
+        // ========== USER INVESTMENTS (active) ==========
         async function loadAllInvestments() {
             const container = document.getElementById('mainContent');
             setLoading(container, true);
@@ -197,7 +271,7 @@
         }
         window.forceCloseInvestment = async (id) => { if(confirm("Close investment and refund remaining?")){ await updateDoc(doc(db,"user_investments",id),{ status:"closed", closedAt:serverTimestamp() }); addAdminLog("force_close_investment"); loadAllInvestments(); } };
         
-        // ===================== WITHDRAWALS =====================
+        // ========== WITHDRAWALS (approve/reject) ==========
         async function loadWithdrawals() {
             const container = document.getElementById('mainContent');
             setLoading(container, true);
@@ -215,7 +289,29 @@
         window.approveWithdrawal = async (id, uid, amt) => { await updateDoc(doc(db,"withdrawals",id),{ status:"paid", processedAt:serverTimestamp() }); await updateDoc(doc(db,"users",uid),{ realBalance: increment(-amt) }); addAdminLog("approve_withdrawal",uid,{amount:amt}); loadWithdrawals(); showNotification(`Withdrawal approved: $${amt}`); };
         window.rejectWithdrawal = async (id) => { await updateDoc(doc(db,"withdrawals",id),{ status:"failed" }); addAdminLog("reject_withdrawal"); loadWithdrawals(); };
         
-        // ===================== DEPOSITS (MANUAL) =====================
+        // ========== WITHDRAWAL SETTINGS ==========
+        async function loadWithdrawalSettings() {
+            const container = document.getElementById('mainContent');
+            try {
+                const config = await getDoc(doc(db,"settings","withdrawalConfig"));
+                const data = config.exists() ? config.data() : { minAmount:10, feePercent:3 };
+                let html = `<div class="admin-card"><h3 class="text-lg font-bold mb-3">🏦 Withdrawal Settings</h3>
+                    <div class="space-y-3"><label>Minimum Withdrawal Amount ($):</label><input type="number" id="minWithdrawal" value="${data.minAmount}" class="border p-2 rounded w-full">
+                    <label>Withdrawal Fee (%):</label><input type="number" step="0.1" id="feePercent" value="${data.feePercent}" class="border p-2 rounded w-full">
+                    <button onclick="window.saveWithdrawalSettings()" class="bg-indigo-600 text-white px-4 py-2 rounded mt-3">Save Settings</button></div></div>`;
+                container.innerHTML = html;
+            } catch(e) { container.innerHTML = `<div class="admin-card text-red-500">Error: ${e.message}</div>`; }
+        }
+        window.saveWithdrawalSettings = async () => {
+            await setDoc(doc(db,"settings","withdrawalConfig"), {
+                minAmount: parseFloat(document.getElementById('minWithdrawal').value),
+                feePercent: parseFloat(document.getElementById('feePercent').value)
+            });
+            addAdminLog("update_withdrawal_settings");
+            showNotification("Withdrawal settings saved");
+        };
+        
+        // ========== DEPOSITS (manual pending) ==========
         async function loadDeposits() {
             const container = document.getElementById('mainContent');
             setLoading(container, true);
@@ -236,7 +332,7 @@
         window.approveDeposit = async (id, uid, amt) => { await updateDoc(doc(db,"pending_deposits",id),{ status:"approved", processedAt:serverTimestamp() }); await updateDoc(doc(db,"users",uid),{ realBalance: increment(amt), totalEarned: increment(amt) }); await addDoc(collection(db,"deposits"),{ userId: uid, amount: amt, method: "manual", status: "completed", createdAt: serverTimestamp() }); addAdminLog("approve_manual_deposit",uid,{amount:amt}); loadDeposits(); showNotification(`Deposit approved: $${amt}`); };
         window.rejectDeposit = async (id) => { await updateDoc(doc(db,"pending_deposits",id),{ status:"rejected" }); loadDeposits(); };
         
-        // ===================== PAYMENT LINKS =====================
+        // ========== PAYMENT LINKS ==========
         async function loadPaymentLinks() {
             const container = document.getElementById('mainContent');
             try {
@@ -250,15 +346,9 @@
                 container.innerHTML = html + '</div>';
             } catch(e) { container.innerHTML = `<div class="admin-card text-red-500">Error: ${e.message}</div>`; }
         }
-        window.savePaymentLink = async (method) => {
-            const url = document.getElementById(`link_${method}`).value;
-            if (url) await setDoc(doc(db,"payment_links",method), { url, updatedAt: serverTimestamp() });
-            else await deleteDoc(doc(db,"payment_links",method));
-            await addAdminLog("update_payment_link", null, { method, url });
-            showNotification(`${method} link saved`);
-        };
+        window.savePaymentLink = async (method) => { const url = document.getElementById(`link_${method}`).value; if (url) await setDoc(doc(db,"payment_links",method), { url, updatedAt: serverTimestamp() }); else await deleteDoc(doc(db,"payment_links",method)); addAdminLog("update_payment_link", null, { method, url }); showNotification(`${method} link saved`); };
         
-        // ===================== CHAT MANAGEMENT =====================
+        // ========== CHAT MANAGEMENT ==========
         async function loadChatManagement() {
             const container = document.getElementById('mainContent');
             setLoading(container, true);
@@ -283,7 +373,7 @@
         window.savePackages = async () => { const packs = window.tempPackages; await setDoc(doc(db,"settings","chatPackages"), { packages: packs, updatedAt: serverTimestamp() }); addAdminLog("update_chat_packages"); showNotification("Chat packages saved"); };
         window.giveChatMinutes = async (uid) => { const mins = parseFloat(prompt("Add minutes:")); if(!isNaN(mins)){ await updateDoc(doc(db,"users",uid),{ chatMinutes: increment(mins) }); loadChatManagement(); } };
         
-        // ===================== SUPPORT TICKETS =====================
+        // ========== SUPPORT TICKETS ==========
         async function loadTickets() {
             const container = document.getElementById('mainContent');
             setLoading(container, true);
@@ -301,19 +391,19 @@
         window.resolveTicket = async (id) => { await updateDoc(doc(db,"support_tickets",id),{ status:"resolved" }); loadTickets(); };
         window.deleteTicket = async (id) => { await deleteDoc(doc(db,"support_tickets",id)); loadTickets(); };
         
-        // ===================== TRANSACTIONS =====================
+        // ========== TRANSACTIONS ==========
         async function loadTransactions() {
             const container = document.getElementById('mainContent');
             setLoading(container, true);
             try {
                 const snap = await getDocs(query(collection(db,"transactions"), orderBy("timestamp","desc"), limit(100)));
-                let html = '<div class="admin-card overflow-x-auto"><h3 class="text-lg font-bold mb-3">📜 Recent Transactions</h3><table class="min-w-full"><thead><tr><th>User ID</th><th>Type</th><th>Amount</th><th>Date</th></tr></thead><tbody>';
+                let html = '<div class="admin-card overflow-x-auto"><h3 class="text-lg font-bold mb-3">📜 Recent Transactions</h3><table class="min-w-full"><thead><td><th>User ID</th><th>Type</th><th>Amount</th><th>Date</th></tr></thead><tbody>';
                 snap.forEach(t => { const data=t.data(); html+=`<tr><td>${data.userId}</td><td>${data.type}</td><td>$${data.amount.toFixed(2)}</td><td>${data.timestamp?.toDate().toLocaleString()}</td></tr>`; });
                 container.innerHTML = html + '</tbody></table></div>';
             } catch(e) { container.innerHTML = `<div class="admin-card text-red-500">Error: ${e.message}</div>`; }
         }
         
-        // ===================== REFERRALS =====================
+        // ========== REFERRALS (view) ==========
         async function loadReferrals() {
             const container = document.getElementById('mainContent');
             setLoading(container, true);
@@ -325,7 +415,25 @@
             } catch(e) { container.innerHTML = `<div class="admin-card text-red-500">Error: ${e.message}</div>`; }
         }
         
-        // ===================== LEADERBOARD =====================
+        // ========== REFERRAL SETTINGS ==========
+        async function loadReferralSettings() {
+            const container = document.getElementById('mainContent');
+            try {
+                const refDoc = await getDoc(doc(db,"settings","referral"));
+                const data = refDoc.exists() ? refDoc.data() : { commissionPercent:10 };
+                let html = `<div class="admin-card"><h3 class="text-lg font-bold mb-3">👥 Referral Settings</h3>
+                    <div class="space-y-3"><label>Commission Percentage (% of referred user's total earned):</label><input type="number" step="0.5" id="commissionPercent" value="${data.commissionPercent}" class="border p-2 rounded w-full">
+                    <button onclick="window.saveReferralSettings()" class="bg-indigo-600 text-white px-4 py-2 rounded mt-3">Save Settings</button></div></div>`;
+                container.innerHTML = html;
+            } catch(e) { container.innerHTML = `<div class="admin-card text-red-500">Error: ${e.message}</div>`; }
+        }
+        window.saveReferralSettings = async () => {
+            await setDoc(doc(db,"settings","referral"), { commissionPercent: parseFloat(document.getElementById('commissionPercent').value) });
+            addAdminLog("update_referral_settings");
+            showNotification("Referral settings saved");
+        };
+        
+        // ========== LEADERBOARD ==========
         async function loadLeaderboard() {
             const container = document.getElementById('mainContent');
             setLoading(container, true);
@@ -337,7 +445,7 @@
             } catch(e) { container.innerHTML = `<div class="admin-card text-red-500">Error: ${e.message}</div>`; }
         }
         
-        // ===================== ADMIN LOGS =====================
+        // ========== ADMIN LOGS ==========
         async function loadAdminLogs() {
             const container = document.getElementById('mainContent');
             setLoading(container, true);
@@ -345,11 +453,11 @@
                 const snap = await getDocs(query(collection(db,"admin_logs"), orderBy("timestamp","desc"), limit(50)));
                 let html = '<div class="admin-card"><h3 class="text-lg font-bold mb-3">📋 Admin Logs</h3><div class="max-h-96 overflow-auto"><table class="w-full"><thead><tr><th>Action</th><th>Target</th><th>Time</th></tr></thead><tbody>';
                 snap.forEach(log => { const l=log.data(); html+=`<tr><td>${l.action}</td><td>${l.targetUserId||'-'}</td><td>${l.timestamp?.toDate().toLocaleString()}</td></tr>`; });
-                container.innerHTML = html + '</tbody></table></div></div>';
+                container.innerHTML = html + '</tbody></td></div></div>';
             } catch(e) { container.innerHTML = `<div class="admin-card text-red-500">Error: ${e.message}</div>`; }
         }
         
-        // ===================== ANNOUNCEMENTS =====================
+        // ========== ANNOUNCEMENTS ==========
         async function loadAnnouncements() {
             const container = document.getElementById('mainContent');
             setLoading(container, true);
@@ -365,7 +473,7 @@
         window.saveAnnouncement = async () => { const title=document.getElementById('annTitle').value, content=document.getElementById('annContent').value; if(title && content){ await addDoc(collection(db,"announcements"),{ title, content, createdAt:serverTimestamp() }); closeAnnouncementModal(); loadAnnouncements(); addAdminLog("add_announcement"); } };
         window.deleteAnnouncement = async (id) => { await deleteDoc(doc(db,"announcements",id)); loadAnnouncements(); };
         
-        // ===================== KYC =====================
+        // ========== KYC ==========
         async function loadKYC() {
             const container = document.getElementById('mainContent');
             setLoading(container, true);
@@ -383,7 +491,7 @@
         window.approveKYC = async (id, uid) => { await updateDoc(doc(db,"kyc_requests",id),{ status:"approved" }); await updateDoc(doc(db,"users",uid),{ kycStatus:"verified" }); addAdminLog("approve_kyc",uid); loadKYC(); };
         window.rejectKYC = async (id) => { await updateDoc(doc(db,"kyc_requests",id),{ status:"rejected" }); loadKYC(); };
         
-        // ===================== SPIN CONFIG =====================
+        // ========== SPIN CONFIG ==========
         async function loadSpinConfig() {
             const container = document.getElementById('mainContent');
             try {
@@ -395,13 +503,9 @@
                 container.innerHTML = html;
             } catch(e) { container.innerHTML = `<div class="admin-card text-red-500">Error: ${e.message}</div>`; }
         }
-        window.saveSpinConfig = async () => {
-            const segments = Array.from(document.querySelectorAll('#spinSegmentsList input')).map(inp => inp.value);
-            await setDoc(doc(db,"settings","spinWheel"), { segments, updatedAt: serverTimestamp() });
-            addAdminLog("update_spin_config"); showNotification("Spin wheel updated");
-        };
+        window.saveSpinConfig = async () => { const segments = Array.from(document.querySelectorAll('#spinSegmentsList input')).map(inp => inp.value); await setDoc(doc(db,"settings","spinWheel"), { segments, updatedAt: serverTimestamp() }); addAdminLog("update_spin_config"); showNotification("Spin wheel updated"); };
         
-        // ===================== STREAK CONFIG =====================
+        // ========== STREAK CONFIG ==========
         async function loadStreakConfig() {
             const container = document.getElementById('mainContent');
             try {
@@ -413,13 +517,9 @@
                 container.innerHTML = html;
             } catch(e) { container.innerHTML = `<div class="admin-card text-red-500">Error: ${e.message}</div>`; }
         }
-        window.saveStreakConfig = async () => {
-            const rewards = Array.from(document.querySelectorAll('#streakRewardsList input')).map(inp => parseFloat(inp.value));
-            await setDoc(doc(db,"streak_config","weekly"), { rewards, updatedAt: serverTimestamp() });
-            addAdminLog("update_streak_config"); showNotification("Streak config saved");
-        };
+        window.saveStreakConfig = async () => { const rewards = Array.from(document.querySelectorAll('#streakRewardsList input')).map(inp => parseFloat(inp.value)); await setDoc(doc(db,"streak_config","weekly"), { rewards, updatedAt: serverTimestamp() }); addAdminLog("update_streak_config"); showNotification("Streak config saved"); };
         
-        // ===================== SYSTEM SETTINGS =====================
+        // ========== SYSTEM SETTINGS ==========
         async function loadSettings() {
             const container = document.getElementById('mainContent');
             try {
@@ -431,29 +531,20 @@
         }
         window.saveSystemSettings = async () => { await setDoc(doc(db,"settings","system"), { minWithdrawal: parseFloat(document.getElementById('minWithdrawal').value), referralCommission: parseFloat(document.getElementById('refCommission').value), supportEmail: document.getElementById('supportEmail').value, updatedAt: serverTimestamp() }); addAdminLog("update_system_settings"); showNotification("Settings saved"); };
         
-        // ===================== EXPORT =====================
+        // ========== EXPORT ==========
         async function loadExport() {
             const container = document.getElementById('mainContent');
             container.innerHTML = `<div class="admin-card"><h3 class="text-lg font-bold mb-3">💾 Export Data</h3><button onclick="window.exportUsersCSV()" class="bg-gray-700 text-white px-4 py-2 rounded">Export Users CSV</button><button onclick="window.exportTransactionsCSV()" class="bg-gray-700 text-white px-4 py-2 rounded ml-2">Export Transactions CSV</button></div>`;
         }
-        window.exportUsersCSV = async () => {
-            const snap = await getDocs(collection(db,"users"));
-            let csv = "Email,Name,Real Balance,Demo Balance,KYC Status\n";
-            snap.forEach(u => { const d=u.data(); if(d.role!=='admin') csv+=`${d.email},${d.displayName||""},${d.realBalance||0},${d.demoBalance||1000},${d.kycStatus||"unverified"}\n`; });
-            const blob = new Blob([csv], {type:"text/csv"}); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "users.csv"; a.click();
-        };
-        window.exportTransactionsCSV = async () => {
-            const snap = await getDocs(query(collection(db,"transactions"), orderBy("timestamp","desc"), limit(500)));
-            let csv = "User ID,Type,Amount,Date\n";
-            snap.forEach(t => { const d=t.data(); csv+=`${d.userId},${d.type},${d.amount},${d.timestamp?.toDate().toISOString()}\n`; });
-            const blob = new Blob([csv], {type:"text/csv"}); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "transactions.csv"; a.click();
-        };
+        window.exportUsersCSV = async () => { const snap = await getDocs(collection(db,"users")); let csv = "Email,Name,Real Balance,Demo Balance,KYC Status\n"; snap.forEach(u => { const d=u.data(); if(d.role!=='admin') csv+=`${d.email},${d.displayName||""},${d.realBalance||0},${d.demoBalance||1000},${d.kycStatus||"unverified"}\n`; }); const blob = new Blob([csv], {type:"text/csv"}); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "users.csv"; a.click(); };
+        window.exportTransactionsCSV = async () => { const snap = await getDocs(query(collection(db,"transactions"), orderBy("timestamp","desc"), limit(500))); let csv = "User ID,Type,Amount,Date\n"; snap.forEach(t => { const d=t.data(); csv+=`${d.userId},${d.type},${d.amount},${d.timestamp?.toDate().toISOString()}\n`; }); const blob = new Blob([csv], {type:"text/csv"}); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "transactions.csv"; a.click(); };
         
-        // ===================== NAVIGATION =====================
+        // ========== NAVIGATION ==========
         const sectionLoaders = {
-            dashboard: loadDashboard, users: loadUsers, investments: loadPlans, activeInvestments: loadAllInvestments,
-            withdrawals: loadWithdrawals, deposits: loadDeposits, paymentLinks: loadPaymentLinks, chatManagement: loadChatManagement,
-            tickets: loadTickets, transactions: loadTransactions, referrals: loadReferrals, leaderboard: loadLeaderboard,
+            dashboard: loadDashboard, users: loadUsers, binaryTrades: loadBinaryTrades, tradingSettings: loadTradingSettings,
+            investments: loadPlans, activeInvestments: loadAllInvestments, withdrawals: loadWithdrawals, withdrawalSettings: loadWithdrawalSettings,
+            deposits: loadDeposits, paymentLinks: loadPaymentLinks, chatManagement: loadChatManagement, tickets: loadTickets,
+            transactions: loadTransactions, referrals: loadReferrals, referralSettings: loadReferralSettings, leaderboard: loadLeaderboard,
             adminLogs: loadAdminLogs, announcements: loadAnnouncements, kyc: loadKYC, spinConfig: loadSpinConfig,
             streakConfig: loadStreakConfig, settings: loadSettings, export: loadExport
         };
