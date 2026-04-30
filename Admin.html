@@ -8,12 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         .admin-card { background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 1rem; margin-bottom: 1rem; }
-        .sidebar {
-            position: fixed; top:0; left:0; width:280px; height:100%;
-            background:#1f2937; color:#e5e7eb;
-            transform: translateX(-100%); transition: transform 0.3s;
-            z-index: 10000; overflow-y: auto;
-        }
+        .sidebar { position: fixed; top:0; left:0; width:280px; height:100%; background:#1f2937; color:#e5e7eb; transform: translateX(-100%); transition: transform 0.3s; z-index: 10000; overflow-y: auto; }
         .sidebar.open { transform: translateX(0); }
         .sidebar a { display: flex; align-items: center; gap:0.75rem; padding:0.7rem 1rem; border-radius:0.75rem; color:#e5e7eb; text-decoration: none; }
         .sidebar a:hover, .sidebar a.active { background:#4f46e5; color:white; cursor: pointer; }
@@ -28,7 +23,10 @@
         .empty-message { text-align:center; color:#9ca3af; padding:2rem; font-style:italic; }
         table { width:100%; border-collapse: collapse; }
         th, td { text-align:left; padding:0.75rem; border-bottom:1px solid #e5e7eb; }
-        .settings-group { border:1px solid #e5e7eb; border-radius:0.5rem; padding:1rem; margin-bottom:1.5rem; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; z-index: 20000; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; max-width: 500px; width: 90%; border-radius: 1rem; padding: 1.5rem; }
+        .notification { position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: white; padding: 10px 20px; border-radius: 40px; z-index: 1100; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -68,51 +66,12 @@
             <h1 class="text-xl font-semibold">Admin Control Panel</h1>
             <div class="flex-1"></div><span id="adminName" class="text-sm"></span>
         </header>
-        <main class="container mx-auto px-4 py-6 space-y-6">
-            <!-- Dashboard Section -->
-            <div id="section-dashboard" class="content-section active-section"><div class="admin-card"><h2 class="text-xl font-bold">Dashboard Stats</h2><div id="adminStats"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
-            <!-- Users Section -->
-            <div id="section-users" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">👥 Users</h3><div id="usersTable"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
-            <!-- Investment Plans Section -->
-            <div id="section-investments" class="content-section"><div class="admin-card"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold">📈 Investment Plans</h3><button onclick="window.showPlanModal()" class="bg-green-600 text-white px-3 py-2 rounded">+ Add New Plan</button></div><div id="plansListAdmin"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
-            <!-- User Investments Section -->
-            <div id="section-activeInvestments" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">⏳ All Active Investments</h3><div id="allInvestmentsList"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
-            <!-- Withdrawals Section -->
-            <div id="section-withdrawals" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">🏦 Withdrawal Requests</h3><div id="withdrawalsAdminList"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
-            <!-- Deposits Section (includes pending_deposits) -->
-            <div id="section-deposits" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">💎 Pending Deposits (Manual)</h3><div id="depositsAdminList"><div class="loading-spinner"><div class="spinner"></div></div></div><h3 class="text-lg font-bold mt-4">✅ Completed Deposits History</h3><div id="completedDepositsList"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
-            <!-- Payment Links Section -->
-            <div id="section-paymentLinks" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">🔗 Payment Gateway Links</h3><div id="paymentLinksForm"></div></div></div>
-            <!-- Chat Management Section -->
-            <div id="section-chatManagement" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">💬 Chat Minutes Management</h3><div id="chatPackagesConfig"></div><div id="userChatMinutesTable"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
-            <!-- Support Tickets -->
-            <div id="section-tickets" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">🎫 Support Tickets</h3><div id="ticketsAdminList"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
-            <!-- Transactions -->
-            <div id="section-transactions" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">📜 Recent Transactions</h3><div id="allTransactionsList"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
-            <!-- Referrals -->
-            <div id="section-referrals" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">👥 Referral Stats</h3><div id="referralAdminStats"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
-            <!-- Leaderboard -->
-            <div id="section-leaderboard" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">🏆 Top Earners</h3><div id="leaderboardAdminList"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
-            <!-- Admin Logs -->
-            <div id="section-adminLogs" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">📋 Admin Logs</h3><div id="adminLogsList" class="max-h-96 overflow-auto"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
-            <!-- Announcements -->
-            <div id="section-announcements" class="content-section"><div class="admin-card"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold">📢 Announcements</h3><button onclick="window.showAnnouncementModal()" class="bg-indigo-600 text-white px-3 py-2 rounded">New Announcement</button></div><div id="announcementsList"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
-            <!-- KYC -->
-            <div id="section-kyc" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">🪪 KYC Requests</h3><div id="kycRequestsList"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
-            <!-- Spin Config -->
-            <div id="section-spinConfig" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">🎡 Spin Wheel Configuration</h3><div id="spinConfigEditor"></div><button onclick="window.saveSpinConfig()" class="mt-3 bg-purple-600 text-white px-4 py-2 rounded">Save Wheel Segments</button></div></div>
-            <!-- Streak Config -->
-            <div id="section-streakConfig" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">🔥 Daily Streak Rewards (7 days)</h3><div id="streakConfigForm"></div><button onclick="window.saveStreakConfig()" class="mt-3 bg-green-600 text-white px-4 py-2 rounded">Save Streak Configuration</button></div></div>
-            <!-- System Settings -->
-            <div id="section-settings" class="content-section"><div class="admin-card"><h3 class="text-xl font-bold mb-4">⚙️ System Settings</h3><div id="systemSettingsForm"><div class="loading-spinner"><div class="spinner"></div></div></div></div></div>
-            <!-- Export -->
-            <div id="section-export" class="content-section"><div class="admin-card"><h3 class="text-lg font-bold">💾 Export Data</h3><button onclick="window.exportUsersCSV()" class="bg-gray-700 text-white px-4 py-2 rounded">Export Users CSV</button></div></div>
-        </main>
+        <main class="container mx-auto px-4 py-6 space-y-6" id="mainContent"></main>
     </div>
 
-    <!-- Modals (Plan, Announcement) -->
-    <div id="planModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4"><div class="bg-white rounded-xl max-w-md w-full p-6"><h3 class="text-xl font-bold mb-4" id="planModalTitle">Add Investment Plan</h3><input type="hidden" id="planId"><div class="space-y-3"><input type="text" id="planName" placeholder="Plan Name" class="w-full border rounded p-2"><input type="number" id="planMinAmount" placeholder="Minimum Amount" class="w-full border rounded p-2"><input type="number" id="planRoi" placeholder="Daily ROI %" class="w-full border rounded p-2"><input type="number" id="planDuration" placeholder="Duration (days)" class="w-full border rounded p-2"><input type="text" id="planImageURL" placeholder="Image URL" class="w-full border rounded p-2"><textarea id="planDescription" placeholder="Description" rows="3" class="w-full border rounded p-2"></textarea><label class="flex items-center gap-2"><input type="checkbox" id="planActive" checked> Active</label><div class="flex gap-2 mt-4"><button onclick="window.savePlan()" class="bg-blue-600 text-white px-4 py-2 rounded">Save</button><button onclick="window.closePlanModal()" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div></div>
-    <div id="announcementModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4"><div class="bg-white rounded-xl max-w-md w-full p-6"><h3 class="text-xl font-bold mb-4">New Announcement</h3><input type="text" id="annTitle" placeholder="Title" class="w-full border rounded p-2 mb-3"><textarea id="annContent" placeholder="Content" rows="4" class="w-full border rounded p-2"></textarea><div class="flex gap-2 mt-4"><button onclick="window.saveAnnouncement()" class="bg-blue-600 text-white px-4 py-2 rounded">Publish</button><button onclick="window.closeAnnouncementModal()" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
+    <!-- Modals -->
+    <div id="planModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-4" id="planModalTitle">Add/Edit Plan</h3><input type="hidden" id="planId"><div class="space-y-3"><input type="text" id="planName" placeholder="Plan Name" class="w-full border p-2 rounded"><input type="number" id="planMinAmount" placeholder="Min Amount ($)" class="w-full border p-2 rounded"><input type="number" id="planRoi" placeholder="Daily ROI %" class="w-full border p-2 rounded"><input type="number" id="planDuration" placeholder="Duration (days)" class="w-full border p-2 rounded"><textarea id="planDescription" placeholder="Description" rows="2" class="w-full border p-2 rounded"></textarea><label><input type="checkbox" id="planActive" checked> Active</label><div class="flex gap-2 mt-4"><button onclick="window.savePlan()" class="bg-blue-600 text-white px-4 py-2 rounded">Save</button><button onclick="window.closePlanModal()" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div></div>
+    <div id="announcementModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-4">New Announcement</h3><input type="text" id="annTitle" placeholder="Title" class="w-full border p-2 rounded mb-3"><textarea id="annContent" placeholder="Content" rows="4" class="w-full border p-2 rounded"></textarea><div class="flex gap-2 mt-4"><button onclick="window.saveAnnouncement()" class="bg-blue-600 text-white px-4 py-2 rounded">Publish</button><button onclick="window.closeAnnouncementModal()" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -125,6 +84,7 @@
         const db = getFirestore(app);
         
         let currentAdmin = null;
+        function showNotification(msg, type='success'){ const d=document.createElement('div'); d.className=`notification ${type==='error'?'bg-red-700':'bg-gray-800'}`; d.innerHTML=msg; document.body.appendChild(d); setTimeout(()=>d.remove(),3000); }
         
         onAuthStateChanged(auth, async (user) => {
             if (!user) { window.location.href = "index.html"; return; }
@@ -132,7 +92,7 @@
             if (!userDoc.exists() || userDoc.data().role !== "admin") { window.location.href = "dashboard.html"; return; }
             currentAdmin = user;
             document.getElementById('adminName').innerText = userDoc.data().displayName || user.email;
-            await loadDashboardStats();
+            await loadDashboard();
             setupNavigation();
         });
         
@@ -140,206 +100,276 @@
             try { await addDoc(collection(db, "admin_logs"), { adminId: currentAdmin.uid, adminEmail: currentAdmin.email, action, targetUserId, details, timestamp: serverTimestamp() }); } catch(e) { console.error(e); }
         }
         
-        // Dashboard
-        async function loadDashboardStats() { /* same as before but include pending manual deposits count */ }
+        // ===================== DASHBOARD =====================
+        async function loadDashboard() {
+            const container = document.getElementById('mainContent');
+            if (!container) return;
+            const stats = await Promise.all([
+                getDocs(collection(db,"users")).then(s => s.size),
+                getDocs(query(collection(db,"withdrawals"), where("status","==","pending"))).then(s => s.size),
+                getDocs(query(collection(db,"pending_deposits"), where("status","==","pending_review"))).then(s => s.size),
+                getDocs(query(collection(db,"kyc_requests"), where("status","==","pending"))).then(s => s.size)
+            ]);
+            container.innerHTML = `<div class="admin-card"><h2 class="text-xl font-bold mb-3">Dashboard Stats</h2><div class="grid grid-cols-2 md:grid-cols-4 gap-4"><div class="bg-indigo-100 p-4 rounded text-center"><div class="text-2xl font-bold">${stats[0]}</div><div>Total Users</div></div><div class="bg-yellow-100 p-4 rounded text-center"><div class="text-2xl font-bold">${stats[1]}</div><div>Pending Withdrawals</div></div><div class="bg-blue-100 p-4 rounded text-center"><div class="text-2xl font-bold">${stats[2]}</div><div>Pending Deposits</div></div><div class="bg-purple-100 p-4 rounded text-center"><div class="text-2xl font-bold">${stats[3]}</div><div>KYC Pending</div></div></div></div>`;
+        }
         
-        // Users (with chat minutes column)
+        // ===================== USERS =====================
         async function loadUsers() {
-            const container = document.getElementById('usersTable');
-            container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+            const container = document.getElementById('mainContent');
+            container.innerHTML = '<div class="admin-card"><h3 class="text-lg font-bold mb-3">👥 Users</h3><div class="loading-spinner"><div class="spinner"></div></div></div>';
             const usersSnap = await getDocs(collection(db,"users"));
-            let html = '<table><thead><tr><th>Email</th><th>Name</th><th>Balance</th><th>Chat Min</th><th>KYC</th><th>Suspended</th><th>Actions</th></tr></thead><tbody>';
+            let html = '<div class="admin-card overflow-x-auto"><h3 class="text-lg font-bold mb-3">👥 Users</h3><table class="min-w-full"><thead><tr><th>Email</th><th>Name</th><th>Balance</th><th>Chat Min</th><th>KYC</th><th>Suspended</th><th>Actions</th></tr></thead><tbody>';
             for (const u of usersSnap.docs) {
                 const data = u.data();
                 if (data.role === 'admin') continue;
-                html += `<tr>
-                    <td>${data.email}</td><td>${data.displayName || '-'}</td>
-                    <td>$${(data.withdrawableBalance || 0).toFixed(2)}</td>
-                    <td>${(data.chatMinutes || 0).toFixed(1)} min</td>
-                    <td>${data.kycStatus || 'unverified'}</td>
-                    <td>${data.isSuspended ? 'Yes' : 'No'}</td>
-                    <td><button onclick="window.toggleSuspend('${u.id}', ${data.isSuspended})" class="bg-yellow-500 text-white px-2 py-1 rounded text-xs">Toggle</button>
-                    <button onclick="window.adjustBalance('${u.id}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Adjust $</button>
-                    <button onclick="window.adjustChatMinutes('${u.id}')" class="bg-purple-500 text-white px-2 py-1 rounded text-xs">Add Chat Min</button></td>
-                </tr>`;
+                html += `<tr><td>${data.email}</td><td>${data.displayName || '-'}</td><td>$${(data.realBalance || 0).toFixed(2)}</td><td>${(data.chatMinutes || 0).toFixed(1)} min</td><td>${data.kycStatus || 'unverified'}</td><td>${data.isSuspended ? 'Yes' : 'No'}</td><td><button onclick="window.toggleSuspend('${u.id}', ${data.isSuspended})" class="bg-yellow-500 text-white px-2 py-1 rounded text-xs m-1">Suspend</button><button onclick="window.adjustBalance('${u.id}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs m-1">Adjust $</button><button onclick="window.adjustChatMinutes('${u.id}')" class="bg-purple-500 text-white px-2 py-1 rounded text-xs m-1">Add Chat Min</button></td></tr>`;
             }
-            container.innerHTML = html + '</tbody></table>';
+            container.innerHTML = html + '</tbody></table></div>';
         }
-        window.adjustChatMinutes = async (uid) => {
-            const mins = parseFloat(prompt("Add or subtract chat minutes (use negative to deduct):"));
-            if (!isNaN(mins)) {
-                await updateDoc(doc(db,"users",uid), { chatMinutes: increment(mins) });
-                await addAdminLog("adjust_chat_minutes", uid, { amount: mins });
-                loadUsers();
-            }
-        };
+        window.toggleSuspend = async (uid, current) => { await updateDoc(doc(db,"users",uid),{isSuspended:!current}); await addAdminLog("toggle_suspend", uid); loadUsers(); showNotification(`User suspended: ${!current}`); };
+        window.adjustBalance = async (uid) => { const amt = parseFloat(prompt("Amount (+/-):")); if(!isNaN(amt)){ await updateDoc(doc(db,"users",uid),{ realBalance: increment(amt), totalEarned: increment(amt>0?amt:0) }); addAdminLog("adjust_balance",uid,{amount:amt}); loadUsers(); showNotification(`Balance updated by $${amt}`); } };
+        window.adjustChatMinutes = async (uid) => { const mins = parseFloat(prompt("Add chat minutes:")); if(!isNaN(mins)){ await updateDoc(doc(db,"users",uid),{ chatMinutes: increment(mins) }); addAdminLog("adjust_chat_minutes",uid,{amount:mins}); loadUsers(); showNotification(`Added ${mins} chat minutes`); } };
         
-        // Payment Links Management
-        async function loadPaymentLinks() {
-            const container = document.getElementById('paymentLinksForm');
-            const methods = ['mpesa', 'bank_transfer', 'crypto'];
-            let html = '<div class="space-y-3">';
-            for (const method of methods) {
-                const linkDoc = await getDoc(doc(db, "payment_links", method));
-                const url = linkDoc.exists() ? linkDoc.data().url : '';
-                html += `<div class="border rounded p-3"><label class="font-bold">${method.toUpperCase()} Payment URL:</label><input type="url" id="link_${method}" value="${url}" class="w-full border rounded p-2 mt-1"><button onclick="window.savePaymentLink('${method}')" class="mt-2 bg-indigo-600 text-white px-3 py-1 rounded">Save Link</button></div>`;
-            }
-            html += '</div>';
-            container.innerHTML = html;
-        }
-        window.savePaymentLink = async (method) => {
-            const url = document.getElementById(`link_${method}`).value;
-            if (url) await setDoc(doc(db,"payment_links",method), { url, updatedAt: serverTimestamp() });
-            else await deleteDoc(doc(db,"payment_links",method));
-            await addAdminLog("update_payment_link", null, { method, url });
-            alert(`${method} link saved`);
-        };
-        
-        // Chat Packages Configuration (dynamic)
-        async function loadChatPackages() {
-            const container = document.getElementById('chatPackagesConfig');
-            const packages = await getDoc(doc(db,"settings","chatPackages"));
-            let packs = packages.exists() ? packages.data().packages : [{ minutes: 30, price: 0.4 }, { minutes: 60, price: 0.9 }, { minutes: 120, price: 1.7 }];
-            let html = '<h4 class="font-bold mt-2">Chat Minute Packages (user buys)</h4><div id="chatPackagesList">';
-            packs.forEach((pkg, idx) => {
-                html += `<div class="flex gap-2 items-center mb-2"><input type="number" value="${pkg.minutes}" placeholder="Minutes" class="border rounded p-1 w-24" data-index="${idx}" data-field="minutes"><span>min for $</span><input type="number" step="0.1" value="${pkg.price}" class="border rounded p-1 w-24" data-index="${idx}" data-field="price"><button onclick="window.removeChatPackage(${idx})" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Remove</button></div>`;
+        // ===================== INVESTMENT PLANS =====================
+        async function loadPlans() {
+            const container = document.getElementById('mainContent');
+            container.innerHTML = '<div class="admin-card"><div class="flex justify-between mb-3"><h3 class="text-lg font-bold">📈 Investment Plans</h3><button onclick="window.showPlanModal()" class="bg-green-600 text-white px-3 py-1 rounded">+ Add Plan</button></div><div class="loading-spinner"><div class="spinner"></div></div></div>';
+            const plansSnap = await getDocs(collection(db,"investment_plans"));
+            let html = '<div class="admin-card"><div class="flex justify-between mb-3"><h3 class="text-lg font-bold">📈 Investment Plans</h3><button onclick="window.showPlanModal()" class="bg-green-600 text-white px-3 py-1 rounded">+ Add Plan</button></div><div class="grid gap-3">';
+            plansSnap.forEach(docSnap => {
+                const p = docSnap.data();
+                html += `<div class="border rounded p-3 flex justify-between items-center"><div><b>${p.name}</b> - Min $${p.minAmount} - ROI ${p.dailyROI}% daily (${p.durationDays}d) - ${p.active ? 'Active' : 'Inactive'}</div><div><button onclick="window.editPlan('${docSnap.id}')" class="bg-indigo-500 text-white px-2 py-1 rounded text-xs">Edit</button><button onclick="window.deletePlan('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs ml-2">Delete</button></div></div>`;
             });
-            html += `<button onclick="window.addChatPackage()" class="bg-green-600 text-white px-2 py-1 rounded text-sm mt-2">+ Add Package</button><button onclick="window.saveChatPackages()" class="bg-blue-600 text-white px-3 py-1 rounded ml-2">Save Packages</button>`;
-            container.innerHTML = html;
-            // Attach live update listeners
-            document.querySelectorAll('#chatPackagesList input').forEach(inp => {
-                inp.addEventListener('change', (e) => {
-                    const idx = parseInt(e.target.dataset.index);
-                    const field = e.target.dataset.field;
-                    const packs = getCurrentPackagesFromDOM();
-                    packs[idx][field] = field === 'minutes' ? parseInt(e.target.value) : parseFloat(e.target.value);
-                    window.tempPackages = packs;
-                });
-            });
+            container.innerHTML = html + '</div></div>';
         }
-        function getCurrentPackagesFromDOM() { const inputs = document.querySelectorAll('#chatPackagesList input'); const packs = []; for(let i=0; i<inputs.length; i+=2){ packs.push({ minutes: parseInt(inputs[i].value), price: parseFloat(inputs[i+1].value) }); } return packs; }
-        window.addChatPackage = () => { const packs = getCurrentPackagesFromDOM(); packs.push({ minutes: 15, price: 0.2 }); renderChatPackagesList(packs); };
-        window.removeChatPackage = (idx) => { const packs = getCurrentPackagesFromDOM(); packs.splice(idx,1); renderChatPackagesList(packs); };
-        function renderChatPackagesList(packs) { let html=''; packs.forEach((pkg,idx)=>{ html+=`<div class="flex gap-2 items-center mb-2"><input type="number" value="${pkg.minutes}" class="border rounded p-1 w-24" data-index="${idx}" data-field="minutes"><span>min for $</span><input type="number" step="0.1" value="${pkg.price}" class="border rounded p-1 w-24" data-index="${idx}" data-field="price"><button onclick="window.removeChatPackage(${idx})" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Remove</button></div>`; }); document.getElementById('chatPackagesList').innerHTML = html; window.tempPackages = packs; }
-        window.saveChatPackages = async () => { const packs = getCurrentPackagesFromDOM(); await setDoc(doc(db,"settings","chatPackages"), { packages: packs, updatedAt: serverTimestamp() }); await addAdminLog("update_chat_packages"); alert("Chat packages saved"); };
+        window.showPlanModal = (id=null) => { document.getElementById('planModal').classList.add('active'); if(id) editPlan(id); else { document.getElementById('planId').value=''; document.getElementById('planName').value=''; document.getElementById('planMinAmount').value=''; document.getElementById('planRoi').value=''; document.getElementById('planDuration').value=''; document.getElementById('planDescription').value=''; document.getElementById('planActive').checked=true; } };
+        window.closePlanModal = () => { document.getElementById('planModal').classList.remove('active'); };
+        window.savePlan = async () => {
+            const id = document.getElementById('planId').value;
+            const data = { name: document.getElementById('planName').value, minAmount: parseFloat(document.getElementById('planMinAmount').value), dailyROI: parseFloat(document.getElementById('planRoi').value), durationDays: parseInt(document.getElementById('planDuration').value), description: document.getElementById('planDescription').value, active: document.getElementById('planActive').checked, updatedAt: serverTimestamp() };
+            if (id) await updateDoc(doc(db,"investment_plans",id), data);
+            else await addDoc(collection(db,"investment_plans"), { ...data, createdAt: serverTimestamp() });
+            closePlanModal(); loadPlans(); addAdminLog(id?"edit_plan":"add_plan");
+        };
+        window.editPlan = async (id) => { const snap = await getDoc(doc(db,"investment_plans",id)); if(snap.exists()){ const d=snap.data(); document.getElementById('planId').value=id; document.getElementById('planName').value=d.name; document.getElementById('planMinAmount').value=d.minAmount; document.getElementById('planRoi').value=d.dailyROI; document.getElementById('planDuration').value=d.durationDays; document.getElementById('planDescription').value=d.description; document.getElementById('planActive').checked=d.active; document.getElementById('planModal').classList.add('active'); } };
+        window.deletePlan = async (id) => { if(confirm("Delete plan?")){ await deleteDoc(doc(db,"investment_plans",id)); loadPlans(); addAdminLog("delete_plan"); } };
         
-        // Pending Deposits (manual review)
-        async function loadPendingDeposits() {
-            const container = document.getElementById('depositsAdminList');
-            container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
-            const snap = await getDocs(query(collection(db,"pending_deposits"), where("status","==","pending_review"), orderBy("createdAt","desc")));
-            if (snap.empty) { container.innerHTML = '<div class="empty-message">No pending manual deposits.</div>'; return; }
-            let html = '';
-            for (const d of snap.docs) {
+        // ===================== USER INVESTMENTS =====================
+        async function loadAllInvestments() {
+            const container = document.getElementById('mainContent');
+            container.innerHTML = '<div class="admin-card"><h3 class="text-lg font-bold mb-3">⏳ Active User Investments</h3><div class="loading-spinner"><div class="spinner"></div></div></div>';
+            const invSnap = await getDocs(query(collection(db,"user_investments"), where("status","==","active"), orderBy("startDate","desc")));
+            let html = '<div class="admin-card overflow-x-auto"><h3 class="text-lg font-bold mb-3">⏳ Active User Investments</h3><table class="min-w-full"><thead><tr><th>User ID</th><th>Plan</th><th>Amount</th><th>Start Date</th><th>Days Left</th><th>Action</th></tr></thead><tbody>';
+            for (const inv of invSnap.docs) {
+                const data = inv.data();
+                const user = await getDoc(doc(db,"users",data.userId));
+                const daysLeft = Math.max(0, data.durationDays - Math.floor((Date.now() - data.startDate.toDate())/86400000));
+                html += `<tr><td>${user.data()?.email || data.userId}</td><td>${data.planName}</td><td>$${data.amount}</td><td>${data.startDate.toDate().toLocaleDateString()}</td><td>${daysLeft}</td><td><button onclick="window.forceCloseInvestment('${inv.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Force Close</button></td></tr>`;
+            }
+            container.innerHTML = html + '</tbody></table></div>';
+        }
+        window.forceCloseInvestment = async (id) => { if(confirm("Close investment and refund remaining?")){ await updateDoc(doc(db,"user_investments",id),{ status:"closed", closedAt:serverTimestamp() }); addAdminLog("force_close_investment"); loadAllInvestments(); } };
+        
+        // ===================== WITHDRAWALS =====================
+        async function loadWithdrawals() {
+            const container = document.getElementById('mainContent');
+            container.innerHTML = '<div class="admin-card"><h3 class="text-lg font-bold mb-3">🏦 Withdrawal Requests</h3><div class="loading-spinner"><div class="spinner"></div></div></div>';
+            const wSnap = await getDocs(query(collection(db,"withdrawals"), orderBy("createdAt","desc")));
+            let html = '<div class="admin-card"><h3 class="text-lg font-bold mb-3">🏦 Withdrawals</h3><div class="space-y-3">';
+            for (const w of wSnap.docs) {
+                const data = w.data();
+                const user = await getDoc(doc(db,"users",data.userId));
+                html += `<div class="border rounded p-3 flex flex-wrap justify-between items-center"><div><b>${user.data()?.email}</b> - $${data.amount} - Status: ${data.status}<br><span class="text-xs">${data.createdAt?.toDate().toLocaleString()}</span></div><div>${data.status === 'pending' ? `<button onclick="window.approveWithdrawal('${w.id}','${data.userId}',${data.amount})" class="bg-green-600 text-white px-3 py-1 rounded">Approve</button><button onclick="window.rejectWithdrawal('${w.id}')" class="bg-red-600 text-white px-3 py-1 rounded ml-2">Reject</button>` : ''}</div></div>`;
+            }
+            container.innerHTML = html + '</div></div>';
+        }
+        window.approveWithdrawal = async (id, uid, amt) => { await updateDoc(doc(db,"withdrawals",id),{ status:"paid", processedAt:serverTimestamp() }); await updateDoc(doc(db,"users",uid),{ realBalance: increment(-amt) }); addAdminLog("approve_withdrawal",uid,{amount:amt}); loadWithdrawals(); showNotification(`Withdrawal approved: $${amt}`); };
+        window.rejectWithdrawal = async (id) => { await updateDoc(doc(db,"withdrawals",id),{ status:"failed" }); addAdminLog("reject_withdrawal"); loadWithdrawals(); };
+        
+        // ===================== DEPOSITS (MANUAL) =====================
+        async function loadDeposits() {
+            const container = document.getElementById('mainContent');
+            container.innerHTML = '<div class="admin-card"><h3 class="text-lg font-bold mb-3">💎 Pending Manual Deposits</h3><div class="loading-spinner"><div class="spinner"></div></div></div>';
+            const pendingSnap = await getDocs(query(collection(db,"pending_deposits"), where("status","==","pending_review"), orderBy("createdAt","desc")));
+            let html = '<div class="admin-card"><h3 class="text-lg font-bold mb-3">💎 Pending Deposits</h3><div class="space-y-3">';
+            for (const d of pendingSnap.docs) {
                 const data = d.data();
                 const user = await getDoc(doc(db,"users",data.userId));
-                html += `<div class="admin-card flex flex-wrap justify-between items-center gap-2">
-                            <div><b>${user.data()?.email}</b> - $${data.amount} via ${data.method}<br><span class="text-xs">Ref: ${data.reference}</span></div>
-                            <div><button onclick="window.approveManualDeposit('${d.id}','${data.userId}',${data.amount})" class="bg-green-600 text-white px-2 py-1 rounded">Approve</button>
-                            <button onclick="window.rejectManualDeposit('${d.id}')" class="bg-red-600 text-white px-2 py-1 rounded">Reject</button></div>
-                        </div>`;
+                html += `<div class="border rounded p-3"><div><b>${user.data()?.email}</b> - $${data.amount} via ${data.method}<br>Reference: ${data.reference || 'N/A'}<br><span class="text-xs">${data.createdAt?.toDate().toLocaleString()}</span></div><div class="mt-2"><button onclick="window.approveDeposit('${d.id}','${data.userId}',${data.amount})" class="bg-green-600 text-white px-3 py-1 rounded">Approve</button><button onclick="window.rejectDeposit('${d.id}')" class="bg-red-600 text-white px-3 py-1 rounded ml-2">Reject</button></div></div>`;
             }
-            container.innerHTML = html;
+            html += '</div><h3 class="text-lg font-bold mt-6 mb-2">✅ Completed Deposits History</h3><div class="space-y-2 max-h-60 overflow-auto">';
+            const completed = await getDocs(query(collection(db,"deposits"), orderBy("createdAt","desc"), limit(30)));
+            completed.forEach(d => { const data = d.data(); html += `<div class="border-b py-1 text-sm">${data.userId} - $${data.amount} (${data.method}) ${data.status}</div>`; });
+            container.innerHTML = html + '</div></div>';
         }
-        window.approveManualDeposit = async (id, uid, amt) => {
-            await updateDoc(doc(db,"pending_deposits",id), { status: "approved", processedAt: serverTimestamp() });
-            await updateDoc(doc(db,"users",uid), { withdrawableBalance: increment(amt), totalEarned: increment(amt) });
-            await addDoc(collection(db,"deposits"), { userId: uid, amount: amt, method: "manual", status: "completed", createdAt: serverTimestamp() });
-            await addAdminLog("approve_manual_deposit", uid, { amount: amt });
-            loadPendingDeposits(); loadDashboardStats();
-        };
-        window.rejectManualDeposit = async (id) => {
-            await updateDoc(doc(db,"pending_deposits",id), { status: "rejected" });
-            await addAdminLog("reject_manual_deposit");
-            loadPendingDeposits();
-        };
-        async function loadCompletedDeposits() {
-            const snap = await getDocs(query(collection(db,"deposits"), orderBy("createdAt","desc"), limit(50)));
-            let html = '<div class="max-h-64 overflow-auto">';
-            snap.forEach(d => { const data = d.data(); html += `<div class="border-b py-1 text-sm">${data.userId} - $${data.amount} (${data.method}) ${data.status}</div>`; });
-            html += '</div>';
-            document.getElementById('completedDepositsList').innerHTML = html;
+        window.approveDeposit = async (id, uid, amt) => { await updateDoc(doc(db,"pending_deposits",id),{ status:"approved", processedAt:serverTimestamp() }); await updateDoc(doc(db,"users",uid),{ realBalance: increment(amt), totalEarned: increment(amt) }); await addDoc(collection(db,"deposits"),{ userId: uid, amount: amt, method: "manual", status: "completed", createdAt: serverTimestamp() }); addAdminLog("approve_manual_deposit",uid,{amount:amt}); loadDeposits(); showNotification(`Deposit approved: $${amt}`); };
+        window.rejectDeposit = async (id) => { await updateDoc(doc(db,"pending_deposits",id),{ status:"rejected" }); loadDeposits(); };
+        
+        // ===================== CHAT MANAGEMENT =====================
+        async function loadChatManagement() {
+            const container = document.getElementById('mainContent');
+            container.innerHTML = '<div class="admin-card"><h3 class="text-lg font-bold mb-3">💬 Chat Packages & Minutes</h3><div id="chatPackagesConfig">Loading...</div><div id="userMinutesTable">Loading...</div></div>';
+            await loadChatPackagesUI();
+            const usersSnap = await getDocs(query(collection(db,"users"), where("role","!=","admin")));
+            let table = '<h4 class="font-bold mt-4">User Chat Minutes</h4><table class="w-full mt-2"><thead><tr><th>Email</th><th>Chat Minutes</th><th>Action</th></tr></thead><tbody>';
+            for (const u of usersSnap.docs) {
+                const data = u.data();
+                table += `<tr><td>${data.email}</td><td>${(data.chatMinutes || 0).toFixed(1)} min</td><td><button onclick="window.giveChatMinutes('${u.id}')" class="bg-purple-500 text-white px-2 py-1 rounded text-xs">Give Minutes</button></td></tr>`;
+            }
+            document.getElementById('userMinutesTable').innerHTML = table + '</tbody></table>';
+        }
+        async function loadChatPackagesUI() {
+            const pkgDoc = await getDoc(doc(db,"settings","chatPackages"));
+            let packages = pkgDoc.exists() ? pkgDoc.data().packages : [{ minutes: 30, price: 0.4 }, { minutes: 60, price: 0.9 }];
+            let html = '<h4 class="font-bold">Chat Minute Packages (User Purchase)</h4><div id="packagesList">';
+            packages.forEach((p, i) => { html += `<div class="flex gap-2 items-center mb-2"><input type="number" value="${p.minutes}" class="border p-1 w-24" data-index="${i}" data-field="minutes"> min for $<input type="number" step="0.1" value="${p.price}" class="border p-1 w-24" data-index="${i}" data-field="price"><button onclick="window.removePackage(${i})" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Remove</button></div>`; });
+            html += `<button onclick="window.addPackage()" class="bg-green-600 text-white px-3 py-1 rounded text-sm">+ Add Package</button><button onclick="window.savePackages()" class="bg-blue-600 text-white px-3 py-1 rounded ml-2">Save Packages</button>`;
+            document.getElementById('chatPackagesConfig').innerHTML = html;
+        }
+        window.addPackage = () => { const list = getPackagesFromDOM(); list.push({minutes:15, price:0.2}); renderPackagesList(list); };
+        window.removePackage = (idx) => { const list = getPackagesFromDOM(); list.splice(idx,1); renderPackagesList(list); };
+        function getPackagesFromDOM() { const inputs = document.querySelectorAll('#packagesList input'); const packs = []; for(let i=0; i<inputs.length; i+=2){ packs.push({ minutes: parseInt(inputs[i].value), price: parseFloat(inputs[i+1].value) }); } return packs; }
+        function renderPackagesList(packs) { let html=''; packs.forEach((p,i)=>{ html+=`<div class="flex gap-2 items-center mb-2"><input type="number" value="${p.minutes}" class="border p-1 w-24" data-index="${i}" data-field="minutes"> min for $<input type="number" step="0.1" value="${p.price}" class="border p-1 w-24" data-index="${i}" data-field="price"><button onclick="window.removePackage(${i})" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Remove</button></div>`; }); document.getElementById('packagesList').innerHTML = html; }
+        window.savePackages = async () => { const packs = getPackagesFromDOM(); await setDoc(doc(db,"settings","chatPackages"), { packages: packs, updatedAt: serverTimestamp() }); addAdminLog("update_chat_packages"); showNotification("Chat packages saved"); };
+        window.giveChatMinutes = async (uid) => { const mins = parseFloat(prompt("Add minutes:")); if(!isNaN(mins)){ await updateDoc(doc(db,"users",uid),{ chatMinutes: increment(mins) }); loadChatManagement(); } };
+        
+        // ===================== SUPPORT TICKETS =====================
+        async function loadTickets() {
+            const container = document.getElementById('mainContent');
+            container.innerHTML = '<div class="admin-card"><h3 class="text-lg font-bold mb-3">🎫 Support Tickets</h3><div class="loading-spinner"><div class="spinner"></div></div></div>';
+            const snap = await getDocs(query(collection(db,"support_tickets"), orderBy("createdAt","desc")));
+            let html = '<div class="admin-card"><h3 class="text-lg font-bold mb-3">Tickets</h3><div class="space-y-3">';
+            for (const t of snap.docs) {
+                const data = t.data();
+                const user = await getDoc(doc(db,"users",data.userId));
+                html += `<div class="border rounded p-3"><div><b>${user.data()?.email}</b> - ${data.subject}</div><div>Status: ${data.status}</div><div class="mt-2"><button onclick="window.resolveTicket('${t.id}')" class="bg-green-600 text-white px-2 py-1 rounded text-xs">Mark Resolved</button><button onclick="window.deleteTicket('${t.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs ml-2">Delete</button></div></div>`;
+            }
+            container.innerHTML = html + '</div></div>';
+        }
+        window.resolveTicket = async (id) => { await updateDoc(doc(db,"support_tickets",id),{ status:"resolved" }); loadTickets(); };
+        window.deleteTicket = async (id) => { await deleteDoc(doc(db,"support_tickets",id)); loadTickets(); };
+        
+        // ===================== TRANSACTIONS =====================
+        async function loadTransactions() {
+            const container = document.getElementById('mainContent');
+            container.innerHTML = '<div class="admin-card"><h3 class="text-lg font-bold mb-3">📜 Recent Transactions</h3><div class="loading-spinner"><div class="spinner"></div></div></div>';
+            const snap = await getDocs(query(collection(db,"transactions"), orderBy("timestamp","desc"), limit(100)));
+            let html = '<div class="admin-card overflow-x-auto"><h3 class="text-lg font-bold mb-3">Transactions</h3><table class="min-w-full"><thead><tr><th>User ID</th><th>Type</th><th>Amount</th><th>Date</th></tr></thead><tbody>';
+            snap.forEach(t => { const data=t.data(); html+=`<tr><td>${data.userId}</td><td>${data.type}</td><td>$${data.amount.toFixed(2)}</td><td>${data.timestamp?.toDate().toLocaleString()}</td></tr>`; });
+            container.innerHTML = html + '</tbody></table></div>';
         }
         
-        // Streak Configuration
+        // ===================== REFERRALS =====================
+        async function loadReferrals() {
+            const container = document.getElementById('mainContent');
+            container.innerHTML = '<div class="admin-card"><h3 class="text-lg font-bold mb-3">👥 Referral Stats</h3><div class="loading-spinner"><div class="spinner"></div></div></div>';
+            const snap = await getDocs(collection(db,"referrals"));
+            let html = '<div class="admin-card"><h3 class="text-lg font-bold">Referrals</h3><div class="space-y-2">';
+            snap.forEach(r => { const data=r.data(); html+=`<div>Referrer: ${data.referrerId} -> Referred: ${data.referredId} - Commission: $${(data.commissionEarned||0).toFixed(2)}</div>`; });
+            container.innerHTML = html + '</div></div>';
+        }
+        
+        // ===================== LEADERBOARD =====================
+        async function loadLeaderboard() {
+            const container = document.getElementById('mainContent');
+            const snap = await getDocs(query(collection(db,"users"), orderBy("totalEarned","desc"), limit(20)));
+            let html = '<div class="admin-card"><h3 class="text-lg font-bold mb-3">🏆 Top Earners</h3><table class="w-full"><thead><tr><th>Name</th><th>Total Earned</th></tr></thead><tbody>';
+            snap.forEach(u => { const d=u.data(); html+=`<tr><td>${d.displayName||d.email}</td><td>$${(d.totalEarned||0).toFixed(2)}</td></tr>`; });
+            container.innerHTML = html + '</tbody></table></div>';
+        }
+        
+        // ===================== KYC =====================
+        async function loadKYC() {
+            const container = document.getElementById('mainContent');
+            container.innerHTML = '<div class="admin-card"><h3 class="text-lg font-bold mb-3">🪪 KYC Requests</h3><div class="loading-spinner"><div class="spinner"></div></div></div>';
+            const snap = await getDocs(query(collection(db,"kyc_requests"), where("status","==","pending")));
+            let html = '<div class="admin-card"><h3 class="text-lg font-bold">KYC Pending</h3><div class="space-y-3">';
+            for (const kyc of snap.docs) {
+                const data = kyc.data();
+                const user = await getDoc(doc(db,"users",data.userId));
+                html += `<div class="border rounded p-3"><div><b>${user.data()?.email}</b><br><a href="${data.faceUrl}" target="_blank">Face Photo</a> | <a href="${data.idUrl}" target="_blank">ID Document</a></div><div class="mt-2"><button onclick="window.approveKYC('${kyc.id}','${data.userId}')" class="bg-green-600 text-white px-3 py-1 rounded">Approve</button><button onclick="window.rejectKYC('${kyc.id}')" class="bg-red-600 text-white px-3 py-1 rounded ml-2">Reject</button></div></div>`;
+            }
+            container.innerHTML = html + '</div></div>';
+        }
+        window.approveKYC = async (id, uid) => { await updateDoc(doc(db,"kyc_requests",id),{ status:"approved" }); await updateDoc(doc(db,"users",uid),{ kycStatus:"verified" }); addAdminLog("approve_kyc",uid); loadKYC(); };
+        window.rejectKYC = async (id) => { await updateDoc(doc(db,"kyc_requests",id),{ status:"rejected" }); loadKYC(); };
+        
+        // ===================== SPIN CONFIG =====================
+        async function loadSpinConfig() {
+            const config = await getDoc(doc(db,"settings","spinWheel"));
+            const segments = config.exists() ? config.data().segments : ["$0","$0.5","$0","$0.2","$0","$0.1","$0","$0"];
+            let html = '<div class="admin-card"><h3 class="text-lg font-bold mb-3">🎡 Spin Wheel Segments</h3><div id="spinSegmentsList">';
+            segments.forEach((val, idx) => { html += `<div class="flex gap-2 items-center mb-2">Segment ${idx+1}: <input type="text" value="${val}" class="border p-2 rounded w-32" data-index="${idx}"></div>`; });
+            html += `<button onclick="window.saveSpinConfig()" class="bg-purple-600 text-white px-4 py-2 rounded mt-2">Save Segments</button></div></div>`;
+            document.getElementById('mainContent').innerHTML = html;
+        }
+        window.saveSpinConfig = async () => {
+            const segments = Array.from(document.querySelectorAll('#spinSegmentsList input')).map(inp => inp.value);
+            await setDoc(doc(db,"settings","spinWheel"), { segments, updatedAt: serverTimestamp() });
+            addAdminLog("update_spin_config"); showNotification("Spin wheel updated");
+        };
+        
+        // ===================== STREAK CONFIG =====================
         async function loadStreakConfig() {
-            const configDoc = await getDoc(doc(db,"streak_config","weekly"));
-            let rewards = configDoc.exists() ? configDoc.data().rewards : [0.04,0.05,0.06,0.07,0.05,0.06,0.06];
-            let html = '<p>Set reward amount for each day (7 days). Total weekly reward will be sum of these.</p><div id="streakRewardsList">';
-            rewards.forEach((val, idx) => { html += `<div class="flex gap-2 items-center mb-2"><span>Day ${idx+1}:</span><input type="number" step="0.01" value="${val}" class="border rounded p-1 w-24" data-day="${idx}"></div>`; });
-            html += `<button onclick="window.saveStreakConfig()" class="bg-blue-600 text-white px-3 py-1 rounded mt-2">Save Streak Rewards</button>`;
-            document.getElementById('streakConfigForm').innerHTML = html;
+            const config = await getDoc(doc(db,"streak_config","weekly"));
+            let rewards = config.exists() ? config.data().rewards : [0.04,0.05,0.06,0.07,0.05,0.06,0.06];
+            let html = '<div class="admin-card"><h3 class="text-lg font-bold mb-3">🔥 Daily Streak Rewards (7 days)</h3><div id="streakRewardsList">';
+            rewards.forEach((val, i) => { html += `<div class="flex gap-2 items-center mb-2">Day ${i+1}: $<input type="number" step="0.01" value="${val}" class="border p-2 rounded w-24" data-day="${i}"></div>`; });
+            html += `<button onclick="window.saveStreakConfig()" class="bg-green-600 text-white px-4 py-2 rounded mt-2">Save Streak Rewards</button></div></div>`;
+            document.getElementById('mainContent').innerHTML = html;
         }
         window.saveStreakConfig = async () => {
-            const rewards = [];
-            document.querySelectorAll('#streakRewardsList input').forEach(inp => rewards.push(parseFloat(inp.value)));
+            const rewards = Array.from(document.querySelectorAll('#streakRewardsList input')).map(inp => parseFloat(inp.value));
             await setDoc(doc(db,"streak_config","weekly"), { rewards, updatedAt: serverTimestamp() });
-            await addAdminLog("update_streak_config");
-            alert("Streak configuration saved!");
+            addAdminLog("update_streak_config"); showNotification("Streak config saved");
         };
         
-        // Existing load functions (simplified for brevity but must be present)
-        async function loadWithdrawals() { /* existing code */ }
-        async function loadTickets() { /* existing */ }
-        async function loadTransactions() { /* existing */ }
-        async function loadReferralStats() { /* existing */ }
-        async function loadLeaderboard() { /* existing */ }
-        async function loadAdminLogs() { /* existing */ }
-        async function loadAnnouncements() { /* existing */ }
-        async function loadKYCRequests() { /* existing */ }
-        async function loadPlans() { /* existing */ }
-        async function loadAllInvestments() { /* existing */ }
-        async function loadSpinConfig() { /* existing, but ensure it uses prize values */ }
-        async function loadSystemSettings() { /* existing, add min withdrawal is $1 etc. */ }
+        // ===================== SYSTEM SETTINGS =====================
+        async function loadSettings() {
+            const settings = await getDoc(doc(db,"settings","system"));
+            const data = settings.exists() ? settings.data() : { minWithdrawal:1, referralCommission:10, supportEmail:"support@bestpay.com" };
+            let html = `<div class="admin-card"><h3 class="text-lg font-bold mb-3">⚙️ System Settings</h3><div class="space-y-3"><label>Min Withdrawal ($):</label><input type="number" id="minWithdrawal" value="${data.minWithdrawal}" class="border p-2 rounded w-full"><label>Referral Commission (%):</label><input type="number" id="refCommission" value="${data.referralCommission}" class="border p-2 rounded w-full"><label>Support Email:</label><input type="email" id="supportEmail" value="${data.supportEmail}" class="border p-2 rounded w-full"><button onclick="window.saveSystemSettings()" class="bg-indigo-600 text-white px-4 py-2 rounded mt-3">Save Settings</button></div></div>`;
+            document.getElementById('mainContent').innerHTML = html;
+        }
+        window.saveSystemSettings = async () => { await setDoc(doc(db,"settings","system"), { minWithdrawal: parseFloat(document.getElementById('minWithdrawal').value), referralCommission: parseFloat(document.getElementById('refCommission').value), supportEmail: document.getElementById('supportEmail').value, updatedAt: serverTimestamp() }); addAdminLog("update_system_settings"); showNotification("Settings saved"); };
         
-        // Navigation loader mapping
-        async function loadSection(sectionId) {
-            const loaders = {
-                dashboard: loadDashboardStats, users: loadUsers, investments: loadPlans, activeInvestments: loadAllInvestments,
-                withdrawals: loadWithdrawals, deposits: () => { loadPendingDeposits(); loadCompletedDeposits(); },
-                paymentLinks: loadPaymentLinks, chatManagement: () => { loadChatPackages(); loadUsers(); },
-                tickets: loadTickets, transactions: loadTransactions, referrals: loadReferralStats,
-                leaderboard: loadLeaderboard, adminLogs: loadAdminLogs, announcements: loadAnnouncements,
-                kyc: loadKYCRequests, spinConfig: loadSpinConfig, streakConfig: loadStreakConfig,
-                settings: loadSystemSettings, export: () => {}
-            };
-            if (loaders[sectionId]) await loaders[sectionId]();
+        // ===================== EXPORT =====================
+        async function exportUsersCSV() { const snap=await getDocs(collection(db,"users")); let csv="Email,Name,Real Balance\n"; snap.forEach(u=>{ const d=u.data(); csv+=`${d.email},${d.displayName||""},${d.realBalance||0}\n`; }); const blob=new Blob([csv],{type:"text/csv"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="users.csv"; a.click(); }
+        window.exportUsersCSV = exportUsersCSV;
+        window.exportData = async () => { await exportUsersCSV(); };
+        
+        // ===================== ANNOUNCEMENTS =====================
+        async function loadAnnouncements() {
+            const snap = await getDocs(query(collection(db,"announcements"), orderBy("createdAt","desc")));
+            let html = '<div class="admin-card"><div class="flex justify-between mb-3"><h3 class="text-lg font-bold">📢 Announcements</h3><button onclick="window.showAnnouncementModal()" class="bg-indigo-600 text-white px-3 py-1 rounded">New</button></div><div class="space-y-3">';
+            snap.forEach(d => { const a=d.data(); html+=`<div class="border rounded p-3"><b>${a.title}</b><br>${a.content}<br><button onclick="window.deleteAnnouncement('${d.id}')" class="text-red-500 text-sm mt-2">Delete</button></div>`; });
+            document.getElementById('mainContent').innerHTML = html + '</div></div>';
+        }
+        window.showAnnouncementModal = () => { document.getElementById('announcementModal').classList.add('active'); };
+        window.closeAnnouncementModal = () => { document.getElementById('announcementModal').classList.remove('active'); };
+        window.saveAnnouncement = async () => { const title=document.getElementById('annTitle').value, content=document.getElementById('annContent').value; if(title && content){ await addDoc(collection(db,"announcements"),{ title, content, createdAt:serverTimestamp() }); closeAnnouncementModal(); loadAnnouncements(); addAdminLog("add_announcement"); } };
+        window.deleteAnnouncement = async (id) => { await deleteDoc(doc(db,"announcements",id)); loadAnnouncements(); };
+        
+        // ===================== ADMIN LOGS =====================
+        async function loadAdminLogs() {
+            const snap = await getDocs(query(collection(db,"admin_logs"), orderBy("timestamp","desc"), limit(50)));
+            let html = '<div class="admin-card"><h3 class="text-lg font-bold mb-3">📋 Admin Logs</h3><div class="max-h-96 overflow-auto"><table class="w-full"><thead><tr><th>Action</th><th>Target</th><th>Time</th></tr></thead><tbody>';
+            snap.forEach(log => { const l=log.data(); html+=`<tr><td>${l.action}</td><td>${l.targetUserId||'-'}</td><td>${l.timestamp?.toDate().toLocaleString()}</td></tr>`; });
+            document.getElementById('mainContent').innerHTML = html + '</tbody></table></div></div>';
         }
         
-        function setupNavigation() { /* same as before, call loadSection based on clicked */ }
-        
-        // Expose functions globally
-        window.toggleSuspend = async (uid, current) => { await updateDoc(doc(db,"users",uid),{isSuspended:!current}); await addAdminLog("toggle_suspend", uid); loadUsers(); };
-        window.adjustBalance = async (uid) => { const amt = parseFloat(prompt("Amount (+/-):")); if(!isNaN(amt)){ await updateDoc(doc(db,"users",uid),{ withdrawableBalance: increment(amt), totalEarned: increment(amt) }); addAdminLog("adjust_balance",uid,{amount:amt}); loadUsers(); } };
-        window.adjustChatMinutes = async (uid) => { const mins = parseFloat(prompt("Add minutes:")); if(!isNaN(mins)){ await updateDoc(doc(db,"users",uid),{ chatMinutes: increment(mins) }); addAdminLog("adjust_chat_minutes",uid,{amount:mins}); loadUsers(); } };
-        window.savePaymentLink = window.savePaymentLink;
-        window.approveManualDeposit = window.approveManualDeposit; window.rejectManualDeposit = window.rejectManualDeposit;
-        window.saveChatPackages = window.saveChatPackages; window.addChatPackage = window.addChatPackage; window.removeChatPackage = window.removeChatPackage;
-        window.saveStreakConfig = window.saveStreakConfig;
-        // Reuse existing plan/announcement/spin methods from original (omitted for length but they are already defined in original admin code)
-        // We'll include minimal stubs to avoid errors
-        window.showPlanModal = () => {}; window.savePlan = () => {}; window.closePlanModal = () => {};
-        window.showAnnouncementModal = () => {}; window.saveAnnouncement = () => {}; window.closeAnnouncementModal = () => {};
-        window.exportUsersCSV = () => {};
-        // Initialize
-        setupNavigation();
-        document.getElementById('logoutAdminBtn').onclick = async () => { await signOut(auth); window.location.href = "index.html"; };
-        
-        // Dummy implementations for missing required functions from original (will be overwritten by actual ones if not loaded, but safe)
-        window.loadDashboardStats = loadDashboardStats;
-        window.loadUsers = loadUsers;
-        window.loadPlans = loadPlans;
-        window.loadAllInvestments = loadAllInvestments;
-        window.loadWithdrawals = loadWithdrawals;
-        window.loadTickets = loadTickets;
-        window.loadTransactions = loadTransactions;
-        window.loadReferralStats = loadReferralStats;
-        window.loadLeaderboard = loadLeaderboard;
-        window.loadAdminLogs = loadAdminLogs;
-        window.loadAnnouncements = loadAnnouncements;
-        window.loadKYCRequests = loadKYCRequests;
-        window.loadSpinConfig = loadSpinConfig;
-        window.loadSystemSettings = loadSystemSettings;
+        // ===================== NAVIGATION =====================
+        const sectionLoaders = { dashboard: loadDashboard, users: loadUsers, investments: loadPlans, activeInvestments: loadAllInvestments, withdrawals: loadWithdrawals, deposits: loadDeposits, paymentLinks: ()=>{}, chatManagement: loadChatManagement, tickets: loadTickets, transactions: loadTransactions, referrals: loadReferrals, leaderboard: loadLeaderboard, adminLogs: loadAdminLogs, announcements: loadAnnouncements, kyc: loadKYC, spinConfig: loadSpinConfig, streakConfig: loadStreakConfig, settings: loadSettings, export: () => { loadDashboard(); } };
+        async function loadSection(sectionId) { if(sectionLoaders[sectionId]) await sectionLoaders[sectionId](); else loadDashboard(); }
+        function setupNavigation() {
+            document.querySelectorAll('.sidebar-nav a').forEach(link => link.addEventListener('click', async (e) => { e.preventDefault(); const id = link.getAttribute('data-section'); await loadSection(id); document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active')); link.classList.add('active'); document.getElementById('sidebarOverlay').click(); }));
+            document.getElementById('hamburgerBtn').onclick = () => { document.getElementById('adminSidebar').classList.add('open'); document.getElementById('sidebarOverlay').classList.add('active'); };
+            document.getElementById('closeSidebarBtn').onclick = () => { document.getElementById('adminSidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('active'); };
+            document.getElementById('sidebarOverlay').onclick = () => { document.getElementById('adminSidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('active'); };
+            document.getElementById('logoutAdminBtn').onclick = async () => { await signOut(auth); window.location.href = "index.html"; };
+        }
+        // Load default dashboard
+        loadDashboard();
     </script>
 </body>
 </html>
