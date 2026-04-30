@@ -58,7 +58,6 @@
         .streak-box.disabled { background:#e5e7eb; cursor:not-allowed; opacity:0.5; }
         .chat-messages { height:400px; overflow-y:auto; background:white; border-radius:1rem; padding:1rem; border:1px solid #e5e7eb; }
         .trade-card { background:#f8fafc; border-radius:0.75rem; padding:0.75rem; margin-bottom:0.75rem; border-left:4px solid #4f46e5; transition:0.1s; position:relative; overflow:hidden; }
-        .trade-card.active-blink { border-left-color: #f97316; background: #fff7ed; }
         .trade-card.glow-win { box-shadow: 0 0 8px rgba(34,197,94,0.6); border-left-color: #22c55e; }
         .trade-card.glow-loss { box-shadow: 0 0 8px rgba(239,68,68,0.6); border-left-color: #ef4444; }
         .countdown { font-family:monospace; font-size:1.2rem; font-weight:bold; }
@@ -69,8 +68,6 @@
         .mode-toggle .active { background: #4f46e5; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .reset-btn { background: #f97316; color: white; padding: 6px 16px; border-radius: 2rem; font-size: 13px; font-weight: bold; margin-left: 12px; }
         .reset-btn:hover { background: #ea580c; }
-        .active-trades-badge { background: #f97316; padding: 4px 10px; border-radius: 30px; font-size: 0.7rem; font-weight: bold; color: white; margin-left: 12px; }
-        /* new beginner friendly styles */
         .status-bar { background: #1e293b; color: white; border-radius: 2rem; padding: 6px 16px; font-weight: bold; display: inline-flex; align-items: center; gap: 10px; }
         .risk-reward-bar { background: #e2e8f0; border-radius: 1rem; height: 8px; width: 100%; overflow: hidden; margin: 8px 0; }
         .risk-reward-fill { height: 100%; width: 0%; background: #22c55e; transition: width 0.2s; }
@@ -80,8 +77,8 @@
         .dot-win { width: 24px; height: 24px; background: #22c55e; border-radius: 50%; }
         .dot-loss { width: 24px; height: 24px; background: #ef4444; border-radius: 50%; }
         .last-trade-mini { background: #f1f5f9; border-radius: 1rem; padding: 6px 12px; font-size: 0.8rem; }
-        .example-trade-btn { background: #8b5cf6; color: white; border-radius: 2rem; padding: 6px 12px; font-size: 0.75rem; }
-        .mute-btn { background: #334155; border: none; color: white; border-radius: 2rem; padding: 4px 8px; font-size: 0.7rem; cursor: pointer; }
+        .auto-trade-panel { background: #f1f5f9; border-radius: 1rem; padding: 8px; margin-top: 12px; display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+        .auto-active { background: #22c55e20; border-left: 3px solid #22c55e; }
     </style>
 </head>
 <body class="bg-amber-50">
@@ -125,14 +122,14 @@
         </div>
 
         <main class="container mx-auto px-4 py-6 space-y-6">
-            <!-- TRADING SECTION enhanced -->
+            <!-- TRADING SECTION enhanced with auto trade and expert mode -->
             <div id="trade" class="content-section active-section">
-                <!-- GLOBAL STATUS BAR -->
                 <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
                     <div id="globalTradeStatus" class="status-bar"><i class="fas fa-chart-simple"></i> <span id="statusText">✅ No active trades</span> <span id="statusTimer" class="font-mono"></span></div>
                     <div class="flex gap-2">
-                        <button id="muteAudioBtn" class="mute-btn"><i class="fas fa-volume-up"></i> Mute</button>
-                        <button id="beginnerModeToggle" class="mute-btn bg-indigo-600"><i class="fas fa-graduation-cap"></i> Beginner Mode</button>
+                        <button id="muteAudioBtn" class="mute-btn" style="background:#334155; border:none; color:white; border-radius:2rem; padding:4px 12px;"><i class="fas fa-volume-up"></i> Mute</button>
+                        <button id="beginnerModeToggle" class="mute-btn" style="background:#4f46e5; border:none; color:white; border-radius:2rem; padding:4px 12px;"><i class="fas fa-graduation-cap"></i> Beginner Mode</button>
+                        <button id="expertModeToggle" class="mute-btn" style="background:#1e293b; border:none; color:white; border-radius:2rem; padding:4px 12px;"><i class="fas fa-brain"></i> Expert Mode</button>
                     </div>
                 </div>
 
@@ -140,7 +137,6 @@
                     <div class="lg:col-span-2 space-y-4">
                         <div class="guide-card flex items-center justify-between" id="tradeGuideBtn"><div><i class="fas fa-book-open text-indigo-600 text-2xl mr-3"></i> <strong>📘 Trading Guide</strong> – 60 sec trades: CALL=price UP, PUT=price DOWN | Win = Stake × Multiplier</div><i class="fas fa-chevron-right"></i></div>
                         <div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>{"allow_symbol_change":true,"interval":"1","symbol":"OANDA:EURUSD","theme":"light","autosize":true}</script></div>
-                        <!-- ANIMATED COUNTDOWN DISPLAY (digital) -->
                         <div class="bg-indigo-50 p-2 rounded-xl text-center font-mono text-xl" id="chartCountdown">⏱️ No active trade</div>
                         <div class="card-glass p-4">
                             <div class="flex justify-between items-center mb-3 flex-wrap gap-3">
@@ -149,15 +145,27 @@
                                     <button id="realModeBtn" class="px-5 py-1.5 rounded-full text-sm font-semibold bg-indigo-600 text-white shadow">Real</button>
                                 </div>
                                 <button id="resetDemoBtn" class="reset-btn"><i class="fas fa-sync-alt mr-1"></i> Reset Demo</button>
-                                <button id="exampleTradeBtn" class="example-trade-btn"><i class="fas fa-magic"></i> Try Example Trade</button>
+                                <button id="exampleTradeBtn" class="example-trade-btn" style="background:#8b5cf6; color:white; border-radius:2rem; padding:6px 12px; font-size:0.75rem;"><i class="fas fa-magic"></i> Try Example</button>
                                 <span id="modeLabel" class="text-sm font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">🔴 REAL ACCOUNT</span>
                             </div>
-                            <!-- beginner mode hint -->
-                            <div id="beginnerHint" class="text-xs text-gray-500 mb-2 hidden"><i class="fas fa-lightbulb"></i> Beginner Mode: Multiplier fixed at 2x, simplified stake buttons</div>
-                            <!-- last trade mini log -->
+                            <div id="beginnerHint" class="text-xs text-gray-500 mb-2 hidden"><i class="fas fa-lightbulb"></i> Beginner Mode: Min stake $6, multiplier fixed 2x</div>
+                            <div id="expertHint" class="text-xs text-gray-500 mb-2 hidden"><i class="fas fa-brain"></i> Expert Mode: Min stake $9, multiplier up to 10x, full control</div>
                             <div id="lastTradeSummary" class="last-trade-mini mb-3">📋 Last trade: —</div>
-                            <!-- win/loss streak dots -->
                             <div class="streak-dots" id="streakDots"></div>
+                            
+                            <!-- AUTO TRADE PANEL -->
+                            <div id="autoTradePanel" class="auto-trade-panel mb-3">
+                                <div><i class="fas fa-robot"></i> Auto Trade</div>
+                                <div class="flex gap-2">
+                                    <select id="autoDirection" class="border rounded p-1 text-sm">
+                                        <option value="call">CALL ▲</option>
+                                        <option value="put">PUT ▼</option>
+                                    </select>
+                                    <button id="startAutoTradeBtn" class="bg-green-600 text-white px-2 py-1 rounded text-sm">Start</button>
+                                    <button id="stopAutoTradeBtn" class="bg-red-600 text-white px-2 py-1 rounded text-sm" disabled>Stop</button>
+                                </div>
+                            </div>
+
                             <div class="flex gap-5 border-b mb-3 mt-2">
                                 <button id="positionsTabBtn" class="px-4 py-2 font-bold text-indigo-600 border-b-2 border-indigo-500">Active (60s)</button>
                                 <button id="historyTabBtn" class="px-4 py-2 font-bold text-gray-500">History</button>
@@ -180,10 +188,9 @@
                         </div>
                         <div class="card-glass p-4 text-center"><div class="text-sm text-gray-500">EUR/USD Live</div><div class="text-3xl font-bold text-indigo-700" id="livePrice">1.0892</div><div class="text-xs">Price updates every 2s</div></div>
                         <div class="card-glass p-4">
-                            <div class="font-medium mb-2">Stake Amount (Min $9) <i class="fas fa-question-circle tooltip-icon" title="Amount you risk on this trade. If wrong, you lose this amount."></i></div>
+                            <div class="font-medium mb-2">Stake Amount <span id="stakeMinLabel">(Min $9)</span> <i class="fas fa-question-circle tooltip-icon" title="Amount you risk on this trade. If wrong, you lose this amount."></i></div>
                             <div class="grid grid-cols-5 gap-2" id="stakeButtonsContainer"></div>
-                            <input type="number" id="stakeAmount" class="w-full border rounded-xl p-2 mt-2 text-center" value="10" step="1" min="9">
-                            <!-- RISK/REWARD SIMULATOR -->
+                            <input type="number" id="stakeAmount" class="w-full border rounded-xl p-2 mt-2 text-center" value="10" step="1">
                             <div class="mt-3">
                                 <div class="flex justify-between text-sm"><span>💰 Potential Profit:</span><span id="potentialProfit" class="text-green-600 font-bold">$0.00</span></div>
                                 <div class="flex justify-between text-sm"><span>💸 Potential Loss:</span><span id="potentialLoss" class="text-red-600 font-bold">$0.00</span></div>
@@ -199,12 +206,11 @@
                         </div>
                         <div class="grid grid-cols-2 gap-3"><button id="callTradeBtn" class="bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-bold">CALL ▲</button><button id="putTradeBtn" class="bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold">PUT ▼</button></div>
                         <div id="tradeFeedback" class="text-sm text-center text-gray-600"></div>
-                        <div id="lockoutWarning" class="hidden text-center text-red-500 text-sm"><i class="fas fa-hourglass-half"></i> Wait for active trades to finish?</div>
                     </div>
                 </div>
             </div>
 
-            <!-- other sections abbreviated but intact -->
+            <!-- other sections (abbreviated but fully functional) -->
             <div id="investments" class="content-section"><div class="card-glass p-6"><h2 class="text-2xl font-bold mb-3">Investment Dashboard</h2><div id="investmentProductsList" class="grid gap-3 mb-6"></div><h3 class="text-xl font-bold mb-2">Your Active Investments</h3><div id="activeInvestmentsList" class="space-y-3"></div></div></div>
             <div id="balances" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">💰 Balance Overview</h3><div id="balanceDetails" class="space-y-2"></div></div></div>
             <div id="transactions" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">📜 Transaction History</h3><div id="historyList" class="space-y-2 max-h-96 overflow-y-auto"></div></div></div>
@@ -227,14 +233,10 @@
     <div id="detailModal" class="modal"><div class="modal-content"><div class="flex justify-between"><h3 id="modalTitle" class="text-xl font-bold">Info</h3><button onclick="closeModal()">&times;</button></div><div id="modalBody"></div><button onclick="closeModal()" class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded">Close</button></div></div>
     <div id="reAuthModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold">Re-authenticate</h3><input type="password" id="reAuthPassword" placeholder="Password" class="border p-2 w-full rounded"><button id="submitReAuthBtn" class="bg-indigo-600 text-white w-full mt-3 py-2 rounded">Confirm</button><button onclick="closeReAuthModal()" class="mt-2 text-gray-500">Cancel</button></div></div>
 
-    <audio id="winSound" preload="auto" src="data:audio/wav;base64,U3RlYWx0aCBzb3VuZCBzaW11bGF0aW9u"></audio>
-    <audio id="lossSound" preload="auto"></audio>
-    <audio id="beepSound" preload="auto"></audio>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut, updateProfile, updateEmail, updatePassword, sendEmailVerification, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, orderBy, serverTimestamp, addDoc, increment, Timestamp, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, orderBy, serverTimestamp, addDoc, increment, Timestamp, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
         
         const firebaseConfig = { apiKey: "AIzaSyDtGN7KCK0A4fhztLN0CgxsKkGROcO_-vI", authDomain: "bestpay-5b78c.firebaseapp.com", projectId: "bestpay-5b78c", storageBucket: "bestpay-5b78c.firebasestorage.app", messagingSenderId: "583230068716", appId: "1:583230068716:web:3e8d298b4d00b46c8652c9" };
@@ -242,31 +244,76 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         const storage = getStorage(app);
-        let currentUser, currentUserData, isRealMode = true, beginnerMode = false, audioMuted = false;
+        let currentUser, currentUserData, isRealMode = true, beginnerMode = true, expertMode = false, audioMuted = false;
         let activeTimers = new Map();
         let pendingTrade = null;
-        let lastTradesResults = []; // store last 5 results 'win' or 'loss'
+        let lastTradesResults = [];
+        let autoTradeInterval = null;
+        let currentPrice = 1.0892;
         
+        // Helper functions
         function playSound(type) { if(audioMuted) return; const audio = new Audio(); if(type==='win') audio.src = "https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"; else if(type==='loss') audio.src = "https://www.soundjay.com/misc/sounds/failure-drum-01.mp3"; else audio.src = "https://www.soundjay.com/misc/sounds/beep-07.mp3"; audio.play().catch(e=>console.log); }
-        function updateStreakDots() { const container = document.getElementById('streakDots'); container.innerHTML = lastTradesResults.slice(-5).reverse().map(res => `<div class="${res==='win'?'dot-win':'dot-loss'}"></div>`).join(''); }
-        function updateRiskReward() { let stake = parseFloat(document.getElementById('stakeAmount').value) || 0; let multiplier = beginnerMode ? 2 : parseFloat(document.getElementById('multiplierSlider').value); let potentialProfit = (stake * multiplier) - stake; let potentialLoss = stake; document.getElementById('potentialProfit').innerText = `$${potentialProfit.toFixed(2)}`; document.getElementById('potentialLoss').innerText = `$${potentialLoss.toFixed(2)}`; let fillPercent = (potentialProfit / (potentialProfit+potentialLoss)) * 100; document.getElementById('riskRewardFill').style.width = Math.min(100, fillPercent)+'%'; document.getElementById('totalPayout').innerText = `$${(stake*multiplier).toFixed(2)}`; }
+        function showNotification(msg, type='success'){ const d=document.createElement('div'); d.className=`notification ${type==='error'?'bg-red-700':type==='info'?'bg-blue-700':'bg-gray-800'}`; d.innerHTML=msg; document.body.appendChild(d); setTimeout(()=>d.remove(),3000); }
+        function showModal(title, content){ document.getElementById('modalTitle').innerText = title; document.getElementById('modalBody').innerHTML = content; document.getElementById('detailModal').classList.add('active'); }
+        window.closeModal = () => document.getElementById('detailModal').classList.remove('active');
+        window.closeReAuthModal = () => document.getElementById('reAuthModal').classList.remove('active');
+        
+        async function loadUserData() { 
+            const snap = await getDoc(doc(db,"users",currentUser.uid)); 
+            currentUserData = snap.data() || { realBalance:0, demoBalance:10000, totalEarned:0, chatMinutes:0 }; 
+            if(currentUserData.demoBalance===undefined) await updateDoc(doc(db,"users",currentUser.uid),{demoBalance:10000});
+            const bal = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||10000);
+            document.getElementById('liveBalance').innerText = `$${bal.toFixed(2)}`; 
+            document.getElementById('spinBalanceDisplay').innerText = bal.toFixed(2); 
+            document.getElementById('userShort').innerText = currentUserData.displayName?.split(' ')[0] || currentUser.email.split('@')[0]; 
+            document.getElementById('balanceDetails').innerHTML = `Real: $${(currentUserData.realBalance||0).toFixed(2)}<br>Demo: $${(currentUserData.demoBalance||10000).toFixed(2)}`; 
+        }
+        async function updateBalanceByMode(changeAmount, isReal) { const field = isReal ? 'realBalance' : 'demoBalance'; await updateDoc(doc(db,"users",currentUser.uid), { [field]: increment(changeAmount), totalEarned: increment(changeAmount>0?changeAmount:0) }); await loadUserData(); }
+        async function resetDemoBalance() { if(!isRealMode){ await updateDoc(doc(db,"users",currentUser.uid),{demoBalance:10000}); loadUserData(); showNotification("Demo reset to $10,000"); } else showNotification("Switch to Demo mode first","info"); }
+        
+        // Price simulation
+        setInterval(()=>{ currentPrice += (Math.random()-0.5)*0.0008; currentPrice = Math.max(1.05,Math.min(1.15,currentPrice)); document.getElementById('livePrice').innerText = currentPrice.toFixed(5); },2000);
+        
+        // Risk/reward updater
+        function updateRiskReward() { 
+            let stake = parseFloat(document.getElementById('stakeAmount').value) || 0; 
+            let multiplier = (beginnerMode && !expertMode) ? 2 : parseFloat(document.getElementById('multiplierSlider').value);
+            if(expertMode) multiplier = parseFloat(document.getElementById('multiplierSlider').value);
+            let minStake = (beginnerMode && !expertMode) ? 6 : 9;
+            if(stake < minStake) stake = minStake;
+            let potentialProfit = (stake * multiplier) - stake; 
+            let potentialLoss = stake; 
+            document.getElementById('potentialProfit').innerText = `$${potentialProfit.toFixed(2)}`; 
+            document.getElementById('potentialLoss').innerText = `$${potentialLoss.toFixed(2)}`; 
+            let fillPercent = (potentialProfit / (potentialProfit+potentialLoss)) * 100; 
+            document.getElementById('riskRewardFill').style.width = Math.min(100, fillPercent)+'%'; 
+            document.getElementById('totalPayout').innerText = `$${(stake*multiplier).toFixed(2)}`; 
+        }
+        
+        // Mode toggles
+        function setBeginnerMode() { beginnerMode = true; expertMode = false; document.getElementById('beginnerHint').classList.remove('hidden'); document.getElementById('expertHint').classList.add('hidden'); document.getElementById('multiplierContainer').classList.add('hidden'); document.getElementById('multiplierSlider').value = 2; document.getElementById('stakeMinLabel').innerHTML = '(Min $6)'; document.getElementById('stakeAmount').min = 6; if(parseFloat(document.getElementById('stakeAmount').value) < 6) document.getElementById('stakeAmount').value = 6; updateRiskReward(); showNotification("Beginner mode: min stake $6, multiplier fixed 2x", "info"); }
+        function setExpertMode() { expertMode = true; beginnerMode = false; document.getElementById('expertHint').classList.remove('hidden'); document.getElementById('beginnerHint').classList.add('hidden'); document.getElementById('multiplierContainer').classList.remove('hidden'); document.getElementById('stakeMinLabel').innerHTML = '(Min $9)'; document.getElementById('stakeAmount').min = 9; if(parseFloat(document.getElementById('stakeAmount').value) < 9) document.getElementById('stakeAmount').value = 9; updateRiskReward(); showNotification("Expert mode: full control, min stake $9, multiplier up to 10x", "info"); }
+        document.getElementById('beginnerModeToggle').onclick = setBeginnerMode;
+        document.getElementById('expertModeToggle').onclick = setExpertMode;
+        document.getElementById('multiplierSlider').addEventListener('input', ()=>{ if(!beginnerMode || expertMode) updateRiskReward(); });
         document.getElementById('stakeAmount').addEventListener('input', updateRiskReward);
-        if(!beginnerMode) document.getElementById('multiplierSlider').addEventListener('input', updateRiskReward);
+        document.getElementById('muteAudioBtn').onclick = () => { audioMuted = !audioMuted; document.getElementById('muteAudioBtn').innerHTML = audioMuted ? '<i class="fas fa-volume-mute"></i> Unmute' : '<i class="fas fa-volume-up"></i> Mute'; };
         
-        function updateBeginnerUI() { const advanced = document.querySelectorAll('.advanced-feature'); if(beginnerMode) { advanced.forEach(el=>el.classList.add('hidden')); document.getElementById('multiplierContainer').classList.add('hidden'); document.getElementById('beginnerHint').classList.remove('hidden'); document.getElementById('multiplierSlider').value = 2; updateRiskReward(); } else { advanced.forEach(el=>el.classList.remove('hidden')); document.getElementById('multiplierContainer').classList.remove('hidden'); document.getElementById('beginnerHint').classList.add('hidden'); } }
-        
-        document.getElementById('beginnerModeToggle').onclick = () => { beginnerMode = !beginnerMode; updateBeginnerUI(); showNotification(beginnerMode ? "Beginner mode ON: Multiplier fixed 2x" : "Beginner mode OFF", "info"); };
-        
+        // Core trade execution
         async function executeTrade(direction, stake, multiplier) {
             const currentBalance = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||10000);
-            if(stake > currentBalance) { showNotification(`Insufficient ${isRealMode?'real':'demo'} balance`,"error"); document.getElementById('insufficientAlert').classList.remove('hidden'); return; }
+            if(stake > currentBalance) { showNotification(`Insufficient ${isRealMode?'real':'demo'} balance`,"error"); document.getElementById('insufficientAlert').classList.remove('hidden'); return false; }
             const entryPrice = currentPrice;
             const tradeObj = { userId:currentUser.uid, direction, amount:stake, multiplier, entryPrice, status:"active", createdAt:serverTimestamp(), expiresAt:Timestamp.fromDate(new Date(Date.now()+60000)), isReal:isRealMode };
-            const docRef = await addDoc(collection(db,"binary_trades"), tradeObj);
-            showNotification(`Trade placed: ${direction} $${stake} (${multiplier}x, 60s)`,"info");
-            playSound('beep');
-            setTimeout(()=>settleTrade(docRef.id, stake, direction, entryPrice, multiplier, isRealMode), 60000);
-            loadOpenTrades();
+            try {
+                const docRef = await addDoc(collection(db,"binary_trades"), tradeObj);
+                showNotification(`Trade placed: ${direction} $${stake} (${multiplier}x, 60s)`,"info");
+                playSound('beep');
+                // Set timeout to settle after 60s
+                setTimeout(()=>settleTrade(docRef.id, stake, direction, entryPrice, multiplier, isRealMode), 60000);
+                await loadOpenTrades(); // refresh immediately
+                return true;
+            } catch(e) { console.error(e); showNotification("Trade failed: "+e.message, "error"); return false; }
         }
         
         async function settleTrade(tradeId, stake, direction, entryPrice, multiplier, isRealTrade){
@@ -291,12 +338,13 @@
         }
         
         async function loadOpenTrades() {
+            if(!currentUser) return;
             const q = query(collection(db,"binary_trades"), where("userId","==",currentUser.uid), where("status","==","active"), where("isReal","==",isRealMode), orderBy("createdAt","desc"));
             const snap = await getDocs(q);
             const container = document.getElementById('openPositionsList');
             const badge = document.getElementById('activeCountBadge');
             badge.innerText = snap.size;
-            if(snap.empty){ container.innerHTML='<div class="text-gray-500 text-center py-4">No active trades</div>'; document.getElementById('globalTradeStatus').innerHTML='<i class="fas fa-chart-simple"></i> ✅ No active trades'; document.getElementById('chartCountdown').innerHTML='⏱️ No active trade'; return; }
+            if(snap.empty){ container.innerHTML='<div class="text-gray-500 text-center py-4">No active trades</div>'; document.getElementById('globalTradeStatus').innerHTML = '<i class="fas fa-chart-simple"></i> ✅ No active trades'; document.getElementById('chartCountdown').innerHTML = '⏱️ No active trade'; return; }
             let earliestExpiry = null;
             let html='';
             snap.forEach(docSnap=>{
@@ -309,14 +357,18 @@
                 html+=`<div class="trade-card ${glowClass}" id="tradeCard-${tradeId}"><div class="flex justify-between"><span class="font-bold">${t.direction.toUpperCase()} $${t.amount} (${t.multiplier}x)</span><span class="countdown text-indigo-600" id="countdown-${tradeId}">${secondsLeft}s</span></div><div class="text-sm">Entry: ${t.entryPrice.toFixed(5)}</div><div class="floating-pl text-sm ${profit>=0?'text-green-600':'text-red-600'}" id="pl-${tradeId}">${profit>=0?`▲ +$${profit.toFixed(2)}`:`▼ -$${Math.abs(profit).toFixed(2)}`}</div></div>`;
             });
             container.innerHTML=html;
+            // global countdown for earliest expiry
             if(earliestExpiry) {
-                let interval = setInterval(()=>{
+                if(window.globalCountdownInterval) clearInterval(window.globalCountdownInterval);
+                window.globalCountdownInterval = setInterval(()=>{
                     if(!earliestExpiry) return;
                     let seconds = Math.max(0, Math.floor((earliestExpiry-new Date())/1000));
                     document.getElementById('chartCountdown').innerHTML = `⏱️ Next trade ends in ${seconds}s`;
-                    if(seconds<=0) clearInterval(interval);
+                    document.getElementById('globalTradeStatus').innerHTML = `<i class="fas fa-chart-simple"></i> 🔴 ${snap.size} active trade(s) – ends in ${seconds}s`;
+                    if(seconds<=0) { clearInterval(window.globalCountdownInterval); document.getElementById('chartCountdown').innerHTML = '⏱️ No active trade'; }
                 }, 1000);
             }
+            // per-trade timers
             snap.forEach(docSnap=>{
                 const t=docSnap.data(), tradeId=docSnap.id, expiryTime=t.expiresAt.toDate();
                 if(activeTimers.has(tradeId)) clearInterval(activeTimers.get(tradeId));
@@ -330,71 +382,124 @@
                         plEl.innerHTML = profit>=0 ? `▲ +$${profit.toFixed(2)}` : `▼ -$${Math.abs(profit).toFixed(2)}`;
                         plEl.className = `floating-pl text-sm ${profit>=0?'text-green-600':'text-red-600'}`;
                         const card = document.getElementById(`tradeCard-${tradeId}`);
-                        if(card) { if(profit>0) card.classList.add('glow-win'); else card.classList.remove('glow-win'); if(profit<0) card.classList.add('glow-loss'); else card.classList.remove('glow-loss'); }
+                        if(card) { if(profit>0) card.classList.add('glow-win'); else if(profit<0) card.classList.add('glow-loss'); else card.classList.remove('glow-win','glow-loss'); }
                     }
                     if(secondsLeft<=0){ clearInterval(interval); activeTimers.delete(tradeId); }
                 },1000);
                 activeTimers.set(tradeId,interval);
             });
-            document.getElementById('globalTradeStatus').innerHTML = `<i class="fas fa-chart-simple"></i> 🔴 ${snap.size} active trade(s) – ends in ${earliestExpiry?Math.floor((earliestExpiry-new Date())/1000):0}s`;
         }
         
-        // example trade
-        document.getElementById('exampleTradeBtn').onclick = async () => {
-            if(!currentUser) return;
-            if(!isRealMode) { showNotification("Demo mode active, using virtual balance", "info"); }
-            document.getElementById('stakeAmount').value = 10;
-            if(!beginnerMode) document.getElementById('multiplierSlider').value = 2;
-            updateRiskReward();
-            showModal("Example Trade", "This is a demo trade: $10 stake, 2x multiplier. Click CALL to see how it works. Watch countdown and result!");
-            pendingTrade = { direction: 'call', stake: 10, multiplier: 2 };
-            document.getElementById('confirmTradeYes').click();
-        };
+        async function loadHistory(){
+            const q=query(collection(db,"binary_trades"), where("userId","==",currentUser.uid), where("status","==","closed"), where("isReal","==",isRealMode), orderBy("createdAt","desc"), limit(10));
+            const snap=await getDocs(q);
+            let html='', totalP=0, wins=0;
+            snap.forEach(d=>{ const t=d.data(); const profit=t.profit||0; totalP+=profit; if(profit>0) wins++; html+=`<div class="flex justify-between border-b py-1">${t.direction} $${t.amount} (${t.multiplier||2}x) ${profit>=0?`+${profit.toFixed(2)}`:profit.toFixed(2)}</div>`; });
+            document.getElementById('lastTradesList').innerHTML=html||'No history';
+            document.getElementById('last10Profit').innerHTML=`$${totalP.toFixed(2)}`;
+            document.getElementById('winRatePercent').innerHTML=snap.size?((wins/snap.size)*100).toFixed(1)+'%':'0%';
+        }
         
-        document.getElementById('muteAudioBtn').onclick = () => { audioMuted = !audioMuted; document.getElementById('muteAudioBtn').innerHTML = audioMuted ? '<i class="fas fa-volume-mute"></i> Unmute' : '<i class="fas fa-volume-up"></i> Mute'; };
-        function showNotification(msg, type='success'){ const d=document.createElement('div'); d.className=`notification ${type==='error'?'bg-red-700':type==='info'?'bg-blue-700':'bg-gray-800'}`; d.innerHTML=msg; document.body.appendChild(d); setTimeout(()=>d.remove(),3000); }
-        function showModal(title, content){ document.getElementById('modalTitle').innerText = title; document.getElementById('modalBody').innerHTML = content; document.getElementById('detailModal').classList.add('active'); }
-        window.closeModal = () => document.getElementById('detailModal').classList.remove('active');
-        window.closeReAuthModal = () => document.getElementById('reAuthModal').classList.remove('active');
+        function updateStreakDots() { const container = document.getElementById('streakDots'); container.innerHTML = lastTradesResults.slice(-5).reverse().map(res => `<div class="${res==='win'?'dot-win':'dot-loss'}"></div>`).join(''); }
         
-        async function loadUserData() { 
-            const snap = await getDoc(doc(db,"users",currentUser.uid)); 
-            currentUserData = snap.data() || { realBalance:0, demoBalance:10000, totalEarned:0, chatMinutes:0 }; 
-            if(currentUserData.demoBalance===undefined) await updateDoc(doc(db,"users",currentUser.uid),{demoBalance:10000});
+        function requestTradeConfirmation(direction){
+            let stake = parseFloat(document.getElementById('stakeAmount').value);
+            let multiplier = (beginnerMode && !expertMode) ? 2 : parseFloat(document.getElementById('multiplierSlider').value);
+            let minStake = (beginnerMode && !expertMode) ? 6 : 9;
+            if(stake < minStake) { showNotification(`Min stake $${minStake}`,"error"); return; }
             const bal = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||10000);
-            document.getElementById('liveBalance').innerText = `$${bal.toFixed(2)}`; 
-            document.getElementById('spinBalanceDisplay').innerText = bal.toFixed(2); 
-            document.getElementById('userShort').innerText = currentUserData.displayName?.split(' ')[0] || currentUser.email.split('@')[0]; 
-            document.getElementById('balanceDetails').innerHTML = `Real: $${(currentUserData.realBalance||0).toFixed(2)}<br>Demo: $${(currentUserData.demoBalance||10000).toFixed(2)}`; 
+            if(stake>bal) { showNotification(`Insufficient ${isRealMode?'real':'demo'} balance`,"error"); document.getElementById('insufficientAlert').classList.remove('hidden'); return; }
+            document.getElementById('insufficientAlert').classList.add('hidden');
+            const payout = stake * multiplier;
+            pendingTrade = { direction, stake, multiplier };
+            document.getElementById('confirmTradeDetails').innerHTML = `<p><strong>Direction:</strong> ${direction.toUpperCase()}</p><p><strong>Stake:</strong> $${stake.toFixed(2)}</p><p><strong>Multiplier:</strong> ${multiplier}x</p><p><strong>Potential Profit:</strong> $${(stake * multiplier - stake).toFixed(2)}</p><p><strong>Total Payout if win:</strong> $${payout.toFixed(2)}</p><p class="text-sm text-gray-500 mt-2">Trade runs 60 seconds. Live P&L shown below.</p>`;
+            document.getElementById('confirmTradeModal').classList.add('active');
         }
-        async function updateBalanceByMode(changeAmount, isReal) { const field = isReal ? 'realBalance' : 'demoBalance'; await updateDoc(doc(db,"users",currentUser.uid), { [field]: increment(changeAmount), totalEarned: increment(changeAmount>0?changeAmount:0) }); await loadUserData(); }
-        async function resetDemoBalance() { if(!isRealMode){ await updateDoc(doc(db,"users",currentUser.uid),{demoBalance:10000}); loadUserData(); showNotification("Demo reset to $10,000"); } else showNotification("Switch to Demo mode first","info"); }
-        let currentPrice = 1.0892;
-        setInterval(()=>{ currentPrice += (Math.random()-0.5)*0.0008; currentPrice = Math.max(1.05,Math.min(1.15,currentPrice)); document.getElementById('livePrice').innerText = currentPrice.toFixed(5); },2000);
-        function requestTradeConfirmation(direction){ const stake = parseFloat(document.getElementById('stakeAmount').value); const multiplier = beginnerMode ? 2 : parseFloat(document.getElementById('multiplierSlider').value); if(stake<9) return showNotification("Min stake $9","error"); const bal = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||10000); if(stake>bal) { showNotification(`Insufficient ${isRealMode?'real':'demo'} balance`,"error"); document.getElementById('insufficientAlert').classList.remove('hidden'); return; } document.getElementById('insufficientAlert').classList.add('hidden'); const payout = stake * multiplier; pendingTrade = { direction, stake, multiplier }; document.getElementById('confirmTradeDetails').innerHTML = `<p><strong>Direction:</strong> ${direction.toUpperCase()}</p><p><strong>Stake:</strong> $${stake.toFixed(2)}</p><p><strong>Multiplier:</strong> ${multiplier}x</p><p><strong>Potential Profit:</strong> $${(stake * multiplier - stake).toFixed(2)}</p><p><strong>Total Payout if win:</strong> $${payout.toFixed(2)}</p><p class="text-sm text-gray-500 mt-2">Trade runs 60 seconds. Live P&L shown below.</p>`; document.getElementById('confirmTradeModal').classList.add('active'); }
-        document.getElementById('confirmTradeYes').onclick = () => { if(pendingTrade){ executeTrade(pendingTrade.direction, pendingTrade.stake, pendingTrade.multiplier); pendingTrade=null; } document.getElementById('confirmTradeModal').classList.remove('active'); };
+        document.getElementById('confirmTradeYes').onclick = async () => { if(pendingTrade){ await executeTrade(pendingTrade.direction, pendingTrade.stake, pendingTrade.multiplier); pendingTrade=null; } document.getElementById('confirmTradeModal').classList.remove('active'); };
         document.getElementById('confirmTradeNo').onclick = () => { pendingTrade=null; document.getElementById('confirmTradeModal').classList.remove('active'); };
         document.getElementById('callTradeBtn').onclick=()=>requestTradeConfirmation('call');
         document.getElementById('putTradeBtn').onclick=()=>requestTradeConfirmation('put');
-        document.getElementById('resetDemoBtn').onclick=resetDemoBalance;
+        
+        // Auto Trade Logic
+        function startAutoTrade() {
+            if(autoTradeInterval) clearInterval(autoTradeInterval);
+            const direction = document.getElementById('autoDirection').value;
+            let stake = parseFloat(document.getElementById('stakeAmount').value);
+            let multiplier = (beginnerMode && !expertMode) ? 2 : parseFloat(document.getElementById('multiplierSlider').value);
+            let minStake = (beginnerMode && !expertMode) ? 6 : 9;
+            if(stake < minStake) { showNotification(`Auto trade min stake $${minStake}`,"error"); return; }
+            autoTradeInterval = setInterval(async () => {
+                const bal = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||10000);
+                if(stake > bal) { showNotification("Auto trade stopped: insufficient balance","error"); stopAutoTrade(); return; }
+                await executeTrade(direction, stake, multiplier);
+            }, 61000);
+            document.getElementById('startAutoTradeBtn').disabled = true;
+            document.getElementById('stopAutoTradeBtn').disabled = false;
+            showNotification(`Auto trading started: ${direction.toUpperCase()} $${stake} (${multiplier}x) every 60s`,"info");
+        }
+        function stopAutoTrade() { if(autoTradeInterval) { clearInterval(autoTradeInterval); autoTradeInterval = null; } document.getElementById('startAutoTradeBtn').disabled = false; document.getElementById('stopAutoTradeBtn').disabled = true; showNotification("Auto trade stopped","info"); }
+        document.getElementById('startAutoTradeBtn').onclick = startAutoTrade;
+        document.getElementById('stopAutoTradeBtn').onclick = stopAutoTrade;
+        
+        // Withdrawal minimum $10
+        document.getElementById('requestWithdrawalBtn').onclick = async () => {
+            const amt = parseFloat(prompt("Amount (min $10)"));
+            if(amt >= 10 && amt <= (currentUserData.realBalance||0)) {
+                await addDoc(collection(db,"withdrawals"),{ userId:currentUser.uid, amount:amt, status:"pending", createdAt:serverTimestamp() });
+                showNotification("Withdrawal request sent");
+                loadWithdrawals();
+            } else showNotification("Invalid amount or insufficient real balance","error");
+        };
+        
+        // Example trade
+        document.getElementById('exampleTradeBtn').onclick = async () => {
+            if(!currentUser) return;
+            document.getElementById('stakeAmount').value = (beginnerMode && !expertMode) ? 6 : 9;
+            if(!beginnerMode || expertMode) document.getElementById('multiplierSlider').value = 2;
+            updateRiskReward();
+            showModal("Example Trade", "This is a demo trade: $10 stake, 2x multiplier. Click CALL to see how it works. Watch countdown and result!");
+            pendingTrade = { direction: 'call', stake: parseFloat(document.getElementById('stakeAmount').value), multiplier: (beginnerMode && !expertMode) ? 2 : 2 };
+            document.getElementById('confirmTradeYes').click();
+        };
+        
+        // Mode toggles for real/demo
         document.getElementById('realModeBtn').onclick=()=>{ isRealMode=true; document.getElementById('modeLabel').innerHTML='🔴 REAL ACCOUNT'; loadUserData(); loadOpenTrades(); loadHistory(); };
         document.getElementById('demoModeBtn').onclick=()=>{ isRealMode=false; document.getElementById('modeLabel').innerHTML='🟢 DEMO MODE'; loadUserData(); loadOpenTrades(); loadHistory(); };
-        document.getElementById('positionsTabBtn').onclick=()=>{ document.getElementById('positionsPanel').classList.remove('hidden'); document.getElementById('historyPanel').classList.add('hidden'); loadOpenTrades(); };
-        document.getElementById('historyTabBtn').onclick=()=>{ document.getElementById('positionsPanel').classList.add('hidden'); document.getElementById('historyPanel').classList.remove('hidden'); loadHistory(); };
-        async function loadHistory(){ const q=query(collection(db,"binary_trades"), where("userId","==",currentUser.uid), where("status","==","closed"), where("isReal","==",isRealMode), orderBy("createdAt","desc"), limit(10)); const snap=await getDocs(q); let html='', totalP=0, wins=0; snap.forEach(d=>{ const t=d.data(); const profit=t.profit||0; totalP+=profit; if(profit>0) wins++; html+=`<div class="flex justify-between border-b py-1">${t.direction} $${t.amount} (${t.multiplier||2}x) ${profit>=0?`+${profit.toFixed(2)}`:profit.toFixed(2)}</div>`; }); document.getElementById('lastTradesList').innerHTML=html||'No history'; document.getElementById('last10Profit').innerHTML=`$${totalP.toFixed(2)}`; document.getElementById('winRatePercent').innerHTML=snap.size?((wins/snap.size)*100).toFixed(1)+'%':'0%'; }
-        // other sections abbreviated but kept functional (same as original)
+        document.getElementById('resetDemoBtn').onclick=resetDemoButton;
+        async function resetDemoButton() { if(!isRealMode){ await updateDoc(doc(db,"users",currentUser.uid),{demoBalance:10000}); loadUserData(); showNotification("Demo reset to $10,000"); } else showNotification("Switch to Demo mode first","info"); }
+        
+        // Other sections boilerplate (keep original functionality)
         async function loadInvestmentPlans(){ const snap=await getDocs(collection(db,"investment_plans")); let html=''; snap.forEach(d=>{ const p=d.data(); html+=`<div class="border rounded p-3"><b>${p.name}</b> - Min $${p.minAmount} - ROI ${p.dailyROI}% daily (${p.durationDays}d)<button onclick="window.investInPlan('${d.id}')" class="mt-2 bg-green-600 text-white px-3 py-1 rounded text-sm">Invest</button></div>`; }); document.getElementById('investmentProductsList').innerHTML=html||'No plans available'; }
         window.investInPlan=async(planId)=>{ const planSnap=await getDoc(doc(db,"investment_plans",planId)); if(!planSnap.exists()) return; const plan=planSnap.data(); const amount=parseFloat(prompt(`Invest min $${plan.minAmount}`)); const balance=isRealMode?(currentUserData.realBalance||0):(currentUserData.demoBalance||10000); if(amount>=plan.minAmount && amount<=balance){ await updateBalanceByMode(-amount, isRealMode); await addDoc(collection(db,"user_investments"),{ userId:currentUser.uid, planId, planName:plan.name, amount, dailyROI:plan.dailyROI, durationDays:plan.durationDays, startDate:serverTimestamp(), status:"active" }); showNotification(`Invested $${amount} in ${plan.name}`); loadUserData(); loadActiveInvestments(); } else showNotification("Insufficient balance","error"); };
-        async function loadActiveInvestiments(){ const snap=await getDocs(query(collection(db,"user_investments"), where("userId","==",currentUser.uid), where("status","==","active"))); let html=''; for(const inv of snap.docs){ const data=inv.data(); const daysActive=Math.floor((Date.now()-data.startDate.toDate())/86400000); const totalROI=data.amount*data.dailyROI/100*daysActive; html+=`<div class="border rounded p-3">${data.planName} - $${data.amount} - ROI earned: $${totalROI.toFixed(2)}</div>`; } document.getElementById('activeInvestmentsList').innerHTML=html||'No active investments'; }
-        function activateSection(id){ document.querySelectorAll('.content-section').forEach(s=>s.classList.remove('active-section')); document.getElementById(id).classList.add('active-section'); if(id==='trade'){ loadOpenTrades(); loadHistory(); } if(id==='investments'){ loadInvestmentPlans(); loadActiveInvestiments(); } }
+        async function loadActiveInvestments(){ const snap=await getDocs(query(collection(db,"user_investments"), where("userId","==",currentUser.uid), where("status","==","active"))); let html=''; for(const inv of snap.docs){ const data=inv.data(); const daysActive=Math.floor((Date.now()-data.startDate.toDate())/86400000); const totalROI=data.amount*data.dailyROI/100*daysActive; html+=`<div class="border rounded p-3">${data.planName} - $${data.amount} - ROI earned: $${totalROI.toFixed(2)}</div>`; } document.getElementById('activeInvestmentsList').innerHTML=html||'No active investments'; }
+        async function loadDeposits(){ const snap=await getDocs(query(collection(db,"deposits"), where("userId","==",currentUser.uid), orderBy("createdAt","desc"))); let html=''; snap.forEach(d=>{ const dp=d.data(); html+=`<div class="border-b py-1">$${dp.amount} - ${dp.status||'pending'} - ${dp.createdAt?.toDate().toLocaleString()}</div>`; }); document.getElementById('depositsList').innerHTML=html||'No deposits'; }
+        async function loadWithdrawals(){ const snap=await getDocs(query(collection(db,"withdrawals"), where("userId","==",currentUser.uid), orderBy("createdAt","desc"))); let html=''; snap.forEach(d=>{ const w=d.data(); html+=`<div>$${w.amount} - ${w.status} - ${w.createdAt?.toDate().toLocaleString()}</div>`; }); document.getElementById('withdrawalsList').innerHTML=html||'None'; }
+        async function loadTransactions(){ const snap=await getDocs(query(collection(db,"transactions"), where("userId","==",currentUser.uid), orderBy("timestamp","desc"), limit(30))); let html=''; snap.forEach(d=>{ const t=d.data(); html+=`<div class="border-b">${t.type}: $${t.amount.toFixed(2)} - ${t.description||''}</div>`; }); document.getElementById('historyList').innerHTML=html||'No transactions'; }
+        async function loadReferrals(){ const snap=await getDocs(query(collection(db,"referrals"), where("referrerId","==",currentUser.uid))); let comm=0; snap.forEach(r=>comm+=r.data().commissionEarned||0); document.getElementById('referralStats').innerHTML=`Referred: ${snap.size} | Commission: $${comm.toFixed(2)}`; document.getElementById('referralLinkDisplay').innerText=`${window.location.origin}/?ref=${currentUser.uid}`; }
+        async function loadLeaderboard(){ const snap=await getDocs(query(collection(db,"users"), orderBy("totalEarned","desc"), limit(10))); let i=1,html=''; snap.forEach(d=>{ const u=d.data(); if(u.role!=='admin') html+=`<div>${i++}. ${u.displayName||u.email} - $${(u.totalEarned||0).toFixed(2)}</div>`; }); document.getElementById('leaderboardContainer').innerHTML=html; }
+        function activateSection(id){ document.querySelectorAll('.content-section').forEach(s=>s.classList.remove('active-section')); document.getElementById(id).classList.add('active-section'); if(id==='trade'){ loadOpenTrades(); loadHistory(); } if(id==='deposits') loadDeposits(); if(id==='withdrawals') loadWithdrawals(); if(id==='transactions') loadTransactions(); if(id==='leaderboard') loadLeaderboard(); if(id==='referrals') loadReferrals(); if(id==='investments'){ loadInvestmentPlans(); loadActiveInvestments(); } }
         document.querySelectorAll('.sidebar-nav a').forEach(link=>link.addEventListener('click',(e)=>{ e.preventDefault(); activateSection(link.dataset.section); document.getElementById('sidebarOverlay').click(); }));
         document.getElementById('hamburgerBtn').onclick=()=>{ document.getElementById('mainSidebar').classList.add('open'); document.getElementById('sidebarOverlay').classList.add('active'); };
         document.getElementById('closeSidebarBtn').onclick=()=>{ document.getElementById('mainSidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('active'); };
         document.getElementById('sidebarOverlay').onclick=()=>{ document.getElementById('mainSidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('active'); };
-        onAuthStateChanged(auth, async(user)=>{ if(!user){ window.location.href="index.html"; return; } currentUser=user; await loadUserData(); await loadInvestmentPlans(); await loadActiveInvestiments(); setInterval(()=>{ if(document.getElementById('trade').classList.contains('active-section')) loadOpenTrades(); },2500); document.getElementById('logoutBtn').onclick=async()=>{ await signOut(auth); window.location.href="index.html"; }; });
-        // quick stake buttons
+        
+        // stake buttons
         for(let i=1;i<=9;i++){ const btn=document.createElement('button'); btn.innerText=i; btn.className='number-btn'; btn.onclick=()=>{ document.getElementById('stakeAmount').value=i; updateRiskReward(); }; document.getElementById('stakeButtonsContainer').appendChild(btn); }
-        updateRiskReward(); updateBeginnerUI();
+        
+        // Firebase Auth
+        onAuthStateChanged(auth, async(user)=>{
+            if(!user){ window.location.href="index.html"; return; }
+            currentUser=user;
+            await loadUserData();
+            await loadInvestmentPlans(); await loadActiveInvestments();
+            await loadDeposits(); await loadWithdrawals(); await loadTransactions();
+            await loadReferrals(); await loadLeaderboard();
+            setInterval(()=>{ if(document.getElementById('trade').classList.contains('active-section')) loadOpenTrades(); }, 3000);
+            document.getElementById('logoutBtn').onclick=async()=>{ await signOut(auth); window.location.href="index.html"; };
+            // Set default mode to beginner
+            setBeginnerMode();
+            updateRiskReward();
+        });
     </script>
 </body>
 </html>
