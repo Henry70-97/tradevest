@@ -103,6 +103,8 @@
         .kyc-upload-area { background: #f9fafb; border: 2px dashed #cbd5e1; border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; }
         .loader { display: inline-block; width: 20px; height: 20px; border: 2px solid #e2e8f0; border-top: 2px solid #4f46e5; border-radius: 50%; animation: spin 0.6s linear infinite; margin-left: 8px; vertical-align: middle; }
         button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .reset-btn { background: #f97316; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; margin-left: 8px; }
+        .reset-btn:hover { background: #ea580c; }
     </style>
 </head>
 <body class="bg-amber-50">
@@ -154,7 +156,7 @@
                     <div class="lg:col-span-2 space-y-4">
                         <div class="guide-card flex items-center justify-between" id="tradeGuideBtn"><div><i class="fas fa-book-open text-indigo-600 text-2xl mr-3"></i> <strong>📘 Trading Guide</strong> – 60 sec trades: CALL=UP, PUT=DOWN (realistic price feed)</div><i class="fas fa-chevron-right"></i></div>
                         <div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>{"allow_symbol_change":true,"interval":"1","symbol":"OANDA:EURUSD","theme":"light","autosize":true}</script></div>
-                        <div class="card-glass p-4"><div class="flex justify-between items-center mb-2"><div class="flex gap-2"><button id="demoModeBtn" class="px-3 py-1 rounded-full bg-gray-200">Demo</button><button id="realModeBtn" class="px-3 py-1 rounded-full bg-indigo-600 text-white">Real</button></div><span id="modeLabel" class="text-sm font-bold text-indigo-600">🔴 REAL ACCOUNT</span></div><div class="flex gap-5 border-b mb-3"><button id="positionsTabBtn" class="px-4 py-2 font-bold text-indigo-600 border-b-2 border-indigo-500">Active (60s)</button><button id="historyTabBtn" class="px-4 py-2 font-bold text-gray-500">History</button></div><div id="positionsPanel"><div id="openPositionsList" class="space-y-2 max-h-64 overflow-y-auto"></div><div id="noTradesMsg" class="text-gray-500 text-center hidden">No active trades</div></div><div id="historyPanel" class="hidden"><div id="lastTradesList" class="space-y-2 max-h-64 overflow-y-auto"></div><div class="mt-3 flex justify-between"><span>Last 10 P/L:</span><span id="last10Profit" class="profit-badge">$0.00</span><span>Win Rate:</span><span id="winRatePercent" class="font-bold">0%</span></div></div></div>
+                        <div class="card-glass p-4"><div class="flex justify-between items-center mb-2"><div class="flex gap-2 items-center"><button id="demoModeBtn" class="px-3 py-1 rounded-full bg-gray-200">Demo</button><button id="realModeBtn" class="px-3 py-1 rounded-full bg-indigo-600 text-white">Real</button><button id="resetDemoBtn" class="reset-btn"><i class="fas fa-sync-alt"></i> Reset Demo</button></div><span id="modeLabel" class="text-sm font-bold text-indigo-600">🔴 REAL ACCOUNT</span></div><div class="flex gap-5 border-b mb-3"><button id="positionsTabBtn" class="px-4 py-2 font-bold text-indigo-600 border-b-2 border-indigo-500">Active (60s)</button><button id="historyTabBtn" class="px-4 py-2 font-bold text-gray-500">History</button></div><div id="positionsPanel"><div id="openPositionsList" class="space-y-2 max-h-64 overflow-y-auto"></div><div id="noTradesMsg" class="text-gray-500 text-center hidden">No active trades</div></div><div id="historyPanel" class="hidden"><div id="lastTradesList" class="space-y-2 max-h-64 overflow-y-auto"></div><div class="mt-3 flex justify-between"><span>Last 10 P/L:</span><span id="last10Profit" class="profit-badge">$0.00</span><span>Win Rate:</span><span id="winRatePercent" class="font-bold">0%</span></div></div></div>
                     </div>
                     <div class="space-y-4">
                         <div class="card-glass p-4"><div class="flex justify-between items-center"><span class="font-bold text-lg">💰 Trading Balance</span><button id="topUpBalanceBtn" class="bg-indigo-600 text-white px-3 py-1 rounded-full text-sm"><i class="fas fa-plus-circle"></i> Top Up</button></div><div id="liveBalance" class="text-3xl font-bold text-green-600 mt-2">$0.00</div><div id="insufficientAlert" class="balance-alert hidden mt-2"><i class="fas fa-exclamation-triangle"></i><span>Insufficient balance? <a href="#" id="depositNowLink" class="font-bold underline">Deposit now</a></span></div></div>
@@ -207,81 +209,209 @@
         window.closeModal = () => document.getElementById('detailModal').classList.remove('active');
         window.closeReAuthModal = () => document.getElementById('reAuthModal').classList.remove('active');
         
-        async function loadUserData() { const snap=await getDoc(doc(db,"users",currentUser.uid)); currentUserData=snap.data()||{ realBalance:0, demoBalance:1000, totalEarned:0 }; const bal = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||0); document.getElementById('liveBalance').innerText=`$${bal.toFixed(2)}`; document.getElementById('spinBalanceDisplay').innerText=bal.toFixed(2); document.getElementById('userShort').innerText=currentUserData.displayName?.split(' ')[0]||currentUser.email.split('@')[0]; document.getElementById('balanceDetails').innerHTML=`Real Balance: $${(currentUserData.realBalance||0).toFixed(2)}<br>Demo Balance: $${(currentUserData.demoBalance||1000).toFixed(2)}`; }
-        async function updateBalance(change, reason){ const field = isRealMode ? 'realBalance' : 'demoBalance'; const userRef=doc(db,"users",currentUser.uid); await updateDoc(userRef, { [field]: increment(change), totalEarned: increment(change > 0 ? change : 0) }); await loadUserData(); }
+        async function loadUserData() { 
+            const snap = await getDoc(doc(db,"users",currentUser.uid)); 
+            currentUserData = snap.data() || { realBalance: 0, demoBalance: 10000, totalEarned: 0, chatMinutes: 0 }; 
+            // Ensure demoBalance exists and has default 10000
+            if (currentUserData.demoBalance === undefined) {
+                await updateDoc(doc(db,"users",currentUser.uid), { demoBalance: 10000 });
+                currentUserData.demoBalance = 10000;
+            }
+            const bal = isRealMode ? (currentUserData.realBalance || 0) : (currentUserData.demoBalance || 10000);
+            document.getElementById('liveBalance').innerText = `$${bal.toFixed(2)}`; 
+            document.getElementById('spinBalanceDisplay').innerText = bal.toFixed(2); 
+            document.getElementById('userShort').innerText = currentUserData.displayName?.split(' ')[0] || currentUser.email.split('@')[0]; 
+            document.getElementById('balanceDetails').innerHTML = `Real Balance: $${(currentUserData.realBalance || 0).toFixed(2)}<br>Demo Balance: $${(currentUserData.demoBalance || 10000).toFixed(2)}`; 
+            document.getElementById('quickWithdrawable').innerHTML = `$${(isRealMode ? (currentUserData.realBalance || 0) : (currentUserData.demoBalance || 10000)).toFixed(2)}`;
+        }
         
-        // Realistic price simulation (random walk with mean reversion)
+        async function updateBalance(change, reason) { 
+            const field = isRealMode ? 'realBalance' : 'demoBalance'; 
+            const userRef = doc(db,"users",currentUser.uid); 
+            await updateDoc(userRef, { [field]: increment(change), totalEarned: increment(change > 0 ? change : 0) }); 
+            await loadUserData(); 
+        }
+        
+        // Reset demo balance to $10,000
+        async function resetDemoBalance() {
+            if (!isRealMode) {
+                await updateDoc(doc(db,"users",currentUser.uid), { demoBalance: 10000 });
+                await loadUserData();
+                showNotification("Demo balance reset to $10,000", "success");
+            } else {
+                showNotification("Switch to Demo mode first to reset demo balance", "info");
+            }
+        }
+        
+        // Realistic price simulation
         let currentPrice = 1.0892;
         setInterval(() => { currentPrice += (Math.random() - 0.5) * 0.0008; currentPrice = Math.max(1.05, Math.min(1.15, currentPrice)); document.getElementById('livePrice').innerText = currentPrice.toFixed(5); }, 2000);
         
-        // 60-sec trade execution with server timestamp check
-        async function executeTrade(direction){ const stake=parseFloat(document.getElementById('stakeAmount').value); if(stake<9) return showNotification("Min $9","error"); const bal = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||0); if(stake>bal) return showNotification(`Insufficient ${isRealMode?'real':'demo'} balance`,"error"); const tradeObj = { userId: currentUser.uid, direction, amount: stake, entryPrice: currentPrice, status: "active", createdAt: serverTimestamp(), expiresAt: Timestamp.fromDate(new Date(Date.now()+60000)), isReal: isRealMode, result: null }; if(isRealMode) await updateBalance(-stake, "trade_stake"); else await updateBalance(-stake, "demo_trade_stake"); const docRef = await addDoc(collection(db, "binary_trades"), tradeObj); showNotification(`Trade placed: ${direction} $${stake} (60s)`,"info"); setTimeout(() => settleTrade(docRef.id, stake, direction), 60000); loadOpenTrades(); }
-        async function settleTrade(tradeId, stake, direction){ const tradeSnap = await getDoc(doc(db, "binary_trades", tradeId)); if(!tradeSnap.exists() || tradeSnap.data().status !== "active") return; const finalPrice = currentPrice; const won = (direction === 'call' && finalPrice > tradeSnap.data().entryPrice) || (direction === 'put' && finalPrice < tradeSnap.data().entryPrice); const payout = won ? stake * 2 : 0; const profit = won ? stake : -stake; await updateDoc(doc(db, "binary_trades", tradeId), { status: "closed", result: won ? "win" : "loss", closePrice: finalPrice, profit }); if(won && isRealMode) await updateBalance(payout, "trade_win"); else if(won && !isRealMode) await updateBalance(payout, "demo_win"); await addDoc(collection(db,"transactions"), { userId:currentUser.uid, type: won ? "trade_win" : "trade_loss", amount: profit, description: `${direction} 60s trade`, timestamp: serverTimestamp() }); showNotification(won ? `🎉 WIN! +$${profit.toFixed(2)}` : `❌ LOSS -$${stake}`, won ? "success" : "error"); loadUserData(); loadOpenTrades(); loadHistory(); }
-        async function loadOpenTrades(){ const q=query(collection(db,"binary_trades"), where("userId","==",currentUser.uid), where("status","==","active"), orderBy("createdAt","desc")); const snap=await getDocs(q); let html=''; snap.forEach(d=>{ const t=d.data(); const expiry = t.expiresAt?.toDate(); const secondsLeft = expiry ? Math.max(0, Math.floor((expiry - new Date())/1000)) : 0; html+=`<div class="p-2 border rounded flex justify-between"><span>${t.direction.toUpperCase()} $${t.amount}</span><span class="text-indigo-600">${secondsLeft}s left</span></div>`; }); document.getElementById('openPositionsList').innerHTML=html||'<div class="text-gray-500">No active trades</div>'; }
-        async function loadHistory(){ const q=query(collection(db,"binary_trades"), where("userId","==",currentUser.uid), where("status","==","closed"), orderBy("createdAt","desc"), limit(10)); const snap=await getDocs(q); let html='', totalP=0, wins=0; snap.forEach(d=>{ const t=d.data(); const profit = t.profit || 0; totalP+=profit; if(profit>0) wins++; html+=`<div class="flex justify-between">${t.direction} $${t.amount} ${profit>=0?`+${profit.toFixed(2)}`:profit.toFixed(2)}</div>`; }); document.getElementById('lastTradesList').innerHTML=html||'No history'; document.getElementById('last10Profit').innerHTML=`$${totalP.toFixed(2)}`; document.getElementById('winRatePercent').innerHTML=snap.size?((wins/snap.size)*100).toFixed(1)+'%':'0%'; }
-        setInterval(()=>{ if(document.getElementById('trade').classList.contains('active-section')){ loadOpenTrades(); loadHistory(); } }, 3000);
+        // 60-sec trade execution
+        async function executeTrade(direction) { 
+            const stake = parseFloat(document.getElementById('stakeAmount').value); 
+            if (stake < 9) return showNotification("Min $9","error"); 
+            const bal = isRealMode ? (currentUserData.realBalance || 0) : (currentUserData.demoBalance || 10000);
+            if (stake > bal) return showNotification(`Insufficient ${isRealMode?'real':'demo'} balance`,"error"); 
+            const tradeObj = { userId: currentUser.uid, direction, amount: stake, entryPrice: currentPrice, status: "active", createdAt: serverTimestamp(), expiresAt: Timestamp.fromDate(new Date(Date.now()+60000)), isReal: isRealMode, result: null }; 
+            if (isRealMode) await updateBalance(-stake, "trade_stake"); 
+            else await updateBalance(-stake, "demo_trade_stake"); 
+            const docRef = await addDoc(collection(db, "binary_trades"), tradeObj); 
+            showNotification(`Trade placed: ${direction} $${stake} (60s)`,"info"); 
+            setTimeout(() => settleTrade(docRef.id, stake, direction), 60000); 
+            loadOpenTrades(); 
+        }
         
-        // Deposits/Withdrawals real data
-        async function loadDeposits(){ const q=query(collection(db,"deposits"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")); const snap=await getDocs(q); let html=''; snap.forEach(d=>{ const dp=d.data(); html+=`<div class="border-b py-1">$${dp.amount} - ${dp.status||'pending'} - ${dp.createdAt?.toDate().toLocaleString()}</div>`; }); document.getElementById('depositsList').innerHTML=html||'No deposits'; }
+        async function settleTrade(tradeId, stake, direction) { 
+            const tradeSnap = await getDoc(doc(db, "binary_trades", tradeId)); 
+            if (!tradeSnap.exists() || tradeSnap.data().status !== "active") return; 
+            const finalPrice = currentPrice; 
+            const won = (direction === 'call' && finalPrice > tradeSnap.data().entryPrice) || (direction === 'put' && finalPrice < tradeSnap.data().entryPrice); 
+            const payout = won ? stake * 2 : 0; 
+            const profit = won ? stake : -stake; 
+            await updateDoc(doc(db, "binary_trades", tradeId), { status: "closed", result: won ? "win" : "loss", closePrice: finalPrice, profit }); 
+            if (won && isRealMode) await updateBalance(payout, "trade_win"); 
+            else if (won && !isRealMode) await updateBalance(payout, "demo_win"); 
+            await addDoc(collection(db,"transactions"), { userId:currentUser.uid, type: won ? "trade_win" : "trade_loss", amount: profit, description: `${direction} 60s trade`, timestamp: serverTimestamp() }); 
+            showNotification(won ? `🎉 WIN! +$${profit.toFixed(2)}` : `❌ LOSS -$${stake}`, won ? "success" : "error"); 
+            loadUserData(); 
+            loadOpenTrades(); 
+            loadHistory(); 
+        }
+        
+        async function loadOpenTrades() { 
+            const q = query(collection(db,"binary_trades"), where("userId","==",currentUser.uid), where("status","==","active"), orderBy("createdAt","desc")); 
+            const snap = await getDocs(q); 
+            let html = ''; 
+            snap.forEach(d => { const t = d.data(); const expiry = t.expiresAt?.toDate(); const secondsLeft = expiry ? Math.max(0, Math.floor((expiry - new Date())/1000)) : 0; html += `<div class="p-2 border rounded flex justify-between"><span>${t.direction.toUpperCase()} $${t.amount}</span><span class="text-indigo-600">${secondsLeft}s left</span></div>`; }); 
+            document.getElementById('openPositionsList').innerHTML = html || '<div class="text-gray-500">No active trades</div>'; 
+        }
+        
+        async function loadHistory() { 
+            const q = query(collection(db,"binary_trades"), where("userId","==",currentUser.uid), where("status","==","closed"), orderBy("createdAt","desc"), limit(10)); 
+            const snap = await getDocs(q); 
+            let html = '', totalP = 0, wins = 0; 
+            snap.forEach(d => { const t = d.data(); const profit = t.profit || 0; totalP += profit; if (profit > 0) wins++; html += `<div class="flex justify-between">${t.direction} $${t.amount} ${profit >= 0 ? `+${profit.toFixed(2)}` : profit.toFixed(2)}</div>`; }); 
+            document.getElementById('lastTradesList').innerHTML = html || 'No history'; 
+            document.getElementById('last10Profit').innerHTML = `$${totalP.toFixed(2)}`; 
+            document.getElementById('winRatePercent').innerHTML = snap.size ? ((wins/snap.size)*100).toFixed(1)+'%':'0%'; 
+        }
+        
+        // Deposits/Withdrawals/Other sections (simplified but functional)
+        async function loadDeposits(){ const q = query(collection(db,"deposits"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")); const snap = await getDocs(q); let html=''; snap.forEach(d=>{ const dp=d.data(); html+=`<div class="border-b py-1">$${dp.amount} - ${dp.status||'pending'} - ${dp.createdAt?.toDate().toLocaleString()}</div>`; }); document.getElementById('depositsList').innerHTML=html||'No deposits'; }
         async function loadWithdrawals(){ const q=query(collection(db,"withdrawals"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")); const snap=await getDocs(q); let html=''; snap.forEach(d=>{ const w=d.data(); html+=`<div>$${w.amount} - ${w.status} - ${w.createdAt?.toDate().toLocaleString()}</div>`; }); document.getElementById('withdrawalsList').innerHTML=html||'None'; }
         async function loadTransactions(){ const q=query(collection(db,"transactions"), where("userId","==",currentUser.uid), orderBy("timestamp","desc"), limit(30)); const snap=await getDocs(q); let html=''; snap.forEach(d=>{ const t=d.data(); html+=`<div class="border-b">${t.type}: $${t.amount.toFixed(2)} - ${t.description||''}</div>`; }); document.getElementById('historyList').innerHTML=html||'No transactions'; }
-        document.getElementById('requestWithdrawalBtn').onclick=async()=>{ const amt=parseFloat(prompt("Amount ($1 min)")); if(amt>=1 && amt<=(currentUserData?.realBalance||0)){ await addDoc(collection(db,"withdrawals"),{ userId:currentUser.uid, amount:amt, status:"pending", createdAt:serverTimestamp() }); showNotification("Withdrawal request sent"); loadWithdrawals(); } else showNotification("Invalid amount","error"); };
-        function initDepositButtons(){ const methods = ['mpesa','bank','crypto']; methods.forEach(m=>{ document.getElementById(`${m}DepositBtn`).onclick=()=>{ const amount = parseFloat(prompt(`Enter amount in USD for ${m.toUpperCase()}`)); if(amount && amount>0){ addDoc(collection(db,"deposits"),{ userId:currentUser.uid, amount, method:m, status:"pending", createdAt:serverTimestamp() }).then(()=>{ showNotification(`Deposit request of $${amount} submitted. Awaiting approval.`); loadDeposits(); }); } }; }); }
         
-        // KYC with Firebase Storage
-        let faceURL="", idURL="";
-        document.getElementById('facePortraitFile').addEventListener('change', async(e)=>{ const file=e.target.files[0]; if(file){ const storageRef=ref(storage, `kyc/${currentUser.uid}/face.jpg`); await uploadBytes(storageRef, file); faceURL=await getDownloadURL(storageRef); document.getElementById('facePreview').innerHTML='✅ Uploaded'; } });
-        document.getElementById('idFile').addEventListener('change', async(e)=>{ const file=e.target.files[0]; if(file){ const storageRef=ref(storage, `kyc/${currentUser.uid}/id.jpg`); await uploadBytes(storageRef, file); idURL=await getDownloadURL(storageRef); document.getElementById('idPreview').innerHTML='✅ Uploaded'; } });
-        document.getElementById('submitKycBtn').onclick=async()=>{ if(!faceURL||!idURL) return showNotification("Upload both images","error"); await setDoc(doc(db,"kyc_requests",currentUser.uid),{ userId:currentUser.uid, faceUrl:faceURL, idUrl:idURL, idType:document.getElementById('idType').value, status:"pending", timestamp:serverTimestamp() }); await updateDoc(doc(db,"users",currentUser.uid),{ kycStatus:"pending" }); showNotification("KYC submitted for review"); loadKYCStatus(); };
-        async function loadKYCStatus(){ const snap=await getDoc(doc(db,"users",currentUser.uid)); const status=snap.data()?.kycStatus||"unverified"; document.getElementById('kycStatusDisplay').innerHTML=`<span class="px-2 py-1 rounded ${status==='verified'?'bg-green-100':'bg-yellow-100'}">${status}</span>`; if(status!=='verified') document.getElementById('kycWarningMsg')?.classList.remove('hidden'); else document.getElementById('kycWarningMsg')?.classList.add('hidden'); }
+        document.getElementById('requestWithdrawalBtn').onclick = async () => { 
+            const amt = parseFloat(prompt("Amount ($1 min)")); 
+            if (amt >= 1 && amt <= (currentUserData?.realBalance || 0)) { 
+                await addDoc(collection(db,"withdrawals"), { userId: currentUser.uid, amount: amt, status: "pending", createdAt: serverTimestamp() }); 
+                showNotification("Withdrawal request sent"); 
+                loadWithdrawals(); 
+            } else showNotification("Invalid amount or insufficient real balance","error"); 
+        };
         
-        // Chat with KYC check
-        async function loadChat(){ const userSnap=await getDoc(doc(db,"users",currentUser.uid)); if(userSnap.data()?.kycStatus!=='verified'){ document.getElementById('chatInput').disabled=true; document.getElementById('sendChatBtn').disabled=true; document.getElementById('kycWarningMsg').classList.remove('hidden'); return; } document.getElementById('kycWarningMsg').classList.add('hidden'); onSnapshot(query(collection(db,"chat_messages"), orderBy("timestamp","desc"), limit(100)), (snap)=>{ let html=''; snap.docs.reverse().forEach(d=>{ const msg=d.data(); html+=`<div><b>${escapeHtml(msg.nickname)}</b>: ${escapeHtml(msg.text)}</div>`; }); document.getElementById('chatMessages').innerHTML=html; }); document.getElementById('sendChatBtn').onclick=async()=>{ const input=document.getElementById('chatInput'); if(input.value.trim()){ await addDoc(collection(db,"chat_messages"),{ userId:currentUser.uid, nickname:document.getElementById('chatNickname').value||currentUser.displayName, text:input.value, timestamp:serverTimestamp() }); input.value=''; } }; document.getElementById('chatInput').disabled=false; document.getElementById('sendChatBtn').disabled=false; }
-        function escapeHtml(str){ return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
-        document.getElementById('buyMinutesBtn').onclick=async()=>{ const bal=isRealMode?(currentUserData?.realBalance||0):(currentUserData?.demoBalance||0); if(bal>=0.4){ await updateBalance(-0.4, "buy_chat"); showNotification("30 chat minutes added (simulated)","info"); } else showNotification("Insufficient balance","error"); };
+        function initDepositButtons(){ 
+            const methods = ['mpesa','bank','crypto']; 
+            methods.forEach(m => { 
+                document.getElementById(`${m}DepositBtn`).onclick = () => { 
+                    const amount = parseFloat(prompt(`Enter amount in USD for ${m.toUpperCase()}`)); 
+                    if (amount && amount > 0) { 
+                        addDoc(collection(db,"pending_deposits"), { userId: currentUser.uid, amount, method: m, status: "pending_review", reference: "manual-"+Date.now(), createdAt: serverTimestamp() }).then(() => { 
+                            showNotification(`Deposit request of $${amount} submitted. Awaiting approval.`); 
+                            loadDeposits(); 
+                        }); 
+                    } 
+                }; 
+            }); 
+        }
         
-        // Prize wheel (provably fair using server hash)
+        // KYC with Firebase Storage (simplified)
+        let faceURL = "", idURL = "";
+        document.getElementById('facePortraitFile').addEventListener('change', async(e) => { const file = e.target.files[0]; if (file) { const storageRef = ref(storage, `kyc/${currentUser.uid}/face.jpg`); await uploadBytes(storageRef, file); faceURL = await getDownloadURL(storageRef); document.getElementById('facePreview').innerHTML = '✅ Uploaded'; } });
+        document.getElementById('idFile').addEventListener('change', async(e) => { const file = e.target.files[0]; if (file) { const storageRef = ref(storage, `kyc/${currentUser.uid}/id.jpg`); await uploadBytes(storageRef, file); idURL = await getDownloadURL(storageRef); document.getElementById('idPreview').innerHTML = '✅ Uploaded'; } });
+        document.getElementById('submitKycBtn').onclick = async () => { if (!faceURL || !idURL) return showNotification("Upload both images","error"); await setDoc(doc(db,"kyc_requests",currentUser.uid), { userId: currentUser.uid, faceUrl: faceURL, idUrl: idURL, idType: document.getElementById('idType').value, status: "pending", timestamp: serverTimestamp() }); await updateDoc(doc(db,"users",currentUser.uid), { kycStatus: "pending" }); showNotification("KYC submitted for review"); loadKYCStatus(); };
+        async function loadKYCStatus() { const snap = await getDoc(doc(db,"users",currentUser.uid)); const status = snap.data()?.kycStatus || "unverified"; document.getElementById('kycStatusDisplay').innerHTML = `<span class="px-2 py-1 rounded ${status==='verified'?'bg-green-100':'bg-yellow-100'}">${status}</span>`; if (status !== 'verified') document.getElementById('kycWarningMsg')?.classList.remove('hidden'); else document.getElementById('kycWarningMsg')?.classList.add('hidden'); }
+        
+        // Chat (simplified)
+        async function loadChat() { const userSnap = await getDoc(doc(db,"users",currentUser.uid)); if (userSnap.data()?.kycStatus !== 'verified') { document.getElementById('chatInput').disabled = true; document.getElementById('sendChatBtn').disabled = true; document.getElementById('kycWarningMsg').classList.remove('hidden'); return; } document.getElementById('kycWarningMsg').classList.add('hidden'); onSnapshot(query(collection(db,"chat_messages"), orderBy("timestamp","desc"), limit(100)), (snap) => { let html = ''; snap.docs.reverse().forEach(d => { const msg = d.data(); html += `<div><b>${escapeHtml(msg.nickname)}</b>: ${escapeHtml(msg.text)}</div>`; }); document.getElementById('chatMessages').innerHTML = html; }); document.getElementById('sendChatBtn').onclick = async () => { const input = document.getElementById('chatInput'); if (input.value.trim()) { await addDoc(collection(db,"chat_messages"), { userId: currentUser.uid, nickname: document.getElementById('chatNickname').value || currentUser.displayName, text: input.value, timestamp: serverTimestamp() }); input.value = ''; } }; document.getElementById('chatInput').disabled = false; document.getElementById('sendChatBtn').disabled = false; }
+        function escapeHtml(str) { return str.replace(/[&<>]/g, function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+        document.getElementById('buyMinutesBtn').onclick = async () => { const bal = isRealMode ? (currentUserData?.realBalance || 0) : (currentUserData?.demoBalance || 10000); if (bal >= 0.4) { await updateBalance(-0.4, "buy_chat"); showNotification("30 chat minutes added (simulated)","info"); } else showNotification("Insufficient balance","error"); };
+        
+        // Prize wheel (simplified)
         const wheelSegments = ["$0","$0.5","$0","$0.2","$0","$0.1","$0","$0"];
-        async function spinWheel(){ const stake=parseFloat(document.getElementById('spinStake').value); const bal=isRealMode?(currentUserData?.realBalance||0):(currentUserData?.demoBalance||0); if(stake<1 || stake>bal) return showNotification(`Invalid stake (max $${bal})`,"error"); await updateBalance(-stake, "spin_stake"); const rand = Math.random(); const idx = Math.floor(rand * wheelSegments.length); const prize = parseFloat(wheelSegments[idx].replace("$","")); if(prize>0) await updateBalance(prize, "spin_win"); await addDoc(collection(db,"transactions"),{ userId:currentUser.uid, type:"spin", amount:prize-stake, description:`Won ${prize}`, timestamp:serverTimestamp() }); showNotification(prize>0?`🎉 Won $${prize}!`:"😞 No prize"); loadUserData(); }
-        document.getElementById('spinBtnWheel').onclick=spinWheel;
+        async function spinWheel() { const stake = parseFloat(document.getElementById('spinStake').value); const bal = isRealMode ? (currentUserData?.realBalance || 0) : (currentUserData?.demoBalance || 10000); if (stake < 1 || stake > bal) return showNotification(`Invalid stake (max $${bal})`,"error"); await updateBalance(-stake, "spin_stake"); const rand = Math.random(); const idx = Math.floor(rand * wheelSegments.length); const prize = parseFloat(wheelSegments[idx].replace("$","")); if (prize > 0) await updateBalance(prize, "spin_win"); await addDoc(collection(db,"transactions"), { userId: currentUser.uid, type: "spin", amount: prize - stake, description: `Won ${prize}`, timestamp: serverTimestamp() }); showNotification(prize > 0 ? `🎉 Won $${prize}!` : "😞 No prize"); loadUserData(); }
+        document.getElementById('spinBtnWheel').onclick = spinWheel;
         
-        // Streak, Leaderboard, Referrals, Support, Announcements (kept functional)
-        async function loadStreak(){ /* same as earlier simplified */ }
-        async function loadLeaderboard(){ const q=query(collection(db,"users"), orderBy("totalEarned","desc"), limit(10)); const snap=await getDocs(q); let i=1,html=''; snap.forEach(d=>{ const u=d.data(); html+=`<div>${i++}. ${u.displayName||'User'} - $${(u.totalEarned||0).toFixed(2)}</div>`; }); document.getElementById('leaderboardContainer').innerHTML=html; }
-        async function loadReferrals(){ const q=query(collection(db,"referrals"), where("referrerId","==",currentUser.uid)); const snap=await getDocs(q); let comm=0; snap.forEach(r=>comm+=r.data().commissionEarned||0); document.getElementById('referralStats').innerHTML=`Referred: ${snap.size} | Commission: $${comm.toFixed(2)}`; document.getElementById('referralLinkDisplay').innerText=`${window.location.origin}/?ref=${currentUser.uid}`; }
-        document.getElementById('copyReferralLinkBtn').onclick=()=>{ navigator.clipboard.writeText(document.getElementById('referralLinkDisplay').innerText); showNotification("Copied"); };
-        document.getElementById('requestCommissionBtn').onclick=async()=>{ /* simplified */ showNotification("Commission requested","info"); };
-        document.getElementById('createTicketBtn').onclick=async()=>{ const subj=prompt("Subject"); if(subj){ await addDoc(collection(db,"support_tickets"),{ userId:currentUser.uid, subject:subj, message:prompt("Message"), status:"pending", createdAt:serverTimestamp() }); showNotification("Ticket created"); loadSupportTickets(); } };
-        async function loadSupportTickets(){ const q=query(collection(db,"support_tickets"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")); const snap=await getDocs(q); let html=''; snap.forEach(d=>{ const t=d.data(); html+=`<div>${t.subject} - ${t.status}</div>`; }); document.getElementById('supportTicketsList').innerHTML=html||'No tickets'; }
-        async function loadAnnouncements(){ const snap=await getDocs(query(collection(db,"announcements"), orderBy("createdAt","desc"), limit(5))); let html=''; snap.forEach(d=>{ const a=d.data(); html+=`<div class="border-b">${a.title}<br>${a.content}</div>`; }); document.getElementById('announcementsList').innerHTML=html||'No announcements'; }
-        async function loadInvestments(){ /* placeholder for investment products */ document.getElementById('investmentProductsList').innerHTML='<div class="p-2 border rounded">Growth Plan - Min $50</div>'; }
+        // Other sections (stubs to avoid errors)
+        async function loadStreak(){ /* existing */ }
+        async function loadLeaderboard(){ const q = query(collection(db,"users"), orderBy("totalEarned","desc"), limit(10)); const snap = await getDocs(q); let i=1,html=''; snap.forEach(d=>{ const u=d.data(); html+=`<div>${i++}. ${u.displayName||'User'} - $${(u.totalEarned||0).toFixed(2)}</div>`; }); document.getElementById('leaderboardContainer').innerHTML = html; }
+        async function loadReferrals(){ const q = query(collection(db,"referrals"), where("referrerId","==",currentUser.uid)); const snap = await getDocs(q); let comm = 0; snap.forEach(r=>comm+=r.data().commissionEarned||0); document.getElementById('referralStats').innerHTML = `Referred: ${snap.size} | Commission: $${comm.toFixed(2)}`; document.getElementById('referralLinkDisplay').innerText = `${window.location.origin}/?ref=${currentUser.uid}`; }
+        document.getElementById('copyReferralLinkBtn').onclick = () => { navigator.clipboard.writeText(document.getElementById('referralLinkDisplay').innerText); showNotification("Copied"); };
+        document.getElementById('requestCommissionBtn').onclick = async () => { /* simplified */ showNotification("Commission requested","info"); };
+        document.getElementById('createTicketBtn').onclick = async () => { const subj = prompt("Subject"); if (subj) { await addDoc(collection(db,"support_tickets"), { userId: currentUser.uid, subject: subj, message: prompt("Message"), status: "pending", createdAt: serverTimestamp() }); showNotification("Ticket created"); loadSupportTickets(); } };
+        async function loadSupportTickets(){ const q = query(collection(db,"support_tickets"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")); const snap = await getDocs(q); let html = ''; snap.forEach(d => { const t = d.data(); html += `<div>${t.subject} - ${t.status}</div>`; }); document.getElementById('supportTicketsList').innerHTML = html || 'No tickets'; }
+        async function loadAnnouncements(){ const snap = await getDocs(query(collection(db,"announcements"), orderBy("createdAt","desc"), limit(5))); let html = ''; snap.forEach(d => { const a = d.data(); html += `<div class="border-b">${a.title}<br>${a.content}</div>`; }); document.getElementById('announcementsList').innerHTML = html || 'No announcements'; }
+        async function loadInvestments(){ /* placeholder */ document.getElementById('investmentProductsList').innerHTML = '<div class="p-2 border rounded">Growth Plan - Min $50</div>'; }
         
-        // UI Helpers & Tabs
-        document.getElementById('realModeBtn').onclick=()=>{ isRealMode=true; document.getElementById('modeLabel').innerHTML='🔴 REAL ACCOUNT'; loadUserData(); showNotification("Real mode active"); };
-        document.getElementById('demoModeBtn').onclick=()=>{ isRealMode=false; document.getElementById('modeLabel').innerHTML='🟢 DEMO MODE'; loadUserData(); showNotification("Demo mode (virtual balance $1,000)"); };
-        document.getElementById('callTradeBtn').onclick=()=>executeTrade('call');
-        document.getElementById('putTradeBtn').onclick=()=>executeTrade('put');
-        document.getElementById('positionsTabBtn').onclick=()=>{ document.getElementById('positionsPanel').classList.remove('hidden'); document.getElementById('historyPanel').classList.add('hidden'); };
-        document.getElementById('historyTabBtn').onclick=()=>{ document.getElementById('positionsPanel').classList.add('hidden'); document.getElementById('historyPanel').classList.remove('hidden'); loadHistory(); };
-        document.getElementById('topUpBalanceBtn').onclick=()=>activateSection('deposits');
-        document.getElementById('depositNowLink').onclick=(e)=>{ e.preventDefault(); activateSection('deposits'); };
-        document.getElementById('tradeGuideBtn').onclick=()=>showModal("Trading Guide","CALL = price rises, PUT = price falls. Win = Stake ×2. 60 sec expiry.");
-        document.getElementById('updateProfileBtn').onclick=async()=>{ const name=document.getElementById('displayNameInput').value; if(name){ await updateProfile(currentUser,{displayName:name}); await updateDoc(doc(db,"users",currentUser.uid),{displayName:name}); showNotification("Profile updated"); } };
-        document.getElementById('updateEmailBtn').onclick=()=>{ const email=document.getElementById('newEmailInput').value; if(email) showReAuthModal(()=>updateEmail(currentUser,email).then(()=>showNotification("Email updated"))); };
-        document.getElementById('updatePasswordBtn').onclick=()=>{ const pwd=document.getElementById('newPasswordInput').value; if(pwd) showReAuthModal(()=>updatePassword(currentUser,pwd).then(()=>showNotification("Password updated"))); };
-        function showReAuthModal(cb){ const modal=document.getElementById('reAuthModal'); modal.classList.add('active'); document.getElementById('submitReAuthBtn').onclick=async()=>{ const pwd=document.getElementById('reAuthPassword').value; const cred=EmailAuthProvider.credential(currentUser.email,pwd); try{ await reauthenticateWithCredential(currentUser,cred); modal.classList.remove('active'); await cb(); }catch(e){ showNotification("Auth failed","error"); } }; }
+        // UI Event Listeners
+        document.getElementById('realModeBtn').onclick = () => { isRealMode = true; document.getElementById('modeLabel').innerHTML = '🔴 REAL ACCOUNT'; loadUserData(); showNotification("Real mode active"); };
+        document.getElementById('demoModeBtn').onclick = () => { isRealMode = false; document.getElementById('modeLabel').innerHTML = '🟢 DEMO MODE'; loadUserData(); showNotification("Demo mode (virtual balance $10,000)"); };
+        document.getElementById('resetDemoBtn').onclick = resetDemoBalance;
+        document.getElementById('callTradeBtn').onclick = () => executeTrade('call');
+        document.getElementById('putTradeBtn').onclick = () => executeTrade('put');
+        document.getElementById('positionsTabBtn').onclick = () => { document.getElementById('positionsPanel').classList.remove('hidden'); document.getElementById('historyPanel').classList.add('hidden'); };
+        document.getElementById('historyTabBtn').onclick = () => { document.getElementById('positionsPanel').classList.add('hidden'); document.getElementById('historyPanel').classList.remove('hidden'); loadHistory(); };
+        document.getElementById('topUpBalanceBtn').onclick = () => activateSection('deposits');
+        document.getElementById('depositNowLink').onclick = (e) => { e.preventDefault(); activateSection('deposits'); };
+        document.getElementById('tradeGuideBtn').onclick = () => showModal("Trading Guide", "CALL = price rises, PUT = price falls. Win = Stake ×2. 60 sec expiry.");
+        document.getElementById('updateProfileBtn').onclick = async () => { const name = document.getElementById('displayNameInput').value; if (name) { await updateProfile(currentUser, { displayName: name }); await updateDoc(doc(db,"users",currentUser.uid), { displayName: name }); showNotification("Profile updated"); } };
+        document.getElementById('updateEmailBtn').onclick = () => { const email = document.getElementById('newEmailInput').value; if (email) showReAuthModal(() => updateEmail(currentUser, email).then(() => showNotification("Email updated"))); };
+        document.getElementById('updatePasswordBtn').onclick = () => { const pwd = document.getElementById('newPasswordInput').value; if (pwd) showReAuthModal(() => updatePassword(currentUser, pwd).then(() => showNotification("Password updated"))); };
+        function showReAuthModal(cb) { const modal = document.getElementById('reAuthModal'); modal.classList.add('active'); document.getElementById('submitReAuthBtn').onclick = async () => { const pwd = document.getElementById('reAuthPassword').value; const cred = EmailAuthProvider.credential(currentUser.email, pwd); try { await reauthenticateWithCredential(currentUser, cred); modal.classList.remove('active'); await cb(); } catch(e) { showNotification("Auth failed","error"); } }; }
         
-        function activateSection(id){ document.querySelectorAll('.content-section').forEach(s=>s.classList.remove('active-section')); document.getElementById(id).classList.add('active-section'); if(id==='trade'){ loadOpenTrades(); loadHistory(); } if(id==='deposits') loadDeposits(); if(id==='withdrawals') loadWithdrawals(); if(id==='transactions') loadTransactions(); if(id==='leaderboard') loadLeaderboard(); if(id==='support') loadSupportTickets(); if(id==='streak') loadStreak(); if(id==='kyc') loadKYCStatus(); if(id==='chat') loadChat(); if(id==='investments') loadInvestments(); if(id==='referrals') loadReferrals(); if(id==='announcements') loadAnnouncements(); }
-        document.querySelectorAll('.sidebar-nav a').forEach(link=>link.addEventListener('click',(e)=>{ e.preventDefault(); activateSection(link.dataset.section); document.getElementById('sidebarOverlay').click(); }));
-        document.getElementById('hamburgerBtn').onclick=()=>{ document.getElementById('mainSidebar').classList.add('open'); document.getElementById('sidebarOverlay').classList.add('active'); };
-        document.getElementById('closeSidebarBtn').onclick=()=>{ document.getElementById('mainSidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('active'); };
-        document.getElementById('sidebarOverlay').onclick=()=>{ document.getElementById('mainSidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('active'); };
+        function activateSection(id) { 
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active-section')); 
+            document.getElementById(id).classList.add('active-section'); 
+            if (id === 'trade') { loadOpenTrades(); loadHistory(); } 
+            if (id === 'deposits') loadDeposits(); 
+            if (id === 'withdrawals') loadWithdrawals(); 
+            if (id === 'transactions') loadTransactions(); 
+            if (id === 'leaderboard') loadLeaderboard(); 
+            if (id === 'support') loadSupportTickets(); 
+            if (id === 'streak') loadStreak(); 
+            if (id === 'kyc') loadKYCStatus(); 
+            if (id === 'chat') loadChat(); 
+            if (id === 'investments') loadInvestments(); 
+            if (id === 'referrals') loadReferrals(); 
+            if (id === 'announcements') loadAnnouncements(); 
+        }
+        
+        document.querySelectorAll('.sidebar-nav a').forEach(link => link.addEventListener('click', (e) => { e.preventDefault(); activateSection(link.dataset.section); document.getElementById('sidebarOverlay').click(); }));
+        document.getElementById('hamburgerBtn').onclick = () => { document.getElementById('mainSidebar').classList.add('open'); document.getElementById('sidebarOverlay').classList.add('active'); };
+        document.getElementById('closeSidebarBtn').onclick = () => { document.getElementById('mainSidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('active'); };
+        document.getElementById('sidebarOverlay').onclick = () => { document.getElementById('mainSidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('active'); };
         
         // Stake buttons
-        const cont=document.getElementById('stakeButtonsContainer'); for(let i=1;i<=9;i++){ const btn=document.createElement('button'); btn.innerText=i; btn.className='number-btn'; btn.onclick=()=>document.getElementById('stakeAmount').value=i; cont.appendChild(btn); }
-        document.getElementById('stakeAmount').addEventListener('input',()=>{ let val=parseFloat(document.getElementById('stakeAmount').value)||0; document.getElementById('totalPayout').innerText=`$${(val*2).toFixed(2)}`; });
+        const cont = document.getElementById('stakeButtonsContainer'); 
+        for (let i = 1; i <= 9; i++) { const btn = document.createElement('button'); btn.innerText = i; btn.className = 'number-btn'; btn.onclick = () => document.getElementById('stakeAmount').value = i; cont.appendChild(btn); }
+        document.getElementById('stakeAmount').addEventListener('input', () => { let val = parseFloat(document.getElementById('stakeAmount').value) || 0; document.getElementById('totalPayout').innerText = `$${(val * 2).toFixed(2)}`; });
         
-        onAuthStateChanged(auth, async(user)=>{ if(!user){ window.location.href="index.html"; return; } currentUser=user; await loadUserData(); await loadDeposits(); await loadWithdrawals(); await loadTransactions(); await loadLeaderboard(); await loadSupportTickets(); await loadAnnouncements(); await loadKYCStatus(); initDepositButtons(); setInterval(()=>{ if(document.getElementById('trade').classList.contains('active-section')) loadOpenTrades(); }, 5000); document.getElementById('logoutBtn').onclick=async()=>{ await signOut(auth); window.location.href="index.html"; }; });
+        onAuthStateChanged(auth, async (user) => { 
+            if (!user) { window.location.href = "index.html"; return; } 
+            currentUser = user; 
+            await loadUserData(); 
+            await loadDeposits(); 
+            await loadWithdrawals(); 
+            await loadTransactions(); 
+            await loadLeaderboard(); 
+            await loadSupportTickets(); 
+            await loadAnnouncements(); 
+            await loadKYCStatus(); 
+            initDepositButtons(); 
+            setInterval(() => { if (document.getElementById('trade').classList.contains('active-section')) loadOpenTrades(); }, 5000); 
+            document.getElementById('logoutBtn').onclick = async () => { await signOut(auth); window.location.href = "index.html"; }; 
+        });
     </script>
 </body>
 </html>
