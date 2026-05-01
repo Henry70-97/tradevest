@@ -34,14 +34,21 @@
         .content-section.active-section { display: block; }
         @keyframes fadeIn { from { opacity:0; transform:translateY(8px);} to { opacity:1; transform:translateY(0);} }
         .tradingview-widget-container { width:100%; height:70vh; min-height:520px; border-radius:1.25rem; overflow:hidden; background:#fff; }
-        @media (max-width:768px){ .tradingview-widget-container { height:55vh; min-height:400px; } }
+        @media (max-width:768px){ 
+            .tradingview-widget-container { height:55vh; min-height:400px; }
+            .grid-cols-3 { grid-template-columns: 1fr !important; }
+            .number-btn { width: 40px; height: 40px; }
+            .stake-buttons-grid { grid-template-columns: repeat(5, 1fr); gap: 0.5rem; }
+            .mode-toggle button { padding: 0.3rem 0.8rem; font-size: 0.7rem; }
+            .sidebar { width: 260px; }
+        }
         .number-btn { width:48px; height:48px; font-weight:bold; background:#eef2ff; border-radius:1rem; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; transition:0.1s; }
         .number-btn:hover { background:#c7d2fe; transform:scale(0.96); }
         .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:20000; justify-content:center; align-items:center; }
         .modal.active { display:flex; }
         .modal-content { background:white; max-width:500px; width:90%; border-radius:1.5rem; padding:1.5rem; max-height:90vh; overflow-y:auto; text-align:center; }
         .profit-badge { background:#22c55e20; color:#15803d; border-radius:2rem; padding:0.2rem 0.8rem; font-weight:bold; }
-        .deposit-method-btn { transition:all 0.2s; }
+        .deposit-method-btn { transition:all 0.2s; cursor: pointer; }
         .deposit-method-btn:hover { transform:translateY(-2px); }
         .video-rectangle { width:100%; max-width:280px; border-radius:1rem; overflow:hidden; background:black; margin:0 auto; }
         .video-rectangle video { width:100%; aspect-ratio:16/9; object-fit:cover; }
@@ -80,14 +87,6 @@
         .empty-message { text-align: center; color: #9ca3af; padding: 2rem; font-style: italic; }
         .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #4f46e5; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .progress-bar { width: 100%; background-color: #e2e8f0; border-radius: 1rem; overflow: hidden; height: 10px; margin: 10px 0; }
-        .progress-fill { width: 0%; height: 100%; background-color: #4f46e5; transition: width 0.3s; }
-        @media (max-width:640px){
-            .stake-buttons-grid { grid-template-columns: repeat(4,1fr); }
-            .mode-toggle button { padding: 0.3rem 0.8rem; font-size: 0.7rem; }
-            .reset-btn { padding: 4px 10px; font-size: 11px; }
-            .video-rectangle { max-width: 220px; }
-        }
     </style>
 </head>
 <body class="bg-amber-50">
@@ -187,7 +186,7 @@
             <div id="balances" class="content-section"><div class="card-glass p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold">💰 Balance Overview</h3><div class="flex gap-2"><button id="quickWithdrawBtn" class="bg-red-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-hand-holding-usd"></i> Withdraw</button><button id="quickTopUpBtn" class="bg-green-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-plus-circle"></i> Top Up</button></div></div><div id="balanceDetails" class="space-y-2"></div><div class="mt-4 p-3 bg-gray-100 rounded"><div class="font-medium">Exchange Rate (USD → KES): <span id="exchangeRate">1 USD = 0 KES</span></div></div></div></div>
             <div id="transactions" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">📜 Transaction History</h3><div id="historyList" class="space-y-2 max-h-96 overflow-y-auto"></div></div></div>
             <div id="withdrawals" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">🏦 Withdrawals</h3><div id="withdrawBalanceInfo" class="mb-3 text-sm bg-gray-100 p-2 rounded"></div><button id="openWithdrawFormBtn" class="mb-3 bg-blue-600 text-white px-4 py-2 rounded-lg">Request Withdrawal</button><div id="withdrawalsList" class="space-y-2"></div></div></div>
-            <div id="deposits" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">💎 Deposit Funds</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" id="depositMethodsContainer"><button data-method="mpesa" class="deposit-method-btn bg-green-600 text-white py-3 rounded-xl"><i class="fas fa-mobile-alt"></i> M-Pesa</button><button data-method="bank" class="deposit-method-btn bg-blue-600 text-white py-3 rounded-xl"><i class="fas fa-university"></i> Bank Transfer</button><button data-method="crypto" class="deposit-method-btn bg-purple-600 text-white py-3 rounded-xl"><i class="fab fa-bitcoin"></i> Crypto</button></div><div class="mt-4 p-3 bg-yellow-50 rounded border-l-4 border-yellow-400"><p class="text-sm"><i class="fas fa-exclamation-triangle"></i> Already deposited but not reflected? <a href="#" id="reportDepositBtn" class="font-bold underline text-indigo-600">Click here</a> to report a pending deposit.</p></div><div id="depositsList" class="space-y-2 max-h-60 overflow-y-auto mt-4"></div></div></div>
+            <div id="deposits" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">💎 Deposit Funds</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" id="depositMethodsContainer"></div><div class="mt-4 p-3 bg-yellow-50 rounded border-l-4 border-yellow-400"><p class="text-sm"><i class="fas fa-exclamation-triangle"></i> Already deposited but not reflected? <a href="#" id="reportDepositBtn" class="font-bold underline text-indigo-600">Click here</a> to report a pending deposit.</p></div><div id="depositsList" class="space-y-2 max-h-60 overflow-y-auto mt-4"></div></div></div>
             <div id="referrals" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold">👥 Referral Program</h3><div id="referralStats" class="my-3"></div><div id="referralLinkDisplay" class="bg-gray-100 p-2 rounded break-all text-sm"></div><button id="copyReferralLinkBtn" class="mt-2 bg-indigo-600 text-white px-3 py-1 rounded">Copy Link</button><button id="requestCommissionBtn" class="mt-2 bg-green-600 text-white px-3 py-1 rounded ml-2">Request Commission</button><div class="mt-4"><h4 class="font-bold">Referred Users</h4><div id="referredUsersList" class="space-y-1 text-sm"></div></div></div></div>
             <div id="leaderboard" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">🏆 Top Earners</h3><div id="leaderboardContainer" class="space-y-2"></div></div></div>
             <div id="support" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">🎫 Support Tickets</h3><button id="createTicketBtn" class="bg-green-600 text-white px-3 py-1 rounded mb-3">New Ticket</button><div id="supportTicketsList" class="space-y-3 max-h-96 overflow-y-auto"></div></div></div>
@@ -203,12 +202,11 @@
     <!-- MODALS -->
     <div id="confirmTradeModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">⚠️ Confirm Trade</h3><div id="confirmTradeDetails"></div><div class="flex gap-3 mt-4"><button id="confirmTradeYes" class="bg-green-600 text-white px-4 py-2 rounded">Confirm</button><button id="confirmTradeNo" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
     <div id="tradeResultModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">📊 Trade Result</h3><div id="tradeResultBody"></div><div id="tradeFeedbackMessage" class="mt-3 text-sm text-gray-600"></div><button id="closeResultModalBtn" class="mt-4 bg-indigo-600 text-white px-6 py-2 rounded mx-auto block">OK</button></div></div>
-    <div id="withdrawConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">💸 Request Withdrawal</h3><div id="withdrawConfirmDetails"></div><div class="progress-bar my-3 hidden" id="withdrawProgressBar"><div class="progress-fill" id="withdrawProgressFill"></div></div><div class="flex gap-3 mt-4"><button id="confirmWithdrawBtn" class="bg-green-600 text-white px-4 py-2 rounded">Confirm</button><button id="cancelWithdrawConfirmBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
+    <div id="withdrawConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">💸 Request Withdrawal</h3><div id="withdrawConfirmDetails"></div><div class="flex gap-3 mt-4"><button id="confirmWithdrawBtn" class="bg-green-600 text-white px-4 py-2 rounded">Confirm</button><button id="cancelWithdrawConfirmBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
     <div id="reportDepositConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">📝 Report Pending Deposit</h3><div id="reportDepositDetails"></div><div class="flex gap-3 mt-4"><button id="confirmReportDepositBtn" class="bg-green-600 text-white px-4 py-2 rounded">Submit</button><button id="cancelReportDepositConfirmBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
     <div id="commissionRequestConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">💰 Request Commission</h3><div id="commissionRequestDetails"></div><div class="flex gap-3 mt-4"><button id="confirmCommissionRequestBtn" class="bg-green-600 text-white px-4 py-2 rounded">Submit Ticket</button><button id="cancelCommissionRequestConfirmBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
     <div id="investConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">📊 Confirm Investment</h3><div id="investConfirmDetails"></div><div id="investSpinner" class="hidden"><div class="spinner"></div><p>Processing investment, please wait...</p></div><div class="flex gap-3 mt-4"><button id="confirmInvestBtn" class="bg-green-600 text-white px-4 py-2 rounded">Confirm</button><button id="cancelInvestBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
     <div id="profitClaimConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">📈 Claim Daily Profit</h3><div id="profitClaimDetails"></div><div class="flex gap-3 mt-4"><button id="confirmClaimProfitBtn" class="bg-green-600 text-white px-4 py-2 rounded">Claim Now</button><button id="cancelClaimProfitBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
-    <div id="progressModal" class="modal"><div class="modal-content"><div class="spinner"></div><p id="progressMessage">Processing...</p></div></div>
     <div id="infoModal" class="modal"><div class="modal-content"><h3 id="infoModalTitle" class="text-xl font-bold mb-3">Info</h3><p id="infoModalMessage"></p><button id="closeInfoModalBtn" class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded">OK</button></div></div>
     <div id="reAuthModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold">Re-authenticate</h3><input type="password" id="reAuthPassword" placeholder="Password" class="border p-2 w-full rounded"><button id="submitReAuthBtn" class="bg-indigo-600 text-white w-full mt-3 py-2 rounded">Confirm</button><button onclick="closeModal('reAuthModal')" class="mt-2 text-gray-500">Cancel</button></div></div>
 
@@ -347,7 +345,7 @@
         }
         document.getElementById('closeResultModalBtn').onclick = () => hideModal('tradeResultModal');
         
-        async function loadOpenTrades() { /* same as original, keep functional */ 
+        async function loadOpenTrades() { 
             if(!currentUser) return;
             try {
                 const q = query(collection(db,"binary_trades"), where("userId","==",currentUser.uid), where("status","==","active"), where("isReal","==",isRealMode), orderBy("createdAt","desc"));
@@ -400,7 +398,7 @@
             } catch(e) { console.error("Open trades error:", e); }
         }
         
-        async function loadHistory(){ /* same, keep but ensure indexes not needed */ 
+        async function loadHistory(){
             try {
                 const q=query(collection(db,"binary_trades"), where("userId","==",currentUser.uid), where("status","==","closed"), where("isReal","==",isRealMode), orderBy("createdAt","desc"), limit(10));
                 const snap=await getDocs(q);
@@ -414,57 +412,32 @@
         
         function updateStreakDots() { const container = document.getElementById('streakDots'); container.innerHTML = lastTradesResults.slice(-5).reverse().map(res => `<div class="${res==='win'?'dot-win':'dot-loss'}"></div>`).join(''); }
         
-        // ----- FIXED: Transactions (client-side sort, no index fail) -----
-        async function loadTransactions() {
-            try {
-                const q = query(collection(db,"transactions"), where("userId","==",currentUser.uid));
-                const snap = await getDocs(q);
-                const transactions = [];
-                snap.forEach(d => transactions.push({ id: d.id, ...d.data() }));
-                transactions.sort((a,b) => (b.timestamp?.toDate()||0) - (a.timestamp?.toDate()||0));
-                if(transactions.length === 0) { document.getElementById('historyList').innerHTML = '<div class="empty-message">No transactions yet</div>'; return; }
-                let html='';
-                transactions.slice(0,50).forEach(t => {
-                    html+=`<div class="border-b py-2"><div class="flex justify-between"><span class="font-medium">${t.type}</span><span class="font-bold ${t.amount>=0?'text-green-600':'text-red-600'}">$${t.amount.toFixed(2)}</span></div><div class="text-sm">${t.description || ''}</div><div class="text-xs text-gray-500">Status: ${t.status || 'completed'} | Ref: ${t.reference || 'N/A'} | ${t.timestamp?.toDate().toLocaleString()}</div></div>`;
-                });
-                document.getElementById('historyList').innerHTML = html;
-            } catch(e) { console.error("Transactions error:", e); document.getElementById('historyList').innerHTML = '<div class="empty-message">Error loading transactions. Please try again later.</div>'; }
+        // ----- FIXED INVESTMENT (create investment doc first, then deduct) -----
+        async function depositInvestment(amount, planId, roi, duration) {
+            const investmentRef = await addDoc(collection(db,"user_investments"), { 
+                userId: currentUser.uid, 
+                planId, 
+                planName: "Investment Plan", 
+                amount, 
+                dailyROI: roi, 
+                durationDays: duration, 
+                startDate: serverTimestamp(), 
+                status: "active", 
+                lastProfitClaim: Timestamp.fromDate(new Date(0)) 
+            });
+            await updateBalanceByMode(-amount, isRealMode);
+            await addDoc(collection(db,"transactions"), { 
+                userId: currentUser.uid, 
+                type: "investment", 
+                amount: -amount, 
+                description: `Investment of $${amount} into plan`, 
+                timestamp: serverTimestamp(), 
+                status: "completed", 
+                reference: investmentRef.id 
+            });
+            return investmentRef.id;
         }
         
-        // ----- FIXED: Leaderboard (client-side sort) -----
-        async function loadLeaderboard() {
-            try {
-                const snap = await getDocs(query(collection(db,"users")));
-                let users = [];
-                snap.forEach(d => users.push({ id: d.id, ...d.data() }));
-                users.sort((a,b) => (b.totalEarned||0) - (a.totalEarned||0));
-                const top10 = users.slice(0,10);
-                let i=1,html='';
-                for(let u of top10) {
-                    if(u.role !=='admin') html+=`<div class="flex justify-between border-b py-2"><span>${i++}. ${u.displayName||u.email}</span><span class="font-bold">$${(u.totalEarned||0).toFixed(2)}</span></div>`;
-                }
-                if(html === '') html = '<div class="empty-message">No traders yet</div>';
-                document.getElementById('leaderboardContainer').innerHTML = html;
-            } catch(e) { console.error("Leaderboard error:", e); document.getElementById('leaderboardContainer').innerHTML = '<div class="empty-message">Error loading leaderboard. Please try later.</div>'; }
-        }
-        
-        // ----- FIXED: Announcements (client-side sort) -----
-        async function loadAnnouncements() {
-            try {
-                const snap = await getDocs(collection(db,"announcements"));
-                let announcements = [];
-                snap.forEach(d => announcements.push({ id: d.id, ...d.data() }));
-                announcements.sort((a,b) => (b.createdAt?.toDate()||0) - (a.createdAt?.toDate()||0));
-                if(announcements.length === 0) { document.getElementById('announcementsList').innerHTML = '<div class="empty-message">No announcements</div>'; return; }
-                let html='';
-                announcements.slice(0,10).forEach(a => {
-                    html+=`<div class="border-b p-3"><div class="font-bold">${a.title}</div><div>${a.content}</div><div class="text-xs text-gray-500">${a.createdAt?.toDate().toLocaleString()}</div></div>`;
-                });
-                document.getElementById('announcementsList').innerHTML = html;
-            } catch(e) { console.error("Announcements error:", e); document.getElementById('announcementsList').innerHTML = '<div class="empty-message">Error loading announcements</div>'; }
-        }
-        
-        // ----- FIXED: Investment confirmation (no artificial timeout, proper error handling) -----
         window.showInvestConfirm = (planId, amount, roi, duration) => {
             const dailyEarning = amount * roi / 100;
             const totalEarn = dailyEarning * duration;
@@ -476,7 +449,11 @@
             if(!window.pendingInvestment) return;
             const { planId, amount, roi, duration } = window.pendingInvestment;
             const balance = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||10000);
-            if(amount > balance) { showInfoModal("Insufficient Balance", "Please deposit or switch to demo mode."); hideModal('investConfirmModal'); return; }
+            if(amount > balance) { 
+                showInfoModal("Insufficient Balance", "Please deposit or switch to demo mode."); 
+                hideModal('investConfirmModal'); 
+                return; 
+            }
             const spinner = document.getElementById('investSpinner');
             const confirmBtn = document.getElementById('confirmInvestBtn');
             const cancelBtn = document.getElementById('cancelInvestBtn');
@@ -484,11 +461,11 @@
             confirmBtn.disabled = true;
             cancelBtn.disabled = true;
             try {
-                await updateBalanceByMode(-amount, isRealMode);
-                await addDoc(collection(db,"user_investments"),{ userId:currentUser.uid, planId, planName: "Investment", amount, dailyROI:roi, durationDays:duration, startDate:serverTimestamp(), status:"active", lastProfitClaim: Timestamp.fromDate(new Date(0)) });
+                await depositInvestment(amount, planId, roi, duration);
                 hideModal('investConfirmModal');
                 showInfoModal("Success", `Invested $${amount} successfully!`);
-                loadUserData(); loadActiveInvestments();
+                loadUserData(); 
+                loadActiveInvestments();
             } catch(err) {
                 console.error(err);
                 showInfoModal("Error", "Investment failed. Please try again later.");
@@ -505,7 +482,7 @@
             window.pendingInvestment = null;
         };
         
-        async function loadActiveInvestments(){ /* keep as before but handle errors */
+        async function loadActiveInvestments(){ 
             try {
                 const snap=await getDocs(query(collection(db,"user_investments"), where("userId","==",currentUser.uid), where("status","==","active"))); 
                 if(snap.empty) { document.getElementById('activeInvestmentsList').innerHTML = '<div class="empty-message">No active investments</div>'; return; }
@@ -546,15 +523,183 @@
         };
         document.getElementById('cancelClaimProfitBtn').onclick = () => hideModal('profitClaimConfirmModal');
         
-        // Additional helper functions (deposits, withdrawals, streak, etc remain same as original but safe)
-        const loadDeposits = async () => { try { const snap = await getDocs(query(collection(db,"deposits"), where("userId","==",currentUser.uid), orderBy("createdAt","desc"))); let html='<div><h4 class="font-bold text-green-600">✅ Completed Deposits</h4>'; if(snap.empty) html+='<div class="empty-message">No completed deposits</div>'; else snap.forEach(d=>{ const dp=d.data(); html+=`<div class="border-b py-2">$${dp.amount} - ${dp.method} - ${dp.status} - ${dp.createdAt?.toDate().toLocaleString()}</div>`; }); html += '</div>'; const pendingSnap = await getDocs(query(collection(db,"pending_deposits"), where("userId","==",currentUser.uid), where("status","==","pending_review"))); if(!pendingSnap.empty) { html = '<div><h4 class="font-bold text-yellow-600">⏳ Pending Deposits (Under Review)</h4>' + html; pendingSnap.forEach(d=>{ const dp=d.data(); html+=`<div class="border-b py-2 bg-yellow-50">$${dp.amount} - Reference: ${dp.reference} - ${dp.createdAt?.toDate().toLocaleString()}</div>`; }); html += '</div>'; } document.getElementById('depositsList').innerHTML = html; } catch(e) { console.error(e); } };
-        const loadWithdrawals = async () => { try { const snap = await getDocs(query(collection(db,"withdrawals"), where("userId","==",currentUser.uid), orderBy("createdAt","desc"))); if(snap.empty) { document.getElementById('withdrawalsList').innerHTML = '<div class="empty-message">No withdrawal requests</div>'; return; } let html=''; snap.forEach(d=>{ const w=d.data(); html+=`<div class="border-b py-3"><div class="flex justify-between"><span class="font-bold">$${w.amount}</span><span class="text-sm ${w.status==='pending'?'text-yellow-600':w.status==='paid'?'text-green-600':'text-red-600'}">${w.status.toUpperCase()}</span></div><div class="text-sm">Fee: $${(w.fee||0).toFixed(2)} | Net: $${(w.netAmount||w.amount).toFixed(2)} | Gateway: ${w.gateway}</div><div class="text-xs text-gray-500">Created: ${w.createdAt?.toDate().toLocaleString()} ${w.processedAt ? `| Processed: ${w.processedAt.toDate().toLocaleString()}` : ''}</div></div>`; }); document.getElementById('withdrawalsList').innerHTML = html; } catch(e) { console.error(e); } };
-        async function loadInvestmentPlans(){ try { const snap = await getDocs(collection(db,"investment_plans")); if(snap.empty) { document.getElementById('investmentProductsList').innerHTML = '<div class="empty-message">No investment plans available</div>'; return; } let html=''; snap.forEach(d=>{ const p=d.data(); const dailyEarnings = (p.fixedAmount || p.minAmount) * p.dailyROI / 100; html+=`<div class="investment-card border rounded-lg p-4 shadow-sm">${p.imageUrl ? `<img src="${p.imageUrl}" class="w-full h-32 object-cover rounded mb-2" onerror="this.src='https://via.placeholder.com/300x150?text=No+Image'">` : '<div class="w-full h-32 bg-gray-200 rounded mb-2 flex items-center justify-center"><i class="fas fa-chart-line text-4xl text-gray-400"></i></div>'}<h3 class="font-bold text-lg">${p.name}</h3><div class="text-sm">Amount: $${p.fixedAmount || p.minAmount} | ROI: ${p.dailyROI}% daily</div><div class="text-sm">Daily Earnings: $${dailyEarnings.toFixed(2)} (≈ KES ${(dailyEarnings * exchangeRate).toFixed(2)})</div><div class="text-sm">Duration: ${p.durationDays} days</div><button onclick="showInvestConfirm('${d.id}', ${p.fixedAmount || p.minAmount}, ${p.dailyROI}, ${p.durationDays})" class="mt-2 bg-green-600 text-white px-3 py-1 rounded text-sm w-full">Invest</button></div>`; }); document.getElementById('investmentProductsList').innerHTML = html; } catch(e) { console.error(e); document.getElementById('investmentProductsList').innerHTML = '<div class="empty-message">Error loading investment plans</div>'; } }
-        // navigation and rest of events remain similar
-        function activateSection(id){ /* same */ document.querySelectorAll('.content-section').forEach(s=>s.classList.remove('active-section')); document.getElementById(id).classList.add('active-section'); if(id==='trade'){ loadOpenTrades(); loadHistory(); } if(id==='deposits') { loadDeposits(); } if(id==='withdrawals') { loadWithdrawals(); loadUserData(); } if(id==='transactions') loadTransactions(); if(id==='leaderboard') loadLeaderboard(); if(id==='streak') loadStreak(); if(id==='announcements') loadAnnouncements(); if(id==='investments'){ loadInvestmentPlans(); loadActiveInvestments(); } if(id==='referrals') loadReferrals(); if(id==='support') loadSupportTickets(); if(id==='kyc') loadUserData(); if(id==='balances') { loadUserData(); loadExchangeRate(); } }
-        async function loadStreak() { /* placeholder but essential, keep original */ try { const kycStatus = currentUserData.kycStatus; const kycWarning = document.getElementById('streakKYCWarning'); const streakGrid = document.getElementById('streakGrid'); if(kycStatus !== 'verified') { kycWarning.classList.remove('hidden'); streakGrid.innerHTML = '<div class="empty-message col-span-7 text-center">KYC verification required to participate in daily streaks</div>'; return; } kycWarning.classList.add('hidden'); const streakDoc = await getDoc(doc(db,"login_streaks",currentUser.uid)); let streakData = streakDoc.exists() ? streakDoc.data() : { currentStreak:0, lastClaimDate: null, claimedDays: [] }; const today = new Date().toDateString(); const lastClaim = streakData.lastClaimDate ? new Date(streakData.lastClaimDate).toDateString() : null; let canClaim = (lastClaim !== today) && (kycStatus === 'verified'); let html = '<div class="streak-grid">'; for(let i=0; i<7; i++) { let dayStatus = 'disabled'; if(streakData.claimedDays && streakData.claimedDays.includes(i)) dayStatus = 'claimed'; else if(canClaim && i === streakData.currentStreak) dayStatus = 'available'; else if(i < streakData.currentStreak && (!streakData.claimedDays || !streakData.claimedDays.includes(i))) dayStatus = 'expired'; let reward = streakRewards[i] || 0; html += `<div class="streak-box ${dayStatus}" data-day="${i}" data-reward="${reward}"><div class="font-bold">Day ${i+1}</div><div class="text-sm">$${reward}</div>${dayStatus==='available' ? '<i class="fas fa-gift"></i>' : (dayStatus==='claimed' ? '<i class="fas fa-check-circle"></i>' : (dayStatus==='expired' ? '<i class="fas fa-times-circle"></i>' : '<i class="fas fa-lock"></i>'))}</div>`; } html += '</div>'; streakGrid.innerHTML = html; document.getElementById('streakInfo').innerHTML = `Current streak: ${streakData.currentStreak} days | ${canClaim ? 'Click today\'s box to claim reward!' : 'Come back tomorrow for next streak!'}`; document.querySelectorAll('.streak-box.available').forEach(box => { box.onclick = async () => { const day = parseInt(box.dataset.day); const reward = parseFloat(box.dataset.reward); await updateBalanceByMode(reward, isRealMode); const newStreak = (streakData.currentStreak + 1) % 7; const newClaimed = [...(streakData.claimedDays || []), day]; await setDoc(doc(db,"login_streaks",currentUser.uid), { currentStreak: newStreak, lastClaimDate: serverTimestamp(), claimedDays: newClaimed }); showInfoModal("Streak Reward", `🎉 Streak day ${day+1} claimed! +$${reward} added to your balance.`); loadStreak(); loadUserData(); }; }); } catch(e) { console.error(e); } }
-        async function loadReferrals() { try { const snap = await getDocs(query(collection(db,"referrals"), where("referrerId","==",currentUser.uid))); let earnedComm = 0, referredList = []; snap.forEach(r=>{ earnedComm += r.data().commissionEarned||0; referredList.push(r.data().referredId); }); document.getElementById('referralStats').innerHTML = `Referred: ${snap.size} | Earned Commission: $${earnedComm.toFixed(2)} | Pending: $0.00 (manual approval)`; document.getElementById('referralLinkDisplay').innerText = `${window.location.origin}/?ref=${currentUser.uid}`; if(referredList.length === 0) { document.getElementById('referredUsersList').innerHTML = '<div class="empty-message">No referred users yet.</div>'; return; } let refHtml = '<ul class="list-disc pl-4">'; for(let refId of referredList) { const userSnap = await getDoc(doc(db,"users",refId)); if(userSnap.exists()) refHtml += `<li>${userSnap.data().displayName || refId} - ${userSnap.data().totalEarned ? `Traded: $${userSnap.data().totalEarned}` : 'No activity'}</li>`; else refHtml += `<li>${refId}</li>`; } refHtml += '</ul>'; document.getElementById('referredUsersList').innerHTML = refHtml; } catch(e) { console.error(e); } }
-        async function loadSupportTickets() { try { const snap = await getDocs(query(collection(db,"support_tickets"), where("userId","==",currentUser.uid), orderBy("createdAt","desc"))); if(snap.empty) { document.getElementById('supportTicketsList').innerHTML = '<div class="empty-message">No support tickets</div>'; return; } let html=''; snap.forEach(d=>{ const t=d.data(); html+=`<div class="border rounded p-3"><div class="flex justify-between"><span class="font-bold">#${d.id.slice(-6)}</span><span class="text-xs ${t.status==='open'?'text-green-600':'text-gray-500'}">${t.status}</span></div><div><b>Subject:</b> ${t.subject}</div><div><b>Message:</b> ${t.message}</div><div class="text-xs text-gray-500">Created: ${t.createdAt?.toDate().toLocaleString()} | Resolved: ${t.resolvedAt?.toDate().toLocaleString() || '—'}</div>${t.note ? `<div class="text-sm bg-gray-50 p-1 mt-1"><b>Admin Note:</b> ${t.note}</div>` : ''}</div>`; }); document.getElementById('supportTicketsList').innerHTML = html; } catch(e) { console.error(e); } }
+        // ----- DEPOSIT: fetch payment link from Firestore and redirect -----
+        async function loadDepositMethods() {
+            try {
+                const methodsSnap = await getDocs(collection(db, "payment_methods"));
+                const container = document.getElementById('depositMethodsContainer');
+                if(methodsSnap.empty) {
+                    container.innerHTML = `
+                        <button data-method="mpesa" class="deposit-method-btn bg-green-600 text-white py-3 rounded-xl"><i class="fas fa-mobile-alt"></i> M-Pesa</button>
+                        <button data-method="bank" class="deposit-method-btn bg-blue-600 text-white py-3 rounded-xl"><i class="fas fa-university"></i> Bank Transfer</button>
+                        <button data-method="crypto" class="deposit-method-btn bg-purple-600 text-white py-3 rounded-xl"><i class="fab fa-bitcoin"></i> Crypto</button>
+                    `;
+                } else {
+                    let html = '';
+                    methodsSnap.forEach(docSnap => {
+                        const method = docSnap.data();
+                        html += `<button data-method="${docSnap.id}" class="deposit-method-btn ${method.bgColor || 'bg-gray-600'} text-white py-3 rounded-xl"><i class="${method.icon}"></i> ${method.name}</button>`;
+                    });
+                    container.innerHTML = html;
+                }
+                document.querySelectorAll('.deposit-method-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const methodId = btn.dataset.method;
+                        try {
+                            const methodDoc = await getDoc(doc(db, "payment_methods", methodId));
+                            if(methodDoc.exists() && methodDoc.data().paymentUrl) {
+                                window.location.href = methodDoc.data().paymentUrl;
+                            } else {
+                                showInfoModal("Payment Link", "Payment method not configured yet. Please contact support.");
+                            }
+                        } catch(err) {
+                            showInfoModal("Error", "Unable to fetch payment link.");
+                        }
+                    });
+                });
+            } catch(e) { console.error(e); }
+        }
+        
+        // ----- Transactions, Leaderboard, Announcements (client-side sort) -----
+        async function loadTransactions() {
+            try {
+                const q = query(collection(db,"transactions"), where("userId","==",currentUser.uid));
+                const snap = await getDocs(q);
+                const transactions = [];
+                snap.forEach(d => transactions.push({ id: d.id, ...d.data() }));
+                transactions.sort((a,b) => (b.timestamp?.toDate()||0) - (a.timestamp?.toDate()||0));
+                if(transactions.length === 0) { document.getElementById('historyList').innerHTML = '<div class="empty-message">No transactions yet</div>'; return; }
+                let html='';
+                transactions.slice(0,50).forEach(t => {
+                    html+=`<div class="border-b py-2"><div class="flex justify-between"><span class="font-medium">${t.type}</span><span class="font-bold ${t.amount>=0?'text-green-600':'text-red-600'}">$${t.amount.toFixed(2)}</span></div><div class="text-sm">${t.description || ''}</div><div class="text-xs text-gray-500">Status: ${t.status || 'completed'} | Ref: ${t.reference || 'N/A'} | ${t.timestamp?.toDate().toLocaleString()}</div></div>`;
+                });
+                document.getElementById('historyList').innerHTML = html;
+            } catch(e) { console.error("Transactions error:", e); document.getElementById('historyList').innerHTML = '<div class="empty-message">Error loading transactions. Please try again later.</div>'; }
+        }
+        
+        async function loadLeaderboard() {
+            try {
+                const snap = await getDocs(query(collection(db,"users")));
+                let users = [];
+                snap.forEach(d => users.push({ id: d.id, ...d.data() }));
+                users.sort((a,b) => (b.totalEarned||0) - (a.totalEarned||0));
+                const top10 = users.slice(0,10);
+                let i=1,html='';
+                for(let u of top10) {
+                    if(u.role !=='admin') html+=`<div class="flex justify-between border-b py-2"><span>${i++}. ${u.displayName||u.email}</span><span class="font-bold">$${(u.totalEarned||0).toFixed(2)}</span></div>`;
+                }
+                if(html === '') html = '<div class="empty-message">No traders yet</div>';
+                document.getElementById('leaderboardContainer').innerHTML = html;
+            } catch(e) { console.error("Leaderboard error:", e); document.getElementById('leaderboardContainer').innerHTML = '<div class="empty-message">Error loading leaderboard. Please try later.</div>'; }
+        }
+        
+        async function loadAnnouncements() {
+            try {
+                const snap = await getDocs(collection(db,"announcements"));
+                let announcements = [];
+                snap.forEach(d => announcements.push({ id: d.id, ...d.data() }));
+                announcements.sort((a,b) => (b.createdAt?.toDate()||0) - (a.createdAt?.toDate()||0));
+                if(announcements.length === 0) { document.getElementById('announcementsList').innerHTML = '<div class="empty-message">No announcements</div>'; return; }
+                let html='';
+                announcements.slice(0,10).forEach(a => {
+                    html+=`<div class="border-b p-3"><div class="font-bold">${a.title}</div><div>${a.content}</div><div class="text-xs text-gray-500">${a.createdAt?.toDate().toLocaleString()}</div></div>`;
+                });
+                document.getElementById('announcementsList').innerHTML = html;
+            } catch(e) { console.error("Announcements error:", e); document.getElementById('announcementsList').innerHTML = '<div class="empty-message">Error loading announcements</div>'; }
+        }
+        
+        // ----- Withdrawals (working) -----
+        async function loadWithdrawals() {
+            try {
+                const snap = await getDocs(query(collection(db,"withdrawals"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")));
+                if(snap.empty) { document.getElementById('withdrawalsList').innerHTML = '<div class="empty-message">No withdrawal requests</div>'; return; }
+                let html=''; snap.forEach(d=>{ const w=d.data(); html+=`<div class="border-b py-3"><div class="flex justify-between"><span class="font-bold">$${w.amount}</span><span class="text-sm ${w.status==='pending'?'text-yellow-600':w.status==='paid'?'text-green-600':'text-red-600'}">${w.status.toUpperCase()}</span></div><div class="text-sm">Fee: $${(w.fee||0).toFixed(2)} | Net: $${(w.netAmount||w.amount).toFixed(2)} | Gateway: ${w.gateway}</div><div class="text-xs text-gray-500">Created: ${w.createdAt?.toDate().toLocaleString()} ${w.processedAt ? `| Processed: ${w.processedAt.toDate().toLocaleString()}` : ''}</div></div>`; }); document.getElementById('withdrawalsList').innerHTML = html; } catch(e) { console.error(e); } }
+        async function loadDeposits() { try { const snap = await getDocs(query(collection(db,"deposits"), where("userId","==",currentUser.uid), orderBy("createdAt","desc"))); let html='<div><h4 class="font-bold text-green-600">✅ Completed Deposits</h4>'; if(snap.empty) html+='<div class="empty-message">No completed deposits</div>'; else snap.forEach(d=>{ const dp=d.data(); html+=`<div class="border-b py-2">$${dp.amount} - ${dp.method} - ${dp.status} - ${dp.createdAt?.toDate().toLocaleString()}</div>`; }); html += '</div>'; const pendingSnap = await getDocs(query(collection(db,"pending_deposits"), where("userId","==",currentUser.uid), where("status","==","pending_review"))); if(!pendingSnap.empty) { html = '<div><h4 class="font-bold text-yellow-600">⏳ Pending Deposits (Under Review)</h4>' + html; pendingSnap.forEach(d=>{ const dp=d.data(); html+=`<div class="border-b py-2 bg-yellow-50">$${dp.amount} - Reference: ${dp.reference} - ${dp.createdAt?.toDate().toLocaleString()}</div>`; }); html += '</div>'; } document.getElementById('depositsList').innerHTML = html; } catch(e) { console.error(e); } }
+        
+        // ----- Investment Plans with fallback -----
+        async function loadInvestmentPlans(){ 
+            try {
+                const snap = await getDocs(collection(db,"investment_plans")); 
+                if(snap.empty) {
+                    const fallback = `<div class="investment-card border rounded-lg p-4 shadow-sm"><h3 class="font-bold text-lg">Starter Plan</h3><div class="text-sm">Amount: $10 | ROI: 5% daily</div><div class="text-sm">Daily Earnings: $0.50 (≈ KES 65.00)</div><div class="text-sm">Duration: 30 days</div><button onclick="showInvestConfirm('fallback1', 10, 5, 30)" class="mt-2 bg-green-600 text-white px-3 py-1 rounded text-sm w-full">Invest</button></div><div class="investment-card border rounded-lg p-4 shadow-sm"><h3 class="font-bold text-lg">Pro Plan</h3><div class="text-sm">Amount: $50 | ROI: 8% daily</div><div class="text-sm">Daily Earnings: $4.00 (≈ KES 520.00)</div><div class="text-sm">Duration: 30 days</div><button onclick="showInvestConfirm('fallback2', 50, 8, 30)" class="mt-2 bg-green-600 text-white px-3 py-1 rounded text-sm w-full">Invest</button></div>`;
+                    document.getElementById('investmentProductsList').innerHTML = fallback;
+                    return;
+                }
+                let html=''; 
+                snap.forEach(d=>{ const p=d.data(); const dailyEarnings = (p.fixedAmount || p.minAmount) * p.dailyROI / 100; html+=`<div class="investment-card border rounded-lg p-4 shadow-sm">${p.imageUrl ? `<img src="${p.imageUrl}" class="w-full h-32 object-cover rounded mb-2" onerror="this.src='https://via.placeholder.com/300x150?text=No+Image'">` : '<div class="w-full h-32 bg-gray-200 rounded mb-2 flex items-center justify-center"><i class="fas fa-chart-line text-4xl text-gray-400"></i></div>'}<h3 class="font-bold text-lg">${p.name}</h3><div class="text-sm">Amount: $${p.fixedAmount || p.minAmount} | ROI: ${p.dailyROI}% daily</div><div class="text-sm">Daily Earnings: $${dailyEarnings.toFixed(2)} (≈ KES ${(dailyEarnings * exchangeRate).toFixed(2)})</div><div class="text-sm">Duration: ${p.durationDays} days</div><button onclick="showInvestConfirm('${d.id}', ${p.fixedAmount || p.minAmount}, ${p.dailyROI}, ${p.durationDays})" class="mt-2 bg-green-600 text-white px-3 py-1 rounded text-sm w-full">Invest</button></div>`; }); 
+                document.getElementById('investmentProductsList').innerHTML = html; 
+            } catch(e) { console.error(e); document.getElementById('investmentProductsList').innerHTML = '<div class="empty-message">Error loading investment plans</div>'; }
+        }
+        
+        // ----- Streak, Referrals, Support Tickets (kept as before but functional) -----
+        async function loadStreak() { 
+            try {
+                const kycStatus = currentUserData.kycStatus; 
+                const kycWarning = document.getElementById('streakKYCWarning'); 
+                const streakGrid = document.getElementById('streakGrid'); 
+                if(kycStatus !== 'verified') { 
+                    kycWarning.classList.remove('hidden'); 
+                    streakGrid.innerHTML = '<div class="empty-message col-span-7 text-center">KYC verification required to participate in daily streaks</div>'; 
+                    return; 
+                } 
+                kycWarning.classList.add('hidden'); 
+                const streakDoc = await getDoc(doc(db,"login_streaks",currentUser.uid)); 
+                let streakData = streakDoc.exists() ? streakDoc.data() : { currentStreak:0, lastClaimDate: null, claimedDays: [] }; 
+                const today = new Date().toDateString(); 
+                const lastClaim = streakData.lastClaimDate ? new Date(streakData.lastClaimDate).toDateString() : null; 
+                let canClaim = (lastClaim !== today) && (kycStatus === 'verified'); 
+                let html = '<div class="streak-grid">'; 
+                for(let i=0; i<7; i++) { 
+                    let dayStatus = 'disabled'; 
+                    if(streakData.claimedDays && streakData.claimedDays.includes(i)) dayStatus = 'claimed'; 
+                    else if(canClaim && i === streakData.currentStreak) dayStatus = 'available'; 
+                    else if(i < streakData.currentStreak && (!streakData.claimedDays || !streakData.claimedDays.includes(i))) dayStatus = 'expired'; 
+                    let reward = streakRewards[i] || 0; 
+                    html += `<div class="streak-box ${dayStatus}" data-day="${i}" data-reward="${reward}"><div class="font-bold">Day ${i+1}</div><div class="text-sm">$${reward}</div>${dayStatus==='available' ? '<i class="fas fa-gift"></i>' : (dayStatus==='claimed' ? '<i class="fas fa-check-circle"></i>' : (dayStatus==='expired' ? '<i class="fas fa-times-circle"></i>' : '<i class="fas fa-lock"></i>'))}</div>`; 
+                } 
+                html += '</div>'; 
+                streakGrid.innerHTML = html; 
+                document.getElementById('streakInfo').innerHTML = `Current streak: ${streakData.currentStreak} days | ${canClaim ? 'Click today\'s box to claim reward!' : 'Come back tomorrow for next streak!'}`; 
+                document.querySelectorAll('.streak-box.available').forEach(box => { 
+                    box.onclick = async () => { 
+                        const day = parseInt(box.dataset.day); 
+                        const reward = parseFloat(box.dataset.reward); 
+                        await updateBalanceByMode(reward, isRealMode); 
+                        const newStreak = (streakData.currentStreak + 1) % 7; 
+                        const newClaimed = [...(streakData.claimedDays || []), day]; 
+                        await setDoc(doc(db,"login_streaks",currentUser.uid), { currentStreak: newStreak, lastClaimDate: serverTimestamp(), claimedDays: newClaimed }); 
+                        showInfoModal("Streak Reward", `🎉 Streak day ${day+1} claimed! +$${reward} added to your balance.`); 
+                        loadStreak(); loadUserData(); 
+                    }; 
+                }); 
+            } catch(e) { console.error(e); } 
+        }
+        async function loadReferrals() { 
+            try { 
+                const snap = await getDocs(query(collection(db,"referrals"), where("referrerId","==",currentUser.uid))); 
+                let earnedComm = 0, referredList = []; 
+                snap.forEach(r=>{ earnedComm += r.data().commissionEarned||0; referredList.push(r.data().referredId); }); 
+                document.getElementById('referralStats').innerHTML = `Referred: ${snap.size} | Earned Commission: $${earnedComm.toFixed(2)} | Pending: $0.00 (manual approval)`; 
+                document.getElementById('referralLinkDisplay').innerText = `${window.location.origin}/?ref=${currentUser.uid}`; 
+                if(referredList.length === 0) { document.getElementById('referredUsersList').innerHTML = '<div class="empty-message">No referred users yet.</div>'; return; } 
+                let refHtml = '<ul class="list-disc pl-4">'; 
+                for(let refId of referredList) { 
+                    const userSnap = await getDoc(doc(db,"users",refId)); 
+                    if(userSnap.exists()) refHtml += `<li>${userSnap.data().displayName || refId} - ${userSnap.data().totalEarned ? `Traded: $${userSnap.data().totalEarned}` : 'No activity'}</li>`; 
+                    else refHtml += `<li>${refId}</li>`; 
+                } 
+                refHtml += '</ul>'; 
+                document.getElementById('referredUsersList').innerHTML = refHtml; 
+            } catch(e) { console.error(e); } 
+        }
+        async function loadSupportTickets() { 
+            try { 
+                const snap = await getDocs(query(collection(db,"support_tickets"), where("userId","==",currentUser.uid), orderBy("createdAt","desc"))); 
+                if(snap.empty) { document.getElementById('supportTicketsList').innerHTML = '<div class="empty-message">No support tickets</div>'; return; } 
+                let html=''; snap.forEach(d=>{ const t=d.data(); html+=`<div class="border rounded p-3"><div class="flex justify-between"><span class="font-bold">#${d.id.slice(-6)}</span><span class="text-xs ${t.status==='open'?'text-green-600':'text-gray-500'}">${t.status}</span></div><div><b>Subject:</b> ${t.subject}</div><div><b>Message:</b> ${t.message}</div><div class="text-xs text-gray-500">Created: ${t.createdAt?.toDate().toLocaleString()} | Resolved: ${t.resolvedAt?.toDate().toLocaleString() || '—'}</div>${t.note ? `<div class="text-sm bg-gray-50 p-1 mt-1"><b>Admin Note:</b> ${t.note}</div>` : ''}</div>`; }); 
+                document.getElementById('supportTicketsList').innerHTML = html; 
+            } catch(e) { console.error(e); } 
+        }
         document.getElementById('createTicketBtn').onclick = async () => { const subject = prompt("Subject:"); if(!subject) return; const message = prompt("Message:"); if(!message) return; await addDoc(collection(db,"support_tickets"), { userId: currentUser.uid, subject, message, status: "open", createdAt: serverTimestamp() }); showInfoModal("Success", "Ticket created"); loadSupportTickets(); };
         document.getElementById('copyReferralLinkBtn').onclick=()=>{ navigator.clipboard.writeText(document.getElementById('referralLinkDisplay').innerText); showInfoModal("Copied", "Referral link copied to clipboard!"); };
         document.getElementById('requestCommissionBtn').onclick = () => { document.getElementById('commissionRequestDetails').innerHTML = `<div class="space-y-3"><input type="text" id="commissionReferredEmail" placeholder="Referred user's email" class="w-full border p-2 rounded"><input type="text" id="commissionReferredCode" placeholder="Their referral code (if any)" class="w-full border p-2 rounded"><textarea id="commissionMessage" placeholder="Additional details..." rows="3" class="w-full border p-2 rounded"></textarea></div>`; showModal('commissionRequestConfirmModal'); };
@@ -567,8 +712,10 @@
         document.getElementById('confirmWithdrawBtn').onclick = async () => { const amount = parseFloat(document.getElementById('withdrawAmount').value); const gateway = document.getElementById('withdrawGateway').value; const details = document.getElementById('withdrawDetails').value; const bal = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||0); if(!isRealMode) { showInfoModal("Error", "Withdrawals only in REAL mode"); return; } if(isNaN(amount) || amount < withdrawalConfig.minAmount || amount > bal) { showInfoModal("Invalid Amount", `Min $${withdrawalConfig.minAmount}, max $${bal.toFixed(2)}`); return; } if(!gateway || !details) { showInfoModal("Error", "All fields required"); return; } const fee = (amount * withdrawalConfig.feePercent) / 100; const netAmount = amount - fee; await addDoc(collection(db, "withdrawals"), { userId: currentUser.uid, amount, fee, netAmount, gateway, details, status: "pending", createdAt: serverTimestamp() }); await addDoc(collection(db, "transactions"), { userId: currentUser.uid, type: "withdrawal_request", amount: -amount, description: `Withdrawal request $${amount} via ${gateway} (pending)`, timestamp: serverTimestamp(), status: "pending", reference: `WD_${Date.now()}` }); hideModal('withdrawConfirmModal'); showInfoModal("Success", "Withdrawal request submitted! Pending admin approval."); loadWithdrawals(); loadTransactions(); };
         document.getElementById('cancelWithdrawConfirmBtn').onclick = () => hideModal('withdrawConfirmModal');
         
-        // stake buttons and mode toggle
+        // ----- Stake buttons -----
         for(let i=1;i<=9;i++){ const btn=document.createElement('button'); btn.innerText=i; btn.className='number-btn'; btn.onclick=()=>{ document.getElementById('stakeAmount').value=i; updateRiskReward(); }; document.getElementById('stakeButtonsContainer').appendChild(btn); }
+        
+        // ----- Mode toggles -----
         function setRealMode() { isRealMode=true; document.getElementById('modeLabel').innerHTML='🔴 REAL ACCOUNT'; document.getElementById('realModeBtn').classList.add('bg-indigo-600','text-white','shadow'); document.getElementById('realModeBtn').classList.remove('bg-gray-200'); document.getElementById('demoModeBtn').classList.remove('bg-indigo-600','text-white','shadow'); document.getElementById('demoModeBtn').classList.add('bg-gray-200'); loadUserData(); loadOpenTrades(); loadHistory(); showInfoModal("Mode Changed", "Real mode active. Real balance will be used for trades."); }
         function setDemoMode() { isRealMode=false; document.getElementById('modeLabel').innerHTML='🟢 DEMO MODE'; document.getElementById('demoModeBtn').classList.add('bg-indigo-600','text-white','shadow'); document.getElementById('demoModeBtn').classList.remove('bg-gray-200'); document.getElementById('realModeBtn').classList.remove('bg-indigo-600','text-white','shadow'); document.getElementById('realModeBtn').classList.add('bg-gray-200'); loadUserData(); loadOpenTrades(); loadHistory(); showInfoModal("Mode Changed", "Demo mode active. Virtual balance: $10,000"); }
         document.getElementById('realModeBtn').onclick = setRealMode;
@@ -597,6 +744,22 @@
         function stopAutoTrade() { if(autoTradeInterval) { clearInterval(autoTradeInterval); autoTradeInterval = null; } document.getElementById('startAutoTradeBtn').disabled = false; document.getElementById('stopAutoTradeBtn').disabled = true; showInfoModal("Auto Trade", "Stopped"); }
         document.getElementById('startAutoTradeBtn').onclick = startAutoTrade;
         document.getElementById('stopAutoTradeBtn').onclick = stopAutoTrade;
+        function activateSection(id){
+            document.querySelectorAll('.content-section').forEach(s=>s.classList.remove('active-section'));
+            document.getElementById(id).classList.add('active-section');
+            if(id==='trade'){ loadOpenTrades(); loadHistory(); }
+            if(id==='deposits') { loadDeposits(); loadDepositMethods(); }
+            if(id==='withdrawals') { loadWithdrawals(); loadUserData(); }
+            if(id==='transactions') loadTransactions();
+            if(id==='leaderboard') loadLeaderboard();
+            if(id==='streak') loadStreak();
+            if(id==='announcements') loadAnnouncements();
+            if(id==='investments'){ loadInvestmentPlans(); loadActiveInvestments(); }
+            if(id==='referrals') loadReferrals();
+            if(id==='support') loadSupportTickets();
+            if(id==='kyc') loadUserData();
+            if(id==='balances') { loadUserData(); loadExchangeRate(); }
+        }
         onAuthStateChanged(auth, async(user)=>{ if(!user){ window.location.href="index.html"; return; } currentUser=user; await loadExchangeRate(); await loadStreakRewards(); await loadWithdrawalConfig(); await loadTradingConfig(); await loadSocialLinks(); await loadUserData(); await loadInvestmentPlans(); await loadActiveInvestments(); await loadDeposits(); await loadWithdrawals(); await loadTransactions(); await loadReferrals(); await loadLeaderboard(); await loadStreak(); await loadAnnouncements(); await loadOpenTrades(); await loadHistory(); setInterval(()=>{ if(document.getElementById('trade').classList.contains('active-section')) loadOpenTrades(); }, 3000); await give20BonusIfFirstRealActivity(); });
         updateRiskReward();
     </script>
