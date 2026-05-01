@@ -88,7 +88,6 @@
             .reset-btn { padding: 4px 10px; font-size: 11px; }
             .video-rectangle { max-width: 220px; }
         }
-        .error-message { color: #ef4444; padding: 1rem; text-align: center; background: #fee2e2; border-radius: 0.75rem; margin: 0.5rem 0; }
     </style>
 </head>
 <body class="bg-amber-50">
@@ -183,7 +182,7 @@
                 </div>
             </div>
 
-            <!-- Other sections -->
+            <!-- INVESTMENTS -->
             <div id="investments" class="content-section"><div class="card-glass p-6"><h2 class="text-2xl font-bold mb-3">Investment Dashboard</h2><div id="investmentProductsList" class="grid md:grid-cols-2 gap-4 mb-6"></div><h3 class="text-xl font-bold mb-2">Your Active Investments</h3><div id="activeInvestmentsList" class="space-y-3"></div></div></div>
             <div id="balances" class="content-section"><div class="card-glass p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold">💰 Balance Overview</h3><div class="flex gap-2"><button id="quickWithdrawBtn" class="bg-red-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-hand-holding-usd"></i> Withdraw</button><button id="quickTopUpBtn" class="bg-green-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-plus-circle"></i> Top Up</button></div></div><div id="balanceDetails" class="space-y-2"></div><div class="mt-4 p-3 bg-gray-100 rounded"><div class="font-medium">Exchange Rate (USD → KES): <span id="exchangeRate">1 USD = 0 KES</span></div></div></div></div>
             <div id="transactions" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">📜 Transaction History</h3><div id="historyList" class="space-y-2 max-h-96 overflow-y-auto"></div></div></div>
@@ -245,12 +244,6 @@
             showModal('infoModal');
         }
         document.getElementById('closeInfoModalBtn').onclick = () => hideModal('infoModal');
-        
-        function showProgress(message) {
-            document.getElementById('progressMessage').innerText = message;
-            showModal('progressModal');
-        }
-        function hideProgress() { hideModal('progressModal'); }
         
         async function loadTradingConfig() {
             try {
@@ -338,18 +331,17 @@
             updateStreakDots();
             document.getElementById('lastTradeSummary').innerHTML = `📋 Last trade: ${direction.toUpperCase()} $${stake} (${multiplier}x) → ${won?'✅ WIN +$'+(payoutAmount-stake).toFixed(2):'❌ LOSS -$'+stake}`;
             
-            // Build feedback message
             let feedback = "";
             if (won) {
-                feedback = `✅ Excellent! You predicted correctly. Your profit of $${(payoutAmount-stake).toFixed(2)} has been added to your balance. Keep an eye on price trends and use the risk‑reward slider to maximise gains.`;
+                feedback = `✅ Excellent! Your profit of $${(payoutAmount-stake).toFixed(2)} has been added. Keep an eye on price trends and use the risk‑reward slider to maximise gains.`;
             } else {
                 if (direction === 'call') {
                     feedback = `❌ You lost because the price went DOWN instead of UP. Tip: analyse short‑term momentum before hitting CALL. Practice in Demo mode to build confidence.`;
                 } else {
-                    feedback = `❌ You lost because the price went UP instead of DOWN. Tip: wait for price to show clear downward movement before entering a PUT trade. Use lower stakes and watch the news.`;
+                    feedback = `❌ You lost because the price went UP instead of DOWN. Tip: wait for price to show clear downward movement before entering a PUT trade. Use lower stakes.`;
                 }
             }
-            const resultHtml = `<div class="text-center"><div class="text-2xl mb-3 ${won?'text-green-600':'text-red-600'}">${won?'🎉 WINNER! 🎉':'💔 LOSS 💔'}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Direction:</b> ${direction.toUpperCase()}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Stake:</b> $${stake.toFixed(2)}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Multiplier:</b> ${multiplier}x</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Entry:</b> ${entryPrice.toFixed(5)}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Exit:</b> ${finalPrice.toFixed(5)}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Payout:</b> $${payoutAmount.toFixed(2)}</div><div class="text-xl font-bold ${won?'text-green-600':'text-red-600'} mt-2">${won?`+$${(payoutAmount-stake).toFixed(2)}`:`-$${stake.toFixed(2)}`}</div><div class="text-sm text-gray-500 mt-2">${won ? 'Well done!' : 'Better luck next time.'}</div></div>`;
+            const resultHtml = `<div class="text-center"><div class="text-2xl mb-3 ${won?'text-green-600':'text-red-600'}">${won?'🎉 WINNER! 🎉':'💔 LOSS 💔'}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Direction:</b> ${direction.toUpperCase()}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Stake:</b> $${stake.toFixed(2)}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Multiplier:</b> ${multiplier}x</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Entry:</b> ${entryPrice.toFixed(5)}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Exit:</b> ${finalPrice.toFixed(5)}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Payout:</b> $${payoutAmount.toFixed(2)}</div><div class="text-xl font-bold ${won?'text-green-600':'text-red-600'} mt-2">${won?`+$${(payoutAmount-stake).toFixed(2)}`:`-$${stake.toFixed(2)}`}</div></div>`;
             document.getElementById('tradeResultBody').innerHTML = resultHtml;
             document.getElementById('tradeFeedbackMessage').innerHTML = `<div class="bg-blue-50 p-2 rounded mt-2 text-left"><i class="fas fa-lightbulb text-yellow-500"></i> <strong>How to improve:</strong> ${feedback}</div>`;
             showModal('tradeResultModal');
@@ -521,7 +513,7 @@
                 document.getElementById('historyList').innerHTML = html;
             } catch(e) { 
                 console.error("Transactions error:", e);
-                document.getElementById('historyList').innerHTML = '<div class="error-message">⚠️ Missing Firestore index. Please create composite index on "transactions": userId (Ascending), timestamp (Descending). Click the link in your browser console or contact admin.</div>';
+                document.getElementById('historyList').innerHTML = '<div class="empty-message">Error loading transactions. Please try again later.</div>';
             }
         }
         
@@ -587,7 +579,7 @@
                 document.getElementById('leaderboardContainer').innerHTML = html;
             } catch(e) { 
                 console.error("Leaderboard error:", e);
-                document.getElementById('leaderboardContainer').innerHTML = '<div class="error-message">⚠️ Missing Firestore index. Please create index on "users": totalEarned (Descending). Click the link in your browser console or contact admin.</div>';
+                document.getElementById('leaderboardContainer').innerHTML = '<div class="empty-message">Error loading leaderboard. Please try later.</div>';
             }
         }
         
@@ -616,20 +608,22 @@
                 document.getElementById('announcementsList').innerHTML = html;
             } catch(e) { 
                 console.error("Announcements error:", e);
-                document.getElementById('announcementsList').innerHTML = '<div class="error-message">⚠️ Missing Firestore index. Please create index on "announcements": createdAt (Descending). Click the link in your browser console or contact admin.</div>';
+                document.getElementById('announcementsList').innerHTML = '<div class="empty-message">Error loading announcements</div>';
             }
         }
         
-        // Investment plans with confirmation and cancelable timeout
+        // Investment plans with timeout
         async function loadInvestmentPlans(){ 
-            const snap=await getDocs(collection(db,"investment_plans")); 
-            if(snap.empty) { document.getElementById('investmentProductsList').innerHTML = '<div class="empty-message">No investment plans available</div>'; return; }
-            let html=''; 
-            snap.forEach(d=>{ const p=d.data(); 
-                const dailyEarnings = (p.fixedAmount || p.minAmount) * p.dailyROI / 100;
-                html+=`<div class="investment-card border rounded-lg p-4 shadow-sm">${p.imageUrl ? `<img src="${p.imageUrl}" class="w-full h-32 object-cover rounded mb-2" onerror="this.src='https://via.placeholder.com/300x150?text=No+Image'">` : '<div class="w-full h-32 bg-gray-200 rounded mb-2 flex items-center justify-center"><i class="fas fa-chart-line text-4xl text-gray-400"></i></div>'}<h3 class="font-bold text-lg">${p.name}</h3><div class="text-sm">Amount: $${p.fixedAmount || p.minAmount} | ROI: ${p.dailyROI}% daily</div><div class="text-sm">Daily Earnings: $${dailyEarnings.toFixed(2)} (≈ KES ${(dailyEarnings * exchangeRate).toFixed(2)})</div><div class="text-sm">Duration: ${p.durationDays} days</div><button onclick="showInvestConfirm('${d.id}', ${p.fixedAmount || p.minAmount}, ${p.dailyROI}, ${p.durationDays})" class="mt-2 bg-green-600 text-white px-3 py-1 rounded text-sm w-full">Invest</button></div>`; 
-            }); 
-            document.getElementById('investmentProductsList').innerHTML = html; 
+            try {
+                const snap = await getDocs(collection(db,"investment_plans")); 
+                if(snap.empty) { document.getElementById('investmentProductsList').innerHTML = '<div class="empty-message">No investment plans available</div>'; return; }
+                let html=''; 
+                snap.forEach(d=>{ const p=d.data(); 
+                    const dailyEarnings = (p.fixedAmount || p.minAmount) * p.dailyROI / 100;
+                    html+=`<div class="investment-card border rounded-lg p-4 shadow-sm">${p.imageUrl ? `<img src="${p.imageUrl}" class="w-full h-32 object-cover rounded mb-2" onerror="this.src='https://via.placeholder.com/300x150?text=No+Image'">` : '<div class="w-full h-32 bg-gray-200 rounded mb-2 flex items-center justify-center"><i class="fas fa-chart-line text-4xl text-gray-400"></i></div>'}<h3 class="font-bold text-lg">${p.name}</h3><div class="text-sm">Amount: $${p.fixedAmount || p.minAmount} | ROI: ${p.dailyROI}% daily</div><div class="text-sm">Daily Earnings: $${dailyEarnings.toFixed(2)} (≈ KES ${(dailyEarnings * exchangeRate).toFixed(2)})</div><div class="text-sm">Duration: ${p.durationDays} days</div><button onclick="showInvestConfirm('${d.id}', ${p.fixedAmount || p.minAmount}, ${p.dailyROI}, ${p.durationDays})" class="mt-2 bg-green-600 text-white px-3 py-1 rounded text-sm w-full">Invest</button></div>`; 
+                }); 
+                document.getElementById('investmentProductsList').innerHTML = html; 
+            } catch(e) { console.error(e); document.getElementById('investmentProductsList').innerHTML = '<div class="empty-message">Error loading investment plans</div>'; }
         }
         window.showInvestConfirm = (planId, amount, roi, duration) => {
             const dailyEarning = amount * roi / 100;
@@ -665,7 +659,14 @@
                 showInfoModal("Success", `Invested $${amount} successfully!`);
                 loadUserData(); loadActiveInvestments();
                 window.pendingInvestment = null;
-            }, 1000);
+            }, 5000); // 5 seconds timeout
+            // Also set a timeout to hide spinner if takes too long
+            setTimeout(() => {
+                if(spinner.classList.contains('hidden') === false) {
+                    spinner.classList.add('hidden'); progressBar.classList.add('hidden');
+                    showInfoModal("Timeout", "Investment verification took too long. Please check your balance and try again.");
+                }
+            }, 6000);
         };
         document.getElementById('cancelInvestBtn').onclick = () => {
             if(activeInvestmentTimeout) {
@@ -698,7 +699,7 @@
                 document.getElementById('activeInvestmentsList').innerHTML = html; 
                 if(window.countdownInterval) clearInterval(window.countdownInterval);
                 window.countdownInterval = setInterval(() => loadActiveInvestments(), 60000);
-            } catch(e) { console.error(e); }
+            } catch(e) { console.error(e); document.getElementById('activeInvestmentsList').innerHTML = '<div class="empty-message">Error loading investments</div>'; }
         }
         window.showClaimProfitConfirm = (investmentId, amount, roi) => {
             const profit = amount * roi / 100;
@@ -774,7 +775,7 @@
             });
         }
         
-        // Referrals (simple load)
+        // Referrals
         async function loadReferrals() {
             try {
                 const snap = await getDocs(query(collection(db,"referrals"), where("referrerId","==",currentUser.uid)));
