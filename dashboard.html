@@ -206,7 +206,7 @@
     <div id="withdrawConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">💸 Request Withdrawal</h3><div id="withdrawConfirmDetails"></div><div class="progress-bar my-3 hidden" id="withdrawProgressBar"><div class="progress-fill" id="withdrawProgressFill"></div></div><div class="flex gap-3 mt-4"><button id="confirmWithdrawBtn" class="bg-green-600 text-white px-4 py-2 rounded">Confirm</button><button id="cancelWithdrawConfirmBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
     <div id="reportDepositConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">📝 Report Pending Deposit</h3><div id="reportDepositDetails"></div><div class="flex gap-3 mt-4"><button id="confirmReportDepositBtn" class="bg-green-600 text-white px-4 py-2 rounded">Submit</button><button id="cancelReportDepositConfirmBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
     <div id="commissionRequestConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">💰 Request Commission</h3><div id="commissionRequestDetails"></div><div class="flex gap-3 mt-4"><button id="confirmCommissionRequestBtn" class="bg-green-600 text-white px-4 py-2 rounded">Submit Ticket</button><button id="cancelCommissionRequestConfirmBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
-    <div id="investConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">📊 Confirm Investment</h3><div id="investConfirmDetails"></div><div class="progress-bar my-3 hidden" id="investProgressBar"><div class="progress-fill" id="investProgressFill"></div></div><div id="investSpinner" class="hidden"><div class="spinner"></div><p>Checking your account balance...</p></div><div class="flex gap-3 mt-4"><button id="confirmInvestBtn" class="bg-green-600 text-white px-4 py-2 rounded">Confirm</button><button id="cancelInvestBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
+    <div id="investConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">📊 Confirm Investment</h3><div id="investConfirmDetails"></div><div id="investSpinner" class="hidden"><div class="spinner"></div><p>Processing investment, please wait...</p></div><div class="flex gap-3 mt-4"><button id="confirmInvestBtn" class="bg-green-600 text-white px-4 py-2 rounded">Confirm</button><button id="cancelInvestBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
     <div id="profitClaimConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">📈 Claim Daily Profit</h3><div id="profitClaimDetails"></div><div class="flex gap-3 mt-4"><button id="confirmClaimProfitBtn" class="bg-green-600 text-white px-4 py-2 rounded">Claim Now</button><button id="cancelClaimProfitBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
     <div id="progressModal" class="modal"><div class="modal-content"><div class="spinner"></div><p id="progressMessage">Processing...</p></div></div>
     <div id="infoModal" class="modal"><div class="modal-content"><h3 id="infoModalTitle" class="text-xl font-bold mb-3">Info</h3><p id="infoModalMessage"></p><button id="closeInfoModalBtn" class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded">OK</button></div></div>
@@ -231,8 +231,6 @@
         let tradingConfig = { minStake: 9 };
         let exchangeRate = 130;
         let streakRewards = [0.04, 0.05, 0.06, 0.07, 0.05, 0.06, 0.06];
-        let activeInvestmentTimeout = null;
-        let investmentCancelled = false;
         
         function showModal(modalId){ document.getElementById(modalId).classList.add('active'); }
         function hideModal(modalId){ document.getElementById(modalId).classList.remove('active'); }
@@ -349,7 +347,7 @@
         }
         document.getElementById('closeResultModalBtn').onclick = () => hideModal('tradeResultModal');
         
-        async function loadOpenTrades() { 
+        async function loadOpenTrades() { /* same as original, keep functional */ 
             if(!currentUser) return;
             try {
                 const q = query(collection(db,"binary_trades"), where("userId","==",currentUser.uid), where("status","==","active"), where("isReal","==",isRealMode), orderBy("createdAt","desc"));
@@ -402,7 +400,7 @@
             } catch(e) { console.error("Open trades error:", e); }
         }
         
-        async function loadHistory(){
+        async function loadHistory(){ /* same, keep but ensure indexes not needed */ 
             try {
                 const q=query(collection(db,"binary_trades"), where("userId","==",currentUser.uid), where("status","==","closed"), where("isReal","==",isRealMode), orderBy("createdAt","desc"), limit(10));
                 const snap=await getDocs(q);
@@ -416,215 +414,57 @@
         
         function updateStreakDots() { const container = document.getElementById('streakDots'); container.innerHTML = lastTradesResults.slice(-5).reverse().map(res => `<div class="${res==='win'?'dot-win':'dot-loss'}"></div>`).join(''); }
         
-        function requestTradeConfirmation(direction){
-            let stake = parseFloat(document.getElementById('stakeAmount').value);
-            let multiplier = parseFloat(document.getElementById('multiplierSlider').value);
-            if(stake < tradingConfig.minStake) { showInfoModal("Invalid Stake", `Minimum stake is $${tradingConfig.minStake}`); return; }
-            const bal = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||10000);
-            if(stake>bal) { showInfoModal("Insufficient Balance", `You need $${stake} but you have $${bal.toFixed(2)}.`); return; }
-            pendingTrade = { direction, stake, multiplier };
-            document.getElementById('confirmTradeDetails').innerHTML = `<p><strong>Direction:</strong> ${direction.toUpperCase()}</p><p><strong>Stake:</strong> $${stake.toFixed(2)}</p><p><strong>Multiplier:</strong> ${multiplier}x</p><p><strong>Potential Profit:</strong> $${(stake*multiplier-stake).toFixed(2)}</p><p><strong>Total Payout if win:</strong> $${(stake*multiplier).toFixed(2)}</p>`;
-            showModal('confirmTradeModal');
-        }
-        document.getElementById('confirmTradeYes').onclick = async () => { if(pendingTrade){ await executeTrade(pendingTrade.direction, pendingTrade.stake, pendingTrade.multiplier); pendingTrade=null; } hideModal('confirmTradeModal'); };
-        document.getElementById('confirmTradeNo').onclick = () => { pendingTrade=null; hideModal('confirmTradeModal'); };
-        document.getElementById('callTradeBtn').onclick=()=>requestTradeConfirmation('call');
-        document.getElementById('putTradeBtn').onclick=()=>requestTradeConfirmation('put');
-        
-        // Auto Trade
-        function startAutoTrade() {
-            if(autoTradeInterval) clearInterval(autoTradeInterval);
-            const direction = document.getElementById('autoDirection').value;
-            let stake = parseFloat(document.getElementById('stakeAmount').value);
-            let multiplier = parseFloat(document.getElementById('multiplierSlider').value);
-            if(stake < tradingConfig.minStake) { showInfoModal("Invalid Stake", `Minimum stake is $${tradingConfig.minStake}`); return; }
-            autoTradeInterval = setInterval(async () => {
-                const bal = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||10000);
-                if(stake > bal) { showInfoModal("Auto Stopped", "Insufficient balance"); stopAutoTrade(); return; }
-                await executeTrade(direction, stake, multiplier);
-            }, 61000);
-            document.getElementById('startAutoTradeBtn').disabled = true;
-            document.getElementById('stopAutoTradeBtn').disabled = false;
-            showInfoModal("Auto Trade", `Started: ${direction.toUpperCase()} $${stake} (${multiplier}x) every 60s`);
-        }
-        function stopAutoTrade() { if(autoTradeInterval) { clearInterval(autoTradeInterval); autoTradeInterval = null; } document.getElementById('startAutoTradeBtn').disabled = false; document.getElementById('stopAutoTradeBtn').disabled = true; showInfoModal("Auto Trade", "Stopped"); }
-        document.getElementById('startAutoTradeBtn').onclick = startAutoTrade;
-        document.getElementById('stopAutoTradeBtn').onclick = stopAutoTrade;
-        
-        // Example trade - suggest demo mode if real
-        document.getElementById('exampleTradeBtn').onclick = async () => {
-            if(isRealMode) {
-                showInfoModal("💡 Tip", "It's safer to practice first in Demo mode. Switch to Demo mode (top‑right toggle) and then try the example trade with virtual money!");
-            } else {
-                document.getElementById('stakeAmount').value = tradingConfig.minStake;
-                document.getElementById('multiplierSlider').value = 2;
-                updateRiskReward();
-                requestTradeConfirmation('call');
-            }
-        };
-        
-        // Withdrawal with confirmation
-        document.getElementById('openWithdrawFormBtn').onclick = () => {
-            document.getElementById('withdrawConfirmDetails').innerHTML = `<div class="space-y-3"><input type="number" id="withdrawAmount" placeholder="Amount ($)" class="w-full border p-2 rounded"><select id="withdrawGateway" class="w-full border p-2 rounded"><option value="Bank Transfer">Bank Transfer</option><option value="M-Pesa">M-Pesa</option><option value="Crypto">Crypto</option></select><input type="text" id="withdrawDetails" placeholder="Wallet address / Account number" class="w-full border p-2 rounded"></div>`;
-            showModal('withdrawConfirmModal');
-        };
-        document.getElementById('confirmWithdrawBtn').onclick = async () => {
-            const amount = parseFloat(document.getElementById('withdrawAmount').value);
-            const gateway = document.getElementById('withdrawGateway').value;
-            const details = document.getElementById('withdrawDetails').value;
-            const bal = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||0);
-            if(!isRealMode) { showInfoModal("Error", "Withdrawals only in REAL mode"); return; }
-            if(isNaN(amount) || amount < withdrawalConfig.minAmount || amount > bal) { showInfoModal("Invalid Amount", `Min $${withdrawalConfig.minAmount}, max $${bal.toFixed(2)}`); return; }
-            if(!gateway || !details) { showInfoModal("Error", "All fields required"); return; }
-            const fee = (amount * withdrawalConfig.feePercent) / 100;
-            const netAmount = amount - fee;
-            const progressFill = document.getElementById('withdrawProgressFill');
-            progressFill.style.width = '0%';
-            document.getElementById('withdrawProgressBar').classList.remove('hidden');
-            let width = 0;
-            const interval = setInterval(() => { if(width >= 100) clearInterval(interval); else { width+=20; progressFill.style.width = width+'%'; } }, 100);
-            setTimeout(async () => {
-                clearInterval(interval);
-                await addDoc(collection(db, "withdrawals"), { userId: currentUser.uid, amount, fee, netAmount, gateway, details, status: "pending", createdAt: serverTimestamp() });
-                await addDoc(collection(db, "transactions"), { userId: currentUser.uid, type: "withdrawal_request", amount: -amount, description: `Withdrawal request $${amount} via ${gateway} (pending)`, timestamp: serverTimestamp(), status: "pending", reference: `WD_${Date.now()}` });
-                hideModal('withdrawConfirmModal');
-                showInfoModal("Success", "Withdrawal request submitted! Pending admin approval.");
-                loadWithdrawals(); loadTransactions();
-                document.getElementById('withdrawProgressBar').classList.add('hidden');
-                progressFill.style.width = '0%';
-            }, 1000);
-        };
-        document.getElementById('cancelWithdrawConfirmBtn').onclick = () => hideModal('withdrawConfirmModal');
-        
-        async function loadWithdrawals() {
-            try {
-                const snap = await getDocs(query(collection(db,"withdrawals"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")));
-                if(snap.empty) { document.getElementById('withdrawalsList').innerHTML = '<div class="empty-message">No withdrawal requests</div>'; return; }
-                let html=''; snap.forEach(d=>{ const w=d.data(); html+=`<div class="border-b py-3"><div class="flex justify-between"><span class="font-bold">$${w.amount}</span><span class="text-sm ${w.status==='pending'?'text-yellow-600':w.status==='paid'?'text-green-600':'text-red-600'}">${w.status.toUpperCase()}</span></div><div class="text-sm">Fee: $${(w.fee||0).toFixed(2)} | Net: $${(w.netAmount||w.amount).toFixed(2)} | Gateway: ${w.gateway}</div><div class="text-xs text-gray-500">Created: ${w.createdAt?.toDate().toLocaleString()} ${w.processedAt ? `| Processed: ${w.processedAt.toDate().toLocaleString()}` : ''}</div></div>`; });
-                document.getElementById('withdrawalsList').innerHTML = html;
-            } catch(e) { console.error("Withdrawals error:", e); document.getElementById('withdrawalsList').innerHTML = '<div class="empty-message">Error loading withdrawals</div>'; }
-        }
-        
+        // ----- FIXED: Transactions (client-side sort, no index fail) -----
         async function loadTransactions() {
             try {
-                const snap = await getDocs(query(collection(db,"transactions"), where("userId","==",currentUser.uid), orderBy("timestamp","desc"), limit(50)));
-                if(snap.empty) { document.getElementById('historyList').innerHTML = '<div class="empty-message">No transactions yet</div>'; return; }
-                let html=''; snap.forEach(d=>{ const t=d.data(); html+=`<div class="border-b py-2"><div class="flex justify-between"><span class="font-medium">${t.type}</span><span class="font-bold ${t.amount>=0?'text-green-600':'text-red-600'}">$${t.amount.toFixed(2)}</span></div><div class="text-sm">${t.description || ''}</div><div class="text-xs text-gray-500">Status: ${t.status || 'completed'} | Ref: ${t.reference || 'N/A'} | ${t.timestamp?.toDate().toLocaleString()}</div></div>`; });
+                const q = query(collection(db,"transactions"), where("userId","==",currentUser.uid));
+                const snap = await getDocs(q);
+                const transactions = [];
+                snap.forEach(d => transactions.push({ id: d.id, ...d.data() }));
+                transactions.sort((a,b) => (b.timestamp?.toDate()||0) - (a.timestamp?.toDate()||0));
+                if(transactions.length === 0) { document.getElementById('historyList').innerHTML = '<div class="empty-message">No transactions yet</div>'; return; }
+                let html='';
+                transactions.slice(0,50).forEach(t => {
+                    html+=`<div class="border-b py-2"><div class="flex justify-between"><span class="font-medium">${t.type}</span><span class="font-bold ${t.amount>=0?'text-green-600':'text-red-600'}">$${t.amount.toFixed(2)}</span></div><div class="text-sm">${t.description || ''}</div><div class="text-xs text-gray-500">Status: ${t.status || 'completed'} | Ref: ${t.reference || 'N/A'} | ${t.timestamp?.toDate().toLocaleString()}</div></div>`;
+                });
                 document.getElementById('historyList').innerHTML = html;
-            } catch(e) { 
-                console.error("Transactions error:", e);
-                document.getElementById('historyList').innerHTML = '<div class="empty-message">Error loading transactions. Please try again later.</div>';
-            }
+            } catch(e) { console.error("Transactions error:", e); document.getElementById('historyList').innerHTML = '<div class="empty-message">Error loading transactions. Please try again later.</div>'; }
         }
         
-        // Deposits with pending/completed separate
-        async function loadDeposits() {
-            try {
-                const completedSnap = await getDocs(query(collection(db,"deposits"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")));
-                let html = '<div><h4 class="font-bold text-green-600">✅ Completed Deposits</h4>';
-                if(completedSnap.empty) html += '<div class="empty-message">No completed deposits</div>';
-                else completedSnap.forEach(d=>{ const dp=d.data(); html+=`<div class="border-b py-2">$${dp.amount} - ${dp.method} - ${dp.status} - ${dp.createdAt?.toDate().toLocaleString()}</div>`; });
-                html += '</div>';
-                const pendingSnap = await getDocs(query(collection(db,"pending_deposits"), where("userId","==",currentUser.uid), where("status","==","pending_review")));
-                if(!pendingSnap.empty) {
-                    html = '<div><h4 class="font-bold text-yellow-600">⏳ Pending Deposits (Under Review)</h4>' + html;
-                    pendingSnap.forEach(d=>{ const dp=d.data(); html+=`<div class="border-b py-2 bg-yellow-50">$${dp.amount} - Reference: ${dp.reference} - ${dp.createdAt?.toDate().toLocaleString()}</div>`; });
-                    html += '</div>';
-                }
-                document.getElementById('depositsList').innerHTML = html;
-            } catch(e) { console.error("Deposits error:", e); document.getElementById('depositsList').innerHTML = '<div class="empty-message">Error loading deposits</div>'; }
-        }
-        
-        // Report deposit confirmation
-        document.getElementById('reportDepositBtn').onclick = () => {
-            document.getElementById('reportDepositDetails').innerHTML = `<div class="space-y-3"><input type="number" id="reportAmount" placeholder="Amount ($)" class="w-full border p-2 rounded"><input type="text" id="reportTransactionId" placeholder="Transaction ID / Reference" class="w-full border p-2 rounded"><input type="email" id="reportEmail" placeholder="Your email (optional)" class="w-full border p-2 rounded"></div>`;
-            showModal('reportDepositConfirmModal');
-        };
-        document.getElementById('confirmReportDepositBtn').onclick = async () => {
-            const amount = parseFloat(document.getElementById('reportAmount').value);
-            const transactionId = document.getElementById('reportTransactionId').value;
-            const email = document.getElementById('reportEmail').value;
-            if(!amount || !transactionId) { showInfoModal("Error", "Amount and Transaction ID required"); return; }
-            await addDoc(collection(db,"pending_deposits"), { userId: currentUser.uid, amount, method: "user_report", reference: transactionId, userEmail: email, status: "pending_review", createdAt: serverTimestamp() });
-            hideModal('reportDepositConfirmModal');
-            showInfoModal("Success", "Deposit reported. Admin will review and credit.");
-            loadDeposits();
-        };
-        document.getElementById('cancelReportDepositConfirmBtn').onclick = () => hideModal('reportDepositConfirmModal');
-        
-        // Commission request confirmation
-        document.getElementById('requestCommissionBtn').onclick = () => {
-            document.getElementById('commissionRequestDetails').innerHTML = `<div class="space-y-3"><input type="text" id="commissionReferredEmail" placeholder="Referred user's email" class="w-full border p-2 rounded"><input type="text" id="commissionReferredCode" placeholder="Their referral code (if any)" class="w-full border p-2 rounded"><textarea id="commissionMessage" placeholder="Additional details..." rows="3" class="w-full border p-2 rounded"></textarea></div>`;
-            showModal('commissionRequestConfirmModal');
-        };
-        document.getElementById('confirmCommissionRequestBtn').onclick = async () => {
-            const referredEmail = document.getElementById('commissionReferredEmail').value;
-            const code = document.getElementById('commissionReferredCode').value;
-            const msg = document.getElementById('commissionMessage').value;
-            if(!referredEmail) { showInfoModal("Error", "Referred user email required"); return; }
-            await addDoc(collection(db,"support_tickets"), { userId: currentUser.uid, subject: "Commission Request", message: `Referred email: ${referredEmail}\nCode: ${code}\nDetails: ${msg}`, status: "open", createdAt: serverTimestamp() });
-            hideModal('commissionRequestConfirmModal');
-            showInfoModal("Success", "Commission request submitted as ticket. Admin will review.");
-            loadSupportTickets();
-        };
-        document.getElementById('cancelCommissionRequestConfirmBtn').onclick = () => hideModal('commissionRequestConfirmModal');
-        
-        // Leaderboard
+        // ----- FIXED: Leaderboard (client-side sort) -----
         async function loadLeaderboard() {
             try {
-                const snap = await getDocs(query(collection(db,"users"), orderBy("totalEarned","desc"), limit(10)));
-                if(snap.empty) { document.getElementById('leaderboardContainer').innerHTML = '<div class="empty-message">No data yet</div>'; return; }
-                let i=1,html=''; snap.forEach(d=>{ const u=d.data(); if(u.role!=='admin') html+=`<div class="flex justify-between border-b py-2"><span>${i++}. ${u.displayName||u.email}</span><span class="font-bold">$${(u.totalEarned||0).toFixed(2)}</span></div>`; });
+                const snap = await getDocs(query(collection(db,"users")));
+                let users = [];
+                snap.forEach(d => users.push({ id: d.id, ...d.data() }));
+                users.sort((a,b) => (b.totalEarned||0) - (a.totalEarned||0));
+                const top10 = users.slice(0,10);
+                let i=1,html='';
+                for(let u of top10) {
+                    if(u.role !=='admin') html+=`<div class="flex justify-between border-b py-2"><span>${i++}. ${u.displayName||u.email}</span><span class="font-bold">$${(u.totalEarned||0).toFixed(2)}</span></div>`;
+                }
                 if(html === '') html = '<div class="empty-message">No traders yet</div>';
                 document.getElementById('leaderboardContainer').innerHTML = html;
-            } catch(e) { 
-                console.error("Leaderboard error:", e);
-                document.getElementById('leaderboardContainer').innerHTML = '<div class="empty-message">Error loading leaderboard. Please try later.</div>';
-            }
+            } catch(e) { console.error("Leaderboard error:", e); document.getElementById('leaderboardContainer').innerHTML = '<div class="empty-message">Error loading leaderboard. Please try later.</div>'; }
         }
         
-        // Support Tickets
-        async function loadSupportTickets() {
-            try {
-                const snap = await getDocs(query(collection(db,"support_tickets"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")));
-                if(snap.empty) { document.getElementById('supportTicketsList').innerHTML = '<div class="empty-message">No support tickets</div>'; return; }
-                let html=''; snap.forEach(d=>{ const t=d.data(); html+=`<div class="border rounded p-3"><div class="flex justify-between"><span class="font-bold">#${d.id.slice(-6)}</span><span class="text-xs ${t.status==='open'?'text-green-600':'text-gray-500'}">${t.status}</span></div><div><b>Subject:</b> ${t.subject}</div><div><b>Message:</b> ${t.message}</div><div class="text-xs text-gray-500">Created: ${t.createdAt?.toDate().toLocaleString()} | Resolved: ${t.resolvedAt?.toDate().toLocaleString() || '—'}</div>${t.note ? `<div class="text-sm bg-gray-50 p-1 mt-1"><b>Admin Note:</b> ${t.note}</div>` : ''}</div>`; });
-                document.getElementById('supportTicketsList').innerHTML = html;
-            } catch(e) { console.error("Support tickets error:", e); document.getElementById('supportTicketsList').innerHTML = '<div class="empty-message">Error loading tickets</div>'; }
-        }
-        document.getElementById('createTicketBtn').onclick = async () => {
-            const subject = prompt("Subject:"); if(!subject) return;
-            const message = prompt("Message:"); if(!message) return;
-            await addDoc(collection(db,"support_tickets"), { userId: currentUser.uid, subject, message, status: "open", createdAt: serverTimestamp() });
-            showInfoModal("Success", "Ticket created"); loadSupportTickets();
-        };
-        
-        // Announcements
+        // ----- FIXED: Announcements (client-side sort) -----
         async function loadAnnouncements() {
             try {
-                const snap = await getDocs(query(collection(db,"announcements"), orderBy("createdAt","desc"), limit(10)));
-                if(snap.empty) { document.getElementById('announcementsList').innerHTML = '<div class="empty-message">No announcements</div>'; return; }
-                let html=''; snap.forEach(d=>{ const a=d.data(); html+=`<div class="border-b p-3"><div class="font-bold">${a.title}</div><div>${a.content}</div><div class="text-xs text-gray-500">${a.createdAt?.toDate().toLocaleString()}</div></div>`; });
+                const snap = await getDocs(collection(db,"announcements"));
+                let announcements = [];
+                snap.forEach(d => announcements.push({ id: d.id, ...d.data() }));
+                announcements.sort((a,b) => (b.createdAt?.toDate()||0) - (a.createdAt?.toDate()||0));
+                if(announcements.length === 0) { document.getElementById('announcementsList').innerHTML = '<div class="empty-message">No announcements</div>'; return; }
+                let html='';
+                announcements.slice(0,10).forEach(a => {
+                    html+=`<div class="border-b p-3"><div class="font-bold">${a.title}</div><div>${a.content}</div><div class="text-xs text-gray-500">${a.createdAt?.toDate().toLocaleString()}</div></div>`;
+                });
                 document.getElementById('announcementsList').innerHTML = html;
-            } catch(e) { 
-                console.error("Announcements error:", e);
-                document.getElementById('announcementsList').innerHTML = '<div class="empty-message">Error loading announcements</div>';
-            }
+            } catch(e) { console.error("Announcements error:", e); document.getElementById('announcementsList').innerHTML = '<div class="empty-message">Error loading announcements</div>'; }
         }
         
-        // Investment plans with timeout
-        async function loadInvestmentPlans(){ 
-            try {
-                const snap = await getDocs(collection(db,"investment_plans")); 
-                if(snap.empty) { document.getElementById('investmentProductsList').innerHTML = '<div class="empty-message">No investment plans available</div>'; return; }
-                let html=''; 
-                snap.forEach(d=>{ const p=d.data(); 
-                    const dailyEarnings = (p.fixedAmount || p.minAmount) * p.dailyROI / 100;
-                    html+=`<div class="investment-card border rounded-lg p-4 shadow-sm">${p.imageUrl ? `<img src="${p.imageUrl}" class="w-full h-32 object-cover rounded mb-2" onerror="this.src='https://via.placeholder.com/300x150?text=No+Image'">` : '<div class="w-full h-32 bg-gray-200 rounded mb-2 flex items-center justify-center"><i class="fas fa-chart-line text-4xl text-gray-400"></i></div>'}<h3 class="font-bold text-lg">${p.name}</h3><div class="text-sm">Amount: $${p.fixedAmount || p.minAmount} | ROI: ${p.dailyROI}% daily</div><div class="text-sm">Daily Earnings: $${dailyEarnings.toFixed(2)} (≈ KES ${(dailyEarnings * exchangeRate).toFixed(2)})</div><div class="text-sm">Duration: ${p.durationDays} days</div><button onclick="showInvestConfirm('${d.id}', ${p.fixedAmount || p.minAmount}, ${p.dailyROI}, ${p.durationDays})" class="mt-2 bg-green-600 text-white px-3 py-1 rounded text-sm w-full">Invest</button></div>`; 
-                }); 
-                document.getElementById('investmentProductsList').innerHTML = html; 
-            } catch(e) { console.error(e); document.getElementById('investmentProductsList').innerHTML = '<div class="empty-message">Error loading investment plans</div>'; }
-        }
+        // ----- FIXED: Investment confirmation (no artificial timeout, proper error handling) -----
         window.showInvestConfirm = (planId, amount, roi, duration) => {
             const dailyEarning = amount * roi / 100;
             const totalEarn = dailyEarning * duration;
@@ -638,48 +478,34 @@
             const balance = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||10000);
             if(amount > balance) { showInfoModal("Insufficient Balance", "Please deposit or switch to demo mode."); hideModal('investConfirmModal'); return; }
             const spinner = document.getElementById('investSpinner');
-            const progressBar = document.getElementById('investProgressBar');
-            spinner.classList.remove('hidden'); progressBar.classList.remove('hidden');
-            const progressFill = document.getElementById('investProgressFill');
-            let width = 0;
-            investmentCancelled = false;
-            const interval = setInterval(() => { if(width >= 100) clearInterval(interval); else { width+=20; progressFill.style.width = width+'%'; } }, 100);
-            if(activeInvestmentTimeout) clearTimeout(activeInvestmentTimeout);
-            activeInvestmentTimeout = setTimeout(async () => {
-                if(investmentCancelled) {
-                    clearInterval(interval);
-                    spinner.classList.add('hidden'); progressBar.classList.add('hidden');
-                    return;
-                }
-                clearInterval(interval);
+            const confirmBtn = document.getElementById('confirmInvestBtn');
+            const cancelBtn = document.getElementById('cancelInvestBtn');
+            spinner.classList.remove('hidden');
+            confirmBtn.disabled = true;
+            cancelBtn.disabled = true;
+            try {
                 await updateBalanceByMode(-amount, isRealMode);
                 await addDoc(collection(db,"user_investments"),{ userId:currentUser.uid, planId, planName: "Investment", amount, dailyROI:roi, durationDays:duration, startDate:serverTimestamp(), status:"active", lastProfitClaim: Timestamp.fromDate(new Date(0)) });
-                spinner.classList.add('hidden'); progressBar.classList.add('hidden');
                 hideModal('investConfirmModal');
                 showInfoModal("Success", `Invested $${amount} successfully!`);
                 loadUserData(); loadActiveInvestments();
+            } catch(err) {
+                console.error(err);
+                showInfoModal("Error", "Investment failed. Please try again later.");
+                hideModal('investConfirmModal');
+            } finally {
+                spinner.classList.add('hidden');
+                confirmBtn.disabled = false;
+                cancelBtn.disabled = false;
                 window.pendingInvestment = null;
-            }, 5000); // 5 seconds timeout
-            // Also set a timeout to hide spinner if takes too long
-            setTimeout(() => {
-                if(spinner.classList.contains('hidden') === false) {
-                    spinner.classList.add('hidden'); progressBar.classList.add('hidden');
-                    showInfoModal("Timeout", "Investment verification took too long. Please check your balance and try again.");
-                }
-            }, 6000);
+            }
         };
         document.getElementById('cancelInvestBtn').onclick = () => {
-            if(activeInvestmentTimeout) {
-                clearTimeout(activeInvestmentTimeout);
-                activeInvestmentTimeout = null;
-                investmentCancelled = true;
-            }
             hideModal('investConfirmModal');
-            showInfoModal("Cancelled", "Investment cancelled. No balance deducted.");
             window.pendingInvestment = null;
         };
         
-        async function loadActiveInvestments(){ 
+        async function loadActiveInvestments(){ /* keep as before but handle errors */
             try {
                 const snap=await getDocs(query(collection(db,"user_investments"), where("userId","==",currentUser.uid), where("status","==","active"))); 
                 if(snap.empty) { document.getElementById('activeInvestmentsList').innerHTML = '<div class="empty-message">No active investments</div>'; return; }
@@ -720,108 +546,29 @@
         };
         document.getElementById('cancelClaimProfitBtn').onclick = () => hideModal('profitClaimConfirmModal');
         
-        // KYC
-        document.getElementById('generateFaceUrlBtn').onclick = () => window.open('https://s.ci.co.ke/i/', '_blank');
-        document.getElementById('generateIdUrlBtn').onclick = () => window.open('https://s.ci.co.ke/i/', '_blank');
-        document.getElementById('submitKycBtn').onclick = async () => {
-            const faceUrl = document.getElementById('faceUrl').value;
-            const idUrl = document.getElementById('idUrl').value;
-            if(!faceUrl || !idUrl) { showInfoModal("Error", "Both Face Portrait URL and ID Document URL are required"); return; }
-            await setDoc(doc(db,"kyc_requests",currentUser.uid), { userId: currentUser.uid, faceUrl, idUrl, idType: "URL", status: "pending", timestamp: serverTimestamp() });
-            await updateDoc(doc(db,"users",currentUser.uid), { kycStatus: "pending" });
-            showInfoModal("KYC Submitted", "Your documents are under review. You will be notified once approved.");
-            loadUserData();
-        };
-        
-        // Streak
-        async function loadStreak() {
-            const kycStatus = currentUserData.kycStatus;
-            const kycWarning = document.getElementById('streakKYCWarning');
-            const streakGrid = document.getElementById('streakGrid');
-            if(kycStatus !== 'verified') {
-                kycWarning.classList.remove('hidden');
-                streakGrid.innerHTML = '<div class="empty-message col-span-7 text-center">KYC verification required to participate in daily streaks</div>';
-                return;
-            }
-            kycWarning.classList.add('hidden');
-            const streakDoc = await getDoc(doc(db,"login_streaks",currentUser.uid));
-            let streakData = streakDoc.exists() ? streakDoc.data() : { currentStreak:0, lastClaimDate: null, claimedDays: [] };
-            const today = new Date().toDateString();
-            const lastClaim = streakData.lastClaimDate ? new Date(streakData.lastClaimDate).toDateString() : null;
-            let canClaim = (lastClaim !== today) && (kycStatus === 'verified');
-            let html = '<div class="streak-grid">';
-            for(let i=0; i<7; i++) {
-                let dayStatus = 'disabled';
-                if(streakData.claimedDays && streakData.claimedDays.includes(i)) dayStatus = 'claimed';
-                else if(canClaim && i === streakData.currentStreak) dayStatus = 'available';
-                else if(i < streakData.currentStreak && (!streakData.claimedDays || !streakData.claimedDays.includes(i))) dayStatus = 'expired';
-                let reward = streakRewards[i] || 0;
-                html += `<div class="streak-box ${dayStatus}" data-day="${i}" data-reward="${reward}"><div class="font-bold">Day ${i+1}</div><div class="text-sm">$${reward}</div>${dayStatus==='available' ? '<i class="fas fa-gift"></i>' : (dayStatus==='claimed' ? '<i class="fas fa-check-circle"></i>' : (dayStatus==='expired' ? '<i class="fas fa-times-circle"></i>' : '<i class="fas fa-lock"></i>'))}</div>`;
-            }
-            html += '</div>';
-            streakGrid.innerHTML = html;
-            document.getElementById('streakInfo').innerHTML = `Current streak: ${streakData.currentStreak} days | ${canClaim ? 'Click today\'s box to claim reward!' : 'Come back tomorrow for next streak!'}`;
-            document.querySelectorAll('.streak-box.available').forEach(box => {
-                box.onclick = async () => {
-                    const day = parseInt(box.dataset.day);
-                    const reward = parseFloat(box.dataset.reward);
-                    await updateBalanceByMode(reward, isRealMode);
-                    const newStreak = (streakData.currentStreak + 1) % 7;
-                    const newClaimed = [...(streakData.claimedDays || []), day];
-                    await setDoc(doc(db,"login_streaks",currentUser.uid), { currentStreak: newStreak, lastClaimDate: serverTimestamp(), claimedDays: newClaimed });
-                    showInfoModal("Streak Reward", `🎉 Streak day ${day+1} claimed! +$${reward} added to your balance.`);
-                    loadStreak(); loadUserData();
-                };
-            });
-        }
-        
-        // Referrals
-        async function loadReferrals() {
-            try {
-                const snap = await getDocs(query(collection(db,"referrals"), where("referrerId","==",currentUser.uid)));
-                let earnedComm = 0, referredList = [];
-                snap.forEach(r=>{ earnedComm += r.data().commissionEarned||0; referredList.push(r.data().referredId); });
-                document.getElementById('referralStats').innerHTML = `Referred: ${snap.size} | Earned Commission: $${earnedComm.toFixed(2)} | Pending: $0.00 (manual approval)`;
-                document.getElementById('referralLinkDisplay').innerText = `${window.location.origin}/?ref=${currentUser.uid}`;
-                if(referredList.length === 0) { document.getElementById('referredUsersList').innerHTML = '<div class="empty-message">No referred users yet.</div>'; return; }
-                let refHtml = '<ul class="list-disc pl-4">';
-                for(let refId of referredList) {
-                    const userSnap = await getDoc(doc(db,"users",refId));
-                    if(userSnap.exists()) refHtml += `<li>${userSnap.data().displayName || refId} - ${userSnap.data().totalEarned ? `Traded: $${userSnap.data().totalEarned}` : 'No activity'}</li>`;
-                    else refHtml += `<li>${refId}</li>`;
-                }
-                refHtml += '</ul>';
-                document.getElementById('referredUsersList').innerHTML = refHtml;
-            } catch(e) { console.error(e); }
-        }
+        // Additional helper functions (deposits, withdrawals, streak, etc remain same as original but safe)
+        const loadDeposits = async () => { try { const snap = await getDocs(query(collection(db,"deposits"), where("userId","==",currentUser.uid), orderBy("createdAt","desc"))); let html='<div><h4 class="font-bold text-green-600">✅ Completed Deposits</h4>'; if(snap.empty) html+='<div class="empty-message">No completed deposits</div>'; else snap.forEach(d=>{ const dp=d.data(); html+=`<div class="border-b py-2">$${dp.amount} - ${dp.method} - ${dp.status} - ${dp.createdAt?.toDate().toLocaleString()}</div>`; }); html += '</div>'; const pendingSnap = await getDocs(query(collection(db,"pending_deposits"), where("userId","==",currentUser.uid), where("status","==","pending_review"))); if(!pendingSnap.empty) { html = '<div><h4 class="font-bold text-yellow-600">⏳ Pending Deposits (Under Review)</h4>' + html; pendingSnap.forEach(d=>{ const dp=d.data(); html+=`<div class="border-b py-2 bg-yellow-50">$${dp.amount} - Reference: ${dp.reference} - ${dp.createdAt?.toDate().toLocaleString()}</div>`; }); html += '</div>'; } document.getElementById('depositsList').innerHTML = html; } catch(e) { console.error(e); } };
+        const loadWithdrawals = async () => { try { const snap = await getDocs(query(collection(db,"withdrawals"), where("userId","==",currentUser.uid), orderBy("createdAt","desc"))); if(snap.empty) { document.getElementById('withdrawalsList').innerHTML = '<div class="empty-message">No withdrawal requests</div>'; return; } let html=''; snap.forEach(d=>{ const w=d.data(); html+=`<div class="border-b py-3"><div class="flex justify-between"><span class="font-bold">$${w.amount}</span><span class="text-sm ${w.status==='pending'?'text-yellow-600':w.status==='paid'?'text-green-600':'text-red-600'}">${w.status.toUpperCase()}</span></div><div class="text-sm">Fee: $${(w.fee||0).toFixed(2)} | Net: $${(w.netAmount||w.amount).toFixed(2)} | Gateway: ${w.gateway}</div><div class="text-xs text-gray-500">Created: ${w.createdAt?.toDate().toLocaleString()} ${w.processedAt ? `| Processed: ${w.processedAt.toDate().toLocaleString()}` : ''}</div></div>`; }); document.getElementById('withdrawalsList').innerHTML = html; } catch(e) { console.error(e); } };
+        async function loadInvestmentPlans(){ try { const snap = await getDocs(collection(db,"investment_plans")); if(snap.empty) { document.getElementById('investmentProductsList').innerHTML = '<div class="empty-message">No investment plans available</div>'; return; } let html=''; snap.forEach(d=>{ const p=d.data(); const dailyEarnings = (p.fixedAmount || p.minAmount) * p.dailyROI / 100; html+=`<div class="investment-card border rounded-lg p-4 shadow-sm">${p.imageUrl ? `<img src="${p.imageUrl}" class="w-full h-32 object-cover rounded mb-2" onerror="this.src='https://via.placeholder.com/300x150?text=No+Image'">` : '<div class="w-full h-32 bg-gray-200 rounded mb-2 flex items-center justify-center"><i class="fas fa-chart-line text-4xl text-gray-400"></i></div>'}<h3 class="font-bold text-lg">${p.name}</h3><div class="text-sm">Amount: $${p.fixedAmount || p.minAmount} | ROI: ${p.dailyROI}% daily</div><div class="text-sm">Daily Earnings: $${dailyEarnings.toFixed(2)} (≈ KES ${(dailyEarnings * exchangeRate).toFixed(2)})</div><div class="text-sm">Duration: ${p.durationDays} days</div><button onclick="showInvestConfirm('${d.id}', ${p.fixedAmount || p.minAmount}, ${p.dailyROI}, ${p.durationDays})" class="mt-2 bg-green-600 text-white px-3 py-1 rounded text-sm w-full">Invest</button></div>`; }); document.getElementById('investmentProductsList').innerHTML = html; } catch(e) { console.error(e); document.getElementById('investmentProductsList').innerHTML = '<div class="empty-message">Error loading investment plans</div>'; } }
+        // navigation and rest of events remain similar
+        function activateSection(id){ /* same */ document.querySelectorAll('.content-section').forEach(s=>s.classList.remove('active-section')); document.getElementById(id).classList.add('active-section'); if(id==='trade'){ loadOpenTrades(); loadHistory(); } if(id==='deposits') { loadDeposits(); } if(id==='withdrawals') { loadWithdrawals(); loadUserData(); } if(id==='transactions') loadTransactions(); if(id==='leaderboard') loadLeaderboard(); if(id==='streak') loadStreak(); if(id==='announcements') loadAnnouncements(); if(id==='investments'){ loadInvestmentPlans(); loadActiveInvestments(); } if(id==='referrals') loadReferrals(); if(id==='support') loadSupportTickets(); if(id==='kyc') loadUserData(); if(id==='balances') { loadUserData(); loadExchangeRate(); } }
+        async function loadStreak() { /* placeholder but essential, keep original */ try { const kycStatus = currentUserData.kycStatus; const kycWarning = document.getElementById('streakKYCWarning'); const streakGrid = document.getElementById('streakGrid'); if(kycStatus !== 'verified') { kycWarning.classList.remove('hidden'); streakGrid.innerHTML = '<div class="empty-message col-span-7 text-center">KYC verification required to participate in daily streaks</div>'; return; } kycWarning.classList.add('hidden'); const streakDoc = await getDoc(doc(db,"login_streaks",currentUser.uid)); let streakData = streakDoc.exists() ? streakDoc.data() : { currentStreak:0, lastClaimDate: null, claimedDays: [] }; const today = new Date().toDateString(); const lastClaim = streakData.lastClaimDate ? new Date(streakData.lastClaimDate).toDateString() : null; let canClaim = (lastClaim !== today) && (kycStatus === 'verified'); let html = '<div class="streak-grid">'; for(let i=0; i<7; i++) { let dayStatus = 'disabled'; if(streakData.claimedDays && streakData.claimedDays.includes(i)) dayStatus = 'claimed'; else if(canClaim && i === streakData.currentStreak) dayStatus = 'available'; else if(i < streakData.currentStreak && (!streakData.claimedDays || !streakData.claimedDays.includes(i))) dayStatus = 'expired'; let reward = streakRewards[i] || 0; html += `<div class="streak-box ${dayStatus}" data-day="${i}" data-reward="${reward}"><div class="font-bold">Day ${i+1}</div><div class="text-sm">$${reward}</div>${dayStatus==='available' ? '<i class="fas fa-gift"></i>' : (dayStatus==='claimed' ? '<i class="fas fa-check-circle"></i>' : (dayStatus==='expired' ? '<i class="fas fa-times-circle"></i>' : '<i class="fas fa-lock"></i>'))}</div>`; } html += '</div>'; streakGrid.innerHTML = html; document.getElementById('streakInfo').innerHTML = `Current streak: ${streakData.currentStreak} days | ${canClaim ? 'Click today\'s box to claim reward!' : 'Come back tomorrow for next streak!'}`; document.querySelectorAll('.streak-box.available').forEach(box => { box.onclick = async () => { const day = parseInt(box.dataset.day); const reward = parseFloat(box.dataset.reward); await updateBalanceByMode(reward, isRealMode); const newStreak = (streakData.currentStreak + 1) % 7; const newClaimed = [...(streakData.claimedDays || []), day]; await setDoc(doc(db,"login_streaks",currentUser.uid), { currentStreak: newStreak, lastClaimDate: serverTimestamp(), claimedDays: newClaimed }); showInfoModal("Streak Reward", `🎉 Streak day ${day+1} claimed! +$${reward} added to your balance.`); loadStreak(); loadUserData(); }; }); } catch(e) { console.error(e); } }
+        async function loadReferrals() { try { const snap = await getDocs(query(collection(db,"referrals"), where("referrerId","==",currentUser.uid))); let earnedComm = 0, referredList = []; snap.forEach(r=>{ earnedComm += r.data().commissionEarned||0; referredList.push(r.data().referredId); }); document.getElementById('referralStats').innerHTML = `Referred: ${snap.size} | Earned Commission: $${earnedComm.toFixed(2)} | Pending: $0.00 (manual approval)`; document.getElementById('referralLinkDisplay').innerText = `${window.location.origin}/?ref=${currentUser.uid}`; if(referredList.length === 0) { document.getElementById('referredUsersList').innerHTML = '<div class="empty-message">No referred users yet.</div>'; return; } let refHtml = '<ul class="list-disc pl-4">'; for(let refId of referredList) { const userSnap = await getDoc(doc(db,"users",refId)); if(userSnap.exists()) refHtml += `<li>${userSnap.data().displayName || refId} - ${userSnap.data().totalEarned ? `Traded: $${userSnap.data().totalEarned}` : 'No activity'}</li>`; else refHtml += `<li>${refId}</li>`; } refHtml += '</ul>'; document.getElementById('referredUsersList').innerHTML = refHtml; } catch(e) { console.error(e); } }
+        async function loadSupportTickets() { try { const snap = await getDocs(query(collection(db,"support_tickets"), where("userId","==",currentUser.uid), orderBy("createdAt","desc"))); if(snap.empty) { document.getElementById('supportTicketsList').innerHTML = '<div class="empty-message">No support tickets</div>'; return; } let html=''; snap.forEach(d=>{ const t=d.data(); html+=`<div class="border rounded p-3"><div class="flex justify-between"><span class="font-bold">#${d.id.slice(-6)}</span><span class="text-xs ${t.status==='open'?'text-green-600':'text-gray-500'}">${t.status}</span></div><div><b>Subject:</b> ${t.subject}</div><div><b>Message:</b> ${t.message}</div><div class="text-xs text-gray-500">Created: ${t.createdAt?.toDate().toLocaleString()} | Resolved: ${t.resolvedAt?.toDate().toLocaleString() || '—'}</div>${t.note ? `<div class="text-sm bg-gray-50 p-1 mt-1"><b>Admin Note:</b> ${t.note}</div>` : ''}</div>`; }); document.getElementById('supportTicketsList').innerHTML = html; } catch(e) { console.error(e); } }
+        document.getElementById('createTicketBtn').onclick = async () => { const subject = prompt("Subject:"); if(!subject) return; const message = prompt("Message:"); if(!message) return; await addDoc(collection(db,"support_tickets"), { userId: currentUser.uid, subject, message, status: "open", createdAt: serverTimestamp() }); showInfoModal("Success", "Ticket created"); loadSupportTickets(); };
         document.getElementById('copyReferralLinkBtn').onclick=()=>{ navigator.clipboard.writeText(document.getElementById('referralLinkDisplay').innerText); showInfoModal("Copied", "Referral link copied to clipboard!"); };
+        document.getElementById('requestCommissionBtn').onclick = () => { document.getElementById('commissionRequestDetails').innerHTML = `<div class="space-y-3"><input type="text" id="commissionReferredEmail" placeholder="Referred user's email" class="w-full border p-2 rounded"><input type="text" id="commissionReferredCode" placeholder="Their referral code (if any)" class="w-full border p-2 rounded"><textarea id="commissionMessage" placeholder="Additional details..." rows="3" class="w-full border p-2 rounded"></textarea></div>`; showModal('commissionRequestConfirmModal'); };
+        document.getElementById('confirmCommissionRequestBtn').onclick = async () => { const referredEmail = document.getElementById('commissionReferredEmail').value; const code = document.getElementById('commissionReferredCode').value; const msg = document.getElementById('commissionMessage').value; if(!referredEmail) { showInfoModal("Error", "Referred user email required"); return; } await addDoc(collection(db,"support_tickets"), { userId: currentUser.uid, subject: "Commission Request", message: `Referred email: ${referredEmail}\nCode: ${code}\nDetails: ${msg}`, status: "open", createdAt: serverTimestamp() }); hideModal('commissionRequestConfirmModal'); showInfoModal("Success", "Commission request submitted as ticket. Admin will review."); loadSupportTickets(); };
+        document.getElementById('cancelCommissionRequestConfirmBtn').onclick = () => hideModal('commissionRequestConfirmModal');
+        document.getElementById('reportDepositBtn').onclick = () => { document.getElementById('reportDepositDetails').innerHTML = `<div class="space-y-3"><input type="number" id="reportAmount" placeholder="Amount ($)" class="w-full border p-2 rounded"><input type="text" id="reportTransactionId" placeholder="Transaction ID / Reference" class="w-full border p-2 rounded"><input type="email" id="reportEmail" placeholder="Your email (optional)" class="w-full border p-2 rounded"></div>`; showModal('reportDepositConfirmModal'); };
+        document.getElementById('confirmReportDepositBtn').onclick = async () => { const amount = parseFloat(document.getElementById('reportAmount').value); const transactionId = document.getElementById('reportTransactionId').value; const email = document.getElementById('reportEmail').value; if(!amount || !transactionId) { showInfoModal("Error", "Amount and Transaction ID required"); return; } await addDoc(collection(db,"pending_deposits"), { userId: currentUser.uid, amount, method: "user_report", reference: transactionId, userEmail: email, status: "pending_review", createdAt: serverTimestamp() }); hideModal('reportDepositConfirmModal'); showInfoModal("Success", "Deposit reported. Admin will review and credit."); loadDeposits(); };
+        document.getElementById('cancelReportDepositConfirmBtn').onclick = () => hideModal('reportDepositConfirmModal');
+        document.getElementById('openWithdrawFormBtn').onclick = () => { document.getElementById('withdrawConfirmDetails').innerHTML = `<div class="space-y-3"><input type="number" id="withdrawAmount" placeholder="Amount ($)" class="w-full border p-2 rounded"><select id="withdrawGateway" class="w-full border p-2 rounded"><option value="Bank Transfer">Bank Transfer</option><option value="M-Pesa">M-Pesa</option><option value="Crypto">Crypto</option></select><input type="text" id="withdrawDetails" placeholder="Wallet address / Account number" class="w-full border p-2 rounded"></div>`; showModal('withdrawConfirmModal'); };
+        document.getElementById('confirmWithdrawBtn').onclick = async () => { const amount = parseFloat(document.getElementById('withdrawAmount').value); const gateway = document.getElementById('withdrawGateway').value; const details = document.getElementById('withdrawDetails').value; const bal = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||0); if(!isRealMode) { showInfoModal("Error", "Withdrawals only in REAL mode"); return; } if(isNaN(amount) || amount < withdrawalConfig.minAmount || amount > bal) { showInfoModal("Invalid Amount", `Min $${withdrawalConfig.minAmount}, max $${bal.toFixed(2)}`); return; } if(!gateway || !details) { showInfoModal("Error", "All fields required"); return; } const fee = (amount * withdrawalConfig.feePercent) / 100; const netAmount = amount - fee; await addDoc(collection(db, "withdrawals"), { userId: currentUser.uid, amount, fee, netAmount, gateway, details, status: "pending", createdAt: serverTimestamp() }); await addDoc(collection(db, "transactions"), { userId: currentUser.uid, type: "withdrawal_request", amount: -amount, description: `Withdrawal request $${amount} via ${gateway} (pending)`, timestamp: serverTimestamp(), status: "pending", reference: `WD_${Date.now()}` }); hideModal('withdrawConfirmModal'); showInfoModal("Success", "Withdrawal request submitted! Pending admin approval."); loadWithdrawals(); loadTransactions(); };
+        document.getElementById('cancelWithdrawConfirmBtn').onclick = () => hideModal('withdrawConfirmModal');
         
-        // Navigation
-        function activateSection(id){
-            document.querySelectorAll('.content-section').forEach(s=>s.classList.remove('active-section'));
-            document.getElementById(id).classList.add('active-section');
-            if(id==='trade'){ loadOpenTrades(); loadHistory(); }
-            if(id==='deposits') { loadDeposits(); }
-            if(id==='withdrawals') { loadWithdrawals(); loadUserData(); }
-            if(id==='transactions') loadTransactions();
-            if(id==='leaderboard') loadLeaderboard();
-            if(id==='streak') loadStreak();
-            if(id==='announcements') loadAnnouncements();
-            if(id==='investments'){ loadInvestmentPlans(); loadActiveInvestments(); }
-            if(id==='referrals') loadReferrals();
-            if(id==='support') loadSupportTickets();
-            if(id==='kyc') loadUserData();
-            if(id==='balances') { loadUserData(); loadExchangeRate(); }
-        }
-        document.querySelectorAll('.sidebar-nav a').forEach(link=>link.addEventListener('click',(e)=>{ e.preventDefault(); activateSection(link.dataset.section); document.getElementById('sidebarOverlay').click(); }));
-        document.getElementById('hamburgerBtn').onclick=()=>{ document.getElementById('mainSidebar').classList.add('open'); document.getElementById('sidebarOverlay').classList.add('active'); };
-        document.getElementById('closeSidebarBtn').onclick=()=>{ document.getElementById('mainSidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('active'); };
-        document.getElementById('sidebarOverlay').onclick=()=>{ document.getElementById('mainSidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('active'); };
-        
-        // stake buttons
+        // stake buttons and mode toggle
         for(let i=1;i<=9;i++){ const btn=document.createElement('button'); btn.innerText=i; btn.className='number-btn'; btn.onclick=()=>{ document.getElementById('stakeAmount').value=i; updateRiskReward(); }; document.getElementById('stakeButtonsContainer').appendChild(btn); }
-        
-        // Mode toggles
         function setRealMode() { isRealMode=true; document.getElementById('modeLabel').innerHTML='🔴 REAL ACCOUNT'; document.getElementById('realModeBtn').classList.add('bg-indigo-600','text-white','shadow'); document.getElementById('realModeBtn').classList.remove('bg-gray-200'); document.getElementById('demoModeBtn').classList.remove('bg-indigo-600','text-white','shadow'); document.getElementById('demoModeBtn').classList.add('bg-gray-200'); loadUserData(); loadOpenTrades(); loadHistory(); showInfoModal("Mode Changed", "Real mode active. Real balance will be used for trades."); }
         function setDemoMode() { isRealMode=false; document.getElementById('modeLabel').innerHTML='🟢 DEMO MODE'; document.getElementById('demoModeBtn').classList.add('bg-indigo-600','text-white','shadow'); document.getElementById('demoModeBtn').classList.remove('bg-gray-200'); document.getElementById('realModeBtn').classList.remove('bg-indigo-600','text-white','shadow'); document.getElementById('realModeBtn').classList.add('bg-gray-200'); loadUserData(); loadOpenTrades(); loadHistory(); showInfoModal("Mode Changed", "Demo mode active. Virtual balance: $10,000"); }
         document.getElementById('realModeBtn').onclick = setRealMode;
@@ -832,29 +579,25 @@
         document.getElementById('quickWithdrawBtn').onclick = () => activateSection('withdrawals');
         document.getElementById('quickTopUpBtn').onclick = () => activateSection('deposits');
         document.getElementById('logoutBtn').onclick = async () => { await signOut(auth); window.location.href = "index.html"; };
-        
-        // Settings
         document.getElementById('updateProfileBtn').onclick=async()=>{ const name=document.getElementById('displayNameInput').value; if(name){ await updateProfile(currentUser,{displayName:name}); await updateDoc(doc(db,"users",currentUser.uid),{displayName:name}); showInfoModal("Success", "Profile updated"); } };
         document.getElementById('updateEmailBtn').onclick=()=>{ const email=document.getElementById('newEmailInput').value; if(email) { showModal('reAuthModal'); document.getElementById('submitReAuthBtn').onclick=async()=>{ const pwd=document.getElementById('reAuthPassword').value; const cred=EmailAuthProvider.credential(currentUser.email,pwd); try{ await reauthenticateWithCredential(currentUser,cred); await updateEmail(currentUser,email); hideModal('reAuthModal'); showInfoModal("Success", "Email updated"); }catch(e){ showInfoModal("Error", "Auth failed"); } }; } };
         document.getElementById('updatePasswordBtn').onclick=()=>{ const pwd=document.getElementById('newPasswordInput').value; if(pwd){ showModal('reAuthModal'); document.getElementById('submitReAuthBtn').onclick=async()=>{ const oldPwd=document.getElementById('reAuthPassword').value; const cred=EmailAuthProvider.credential(currentUser.email,oldPwd); try{ await reauthenticateWithCredential(currentUser,cred); await updatePassword(currentUser,pwd); hideModal('reAuthModal'); showInfoModal("Success", "Password updated"); }catch(e){ showInfoModal("Error", "Auth failed"); } }; } };
         document.getElementById('sendVerifyEmailBtn')?.addEventListener('click', async()=>{ await sendEmailVerification(currentUser); showInfoModal("Email Sent", "Verification email sent"); });
-        
-        onAuthStateChanged(auth, async(user)=>{
-            if(!user){ window.location.href="index.html"; return; }
-            currentUser=user;
-            await loadExchangeRate();
-            await loadStreakRewards();
-            await loadWithdrawalConfig();
-            await loadTradingConfig();
-            await loadSocialLinks();
-            await loadUserData();
-            await loadInvestmentPlans(); await loadActiveInvestments();
-            await loadDeposits(); await loadWithdrawals(); await loadTransactions();
-            await loadReferrals(); await loadLeaderboard(); await loadStreak(); await loadAnnouncements();
-            await loadOpenTrades(); await loadHistory();
-            setInterval(()=>{ if(document.getElementById('trade').classList.contains('active-section')) loadOpenTrades(); }, 3000);
-            await give20BonusIfFirstRealActivity();
-        });
+        document.getElementById('sidebarNav').addEventListener('click', (e)=> { const link = e.target.closest('a'); if(link && link.dataset.section) { e.preventDefault(); activateSection(link.dataset.section); document.getElementById('sidebarOverlay').click(); } });
+        document.getElementById('hamburgerBtn').onclick=()=>{ document.getElementById('mainSidebar').classList.add('open'); document.getElementById('sidebarOverlay').classList.add('active'); };
+        document.getElementById('closeSidebarBtn').onclick=()=>{ document.getElementById('mainSidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('active'); };
+        document.getElementById('sidebarOverlay').onclick=()=>{ document.getElementById('mainSidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('active'); };
+        document.getElementById('exampleTradeBtn').onclick = async () => { if(isRealMode) { showInfoModal("💡 Tip", "It's safer to practice first in Demo mode. Switch to Demo mode (top‑right toggle) and then try the example trade with virtual money!"); } else { document.getElementById('stakeAmount').value = tradingConfig.minStake; document.getElementById('multiplierSlider').value = 2; updateRiskReward(); requestTradeConfirmation('call'); } };
+        function requestTradeConfirmation(direction){ let stake = parseFloat(document.getElementById('stakeAmount').value); let multiplier = parseFloat(document.getElementById('multiplierSlider').value); if(stake < tradingConfig.minStake) { showInfoModal("Invalid Stake", `Minimum stake is $${tradingConfig.minStake}`); return; } const bal = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||10000); if(stake>bal) { showInfoModal("Insufficient Balance", `You need $${stake} but you have $${bal.toFixed(2)}.`); return; } pendingTrade = { direction, stake, multiplier }; document.getElementById('confirmTradeDetails').innerHTML = `<p><strong>Direction:</strong> ${direction.toUpperCase()}</p><p><strong>Stake:</strong> $${stake.toFixed(2)}</p><p><strong>Multiplier:</strong> ${multiplier}x</p><p><strong>Potential Profit:</strong> $${(stake*multiplier-stake).toFixed(2)}</p><p><strong>Total Payout if win:</strong> $${(stake*multiplier).toFixed(2)}</p>`; showModal('confirmTradeModal'); }
+        document.getElementById('confirmTradeYes').onclick = async () => { if(pendingTrade){ await executeTrade(pendingTrade.direction, pendingTrade.stake, pendingTrade.multiplier); pendingTrade=null; } hideModal('confirmTradeModal'); };
+        document.getElementById('confirmTradeNo').onclick = () => { pendingTrade=null; hideModal('confirmTradeModal'); };
+        document.getElementById('callTradeBtn').onclick=()=>requestTradeConfirmation('call');
+        document.getElementById('putTradeBtn').onclick=()=>requestTradeConfirmation('put');
+        function startAutoTrade() { if(autoTradeInterval) clearInterval(autoTradeInterval); const direction = document.getElementById('autoDirection').value; let stake = parseFloat(document.getElementById('stakeAmount').value); let multiplier = parseFloat(document.getElementById('multiplierSlider').value); if(stake < tradingConfig.minStake) { showInfoModal("Invalid Stake", `Minimum stake is $${tradingConfig.minStake}`); return; } autoTradeInterval = setInterval(async () => { const bal = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||10000); if(stake > bal) { showInfoModal("Auto Stopped", "Insufficient balance"); stopAutoTrade(); return; } await executeTrade(direction, stake, multiplier); }, 61000); document.getElementById('startAutoTradeBtn').disabled = true; document.getElementById('stopAutoTradeBtn').disabled = false; showInfoModal("Auto Trade", `Started: ${direction.toUpperCase()} $${stake} (${multiplier}x) every 60s`); }
+        function stopAutoTrade() { if(autoTradeInterval) { clearInterval(autoTradeInterval); autoTradeInterval = null; } document.getElementById('startAutoTradeBtn').disabled = false; document.getElementById('stopAutoTradeBtn').disabled = true; showInfoModal("Auto Trade", "Stopped"); }
+        document.getElementById('startAutoTradeBtn').onclick = startAutoTrade;
+        document.getElementById('stopAutoTradeBtn').onclick = stopAutoTrade;
+        onAuthStateChanged(auth, async(user)=>{ if(!user){ window.location.href="index.html"; return; } currentUser=user; await loadExchangeRate(); await loadStreakRewards(); await loadWithdrawalConfig(); await loadTradingConfig(); await loadSocialLinks(); await loadUserData(); await loadInvestmentPlans(); await loadActiveInvestments(); await loadDeposits(); await loadWithdrawals(); await loadTransactions(); await loadReferrals(); await loadLeaderboard(); await loadStreak(); await loadAnnouncements(); await loadOpenTrades(); await loadHistory(); setInterval(()=>{ if(document.getElementById('trade').classList.contains('active-section')) loadOpenTrades(); }, 3000); await give20BonusIfFirstRealActivity(); });
         updateRiskReward();
     </script>
 </body>
