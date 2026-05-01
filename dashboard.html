@@ -88,7 +88,7 @@
             .reset-btn { padding: 4px 10px; font-size: 11px; }
             .video-rectangle { max-width: 220px; }
         }
-        .error-message { color: #ef4444; padding: 1rem; text-align: center; }
+        .error-message { color: #ef4444; padding: 1rem; text-align: center; background: #fee2e2; border-radius: 0.75rem; margin: 0.5rem 0; }
     </style>
 </head>
 <body class="bg-amber-50">
@@ -166,7 +166,7 @@
                             </div>
                             <div class="flex gap-5 border-b mb-3 mt-2">
                                 <button id="positionsTabBtn" class="px-4 py-2 font-bold text-indigo-600 border-b-2 border-indigo-500">Active (60s)</button>
-                                <button id="historyTabBtn" class="px-4 py-2 font-bold text-gray-500">History</button>
+                                <button id="historyTabBtn" class="px-4 py-2 font-bold text-gray-500">Trade History</button>
                             </div>
                             <div id="positionsPanel"><div class="text-sm mb-2 flex justify-between"><span>Live positions:</span><span id="activeCountBadge" class="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full text-xs font-bold">0</span></div><div id="openPositionsList" class="space-y-2 max-h-80 overflow-y-auto"></div></div>
                             <div id="historyPanel" class="hidden"><div id="lastTradesList" class="space-y-2 max-h-64 overflow-y-auto"></div><div class="mt-3 flex justify-between"><span>Last 10 P/L:</span><span id="last10Profit" class="profit-badge">$0.00</span><span>Win Rate:</span><span id="winRatePercent" class="font-bold">0%</span></div></div>
@@ -203,7 +203,7 @@
 
     <!-- MODALS -->
     <div id="confirmTradeModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">⚠️ Confirm Trade</h3><div id="confirmTradeDetails"></div><div class="flex gap-3 mt-4"><button id="confirmTradeYes" class="bg-green-600 text-white px-4 py-2 rounded">Confirm</button><button id="confirmTradeNo" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
-    <div id="tradeResultModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">📊 Trade Result</h3><div id="tradeResultBody"></div><button id="closeResultModalBtn" class="mt-4 bg-indigo-600 text-white px-6 py-2 rounded mx-auto block">OK</button></div></div>
+    <div id="tradeResultModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">📊 Trade Result</h3><div id="tradeResultBody"></div><div id="tradeFeedbackMessage" class="mt-3 text-sm text-gray-600"></div><button id="closeResultModalBtn" class="mt-4 bg-indigo-600 text-white px-6 py-2 rounded mx-auto block">OK</button></div></div>
     <div id="withdrawConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">💸 Request Withdrawal</h3><div id="withdrawConfirmDetails"></div><div class="progress-bar my-3 hidden" id="withdrawProgressBar"><div class="progress-fill" id="withdrawProgressFill"></div></div><div class="flex gap-3 mt-4"><button id="confirmWithdrawBtn" class="bg-green-600 text-white px-4 py-2 rounded">Confirm</button><button id="cancelWithdrawConfirmBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
     <div id="reportDepositConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">📝 Report Pending Deposit</h3><div id="reportDepositDetails"></div><div class="flex gap-3 mt-4"><button id="confirmReportDepositBtn" class="bg-green-600 text-white px-4 py-2 rounded">Submit</button><button id="cancelReportDepositConfirmBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
     <div id="commissionRequestConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">💰 Request Commission</h3><div id="commissionRequestDetails"></div><div class="flex gap-3 mt-4"><button id="confirmCommissionRequestBtn" class="bg-green-600 text-white px-4 py-2 rounded">Submit Ticket</button><button id="cancelCommissionRequestConfirmBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
@@ -337,8 +337,21 @@
             lastTradesResults.unshift(won?'win':'loss'); if(lastTradesResults.length>5) lastTradesResults.pop();
             updateStreakDots();
             document.getElementById('lastTradeSummary').innerHTML = `📋 Last trade: ${direction.toUpperCase()} $${stake} (${multiplier}x) → ${won?'✅ WIN +$'+(payoutAmount-stake).toFixed(2):'❌ LOSS -$'+stake}`;
-            const resultHtml = `<div class="text-center"><div class="text-2xl mb-3 ${won?'text-green-600':'text-red-600'}">${won?'🎉 WINNER! 🎉':'💔 LOSS 💔'}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Direction:</b> ${direction.toUpperCase()}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Stake:</b> $${stake.toFixed(2)}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Multiplier:</b> ${multiplier}x</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Entry:</b> ${entryPrice.toFixed(5)}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Exit:</b> ${finalPrice.toFixed(5)}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Payout:</b> $${payoutAmount.toFixed(2)}</div><div class="text-xl font-bold ${won?'text-green-600':'text-red-600'} mt-2">${won?`+$${(payoutAmount-stake).toFixed(2)}`:`-$${stake.toFixed(2)}`}</div></div>`;
+            
+            // Build feedback message
+            let feedback = "";
+            if (won) {
+                feedback = `✅ Excellent! You predicted correctly. Your profit of $${(payoutAmount-stake).toFixed(2)} has been added to your balance. Keep an eye on price trends and use the risk‑reward slider to maximise gains.`;
+            } else {
+                if (direction === 'call') {
+                    feedback = `❌ You lost because the price went DOWN instead of UP. Tip: analyse short‑term momentum before hitting CALL. Practice in Demo mode to build confidence.`;
+                } else {
+                    feedback = `❌ You lost because the price went UP instead of DOWN. Tip: wait for price to show clear downward movement before entering a PUT trade. Use lower stakes and watch the news.`;
+                }
+            }
+            const resultHtml = `<div class="text-center"><div class="text-2xl mb-3 ${won?'text-green-600':'text-red-600'}">${won?'🎉 WINNER! 🎉':'💔 LOSS 💔'}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Direction:</b> ${direction.toUpperCase()}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Stake:</b> $${stake.toFixed(2)}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Multiplier:</b> ${multiplier}x</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Entry:</b> ${entryPrice.toFixed(5)}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Exit:</b> ${finalPrice.toFixed(5)}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Payout:</b> $${payoutAmount.toFixed(2)}</div><div class="text-xl font-bold ${won?'text-green-600':'text-red-600'} mt-2">${won?`+$${(payoutAmount-stake).toFixed(2)}`:`-$${stake.toFixed(2)}`}</div><div class="text-sm text-gray-500 mt-2">${won ? 'Well done!' : 'Better luck next time.'}</div></div>`;
             document.getElementById('tradeResultBody').innerHTML = resultHtml;
+            document.getElementById('tradeFeedbackMessage').innerHTML = `<div class="bg-blue-50 p-2 rounded mt-2 text-left"><i class="fas fa-lightbulb text-yellow-500"></i> <strong>How to improve:</strong> ${feedback}</div>`;
             showModal('tradeResultModal');
             loadOpenTrades(); loadHistory(); loadUserData(); loadTransactions(); loadWithdrawals(); loadDeposits();
         }
@@ -402,7 +415,7 @@
                 const q=query(collection(db,"binary_trades"), where("userId","==",currentUser.uid), where("status","==","closed"), where("isReal","==",isRealMode), orderBy("createdAt","desc"), limit(10));
                 const snap=await getDocs(q);
                 let html='', totalP=0, wins=0;
-                snap.forEach(d=>{ const t=d.data(); const profit=t.profit||0; totalP+=profit; if(profit>0) wins++; html+=`<div class="flex justify-between border-b py-1">${t.direction} $${t.amount} (${t.multiplier||2}x) ${profit>=0?`+${profit.toFixed(2)}`:profit.toFixed(2)}</div>`; });
+                snap.forEach(d=>{ const t=d.data(); const profit=t.profit||0; totalP+=profit; if(profit>0) wins++; html+=`<div class="flex justify-between border-b py-1"><span>${t.direction} $${t.amount} (${t.multiplier||2}x) <span class="text-xs text-gray-500">${t.createdAt?.toDate().toLocaleTimeString()}</span></span><span class="${profit>=0?'text-green-600':'text-red-600'}">${profit>=0?`+${profit.toFixed(2)}`:profit.toFixed(2)}</span></div>`; });
                 document.getElementById('lastTradesList').innerHTML=html||'<div class="empty-message">No trade history</div>';
                 document.getElementById('last10Profit').innerHTML=`$${totalP.toFixed(2)}`;
                 document.getElementById('winRatePercent').innerHTML=snap.size?((wins/snap.size)*100).toFixed(1)+'%':'0%';
@@ -445,6 +458,18 @@
         function stopAutoTrade() { if(autoTradeInterval) { clearInterval(autoTradeInterval); autoTradeInterval = null; } document.getElementById('startAutoTradeBtn').disabled = false; document.getElementById('stopAutoTradeBtn').disabled = true; showInfoModal("Auto Trade", "Stopped"); }
         document.getElementById('startAutoTradeBtn').onclick = startAutoTrade;
         document.getElementById('stopAutoTradeBtn').onclick = stopAutoTrade;
+        
+        // Example trade - suggest demo mode if real
+        document.getElementById('exampleTradeBtn').onclick = async () => {
+            if(isRealMode) {
+                showInfoModal("💡 Tip", "It's safer to practice first in Demo mode. Switch to Demo mode (top‑right toggle) and then try the example trade with virtual money!");
+            } else {
+                document.getElementById('stakeAmount').value = tradingConfig.minStake;
+                document.getElementById('multiplierSlider').value = 2;
+                updateRiskReward();
+                requestTradeConfirmation('call');
+            }
+        };
         
         // Withdrawal with confirmation
         document.getElementById('openWithdrawFormBtn').onclick = () => {
@@ -494,7 +519,10 @@
                 if(snap.empty) { document.getElementById('historyList').innerHTML = '<div class="empty-message">No transactions yet</div>'; return; }
                 let html=''; snap.forEach(d=>{ const t=d.data(); html+=`<div class="border-b py-2"><div class="flex justify-between"><span class="font-medium">${t.type}</span><span class="font-bold ${t.amount>=0?'text-green-600':'text-red-600'}">$${t.amount.toFixed(2)}</span></div><div class="text-sm">${t.description || ''}</div><div class="text-xs text-gray-500">Status: ${t.status || 'completed'} | Ref: ${t.reference || 'N/A'} | ${t.timestamp?.toDate().toLocaleString()}</div></div>`; });
                 document.getElementById('historyList').innerHTML = html;
-            } catch(e) { console.error("Transactions error:", e); document.getElementById('historyList').innerHTML = '<div class="empty-message">Error loading transactions. Make sure Firestore index exists.</div>'; }
+            } catch(e) { 
+                console.error("Transactions error:", e);
+                document.getElementById('historyList').innerHTML = '<div class="error-message">⚠️ Missing Firestore index. Please create composite index on "transactions": userId (Ascending), timestamp (Descending). Click the link in your browser console or contact admin.</div>';
+            }
         }
         
         // Deposits with pending/completed separate
@@ -557,7 +585,10 @@
                 let i=1,html=''; snap.forEach(d=>{ const u=d.data(); if(u.role!=='admin') html+=`<div class="flex justify-between border-b py-2"><span>${i++}. ${u.displayName||u.email}</span><span class="font-bold">$${(u.totalEarned||0).toFixed(2)}</span></div>`; });
                 if(html === '') html = '<div class="empty-message">No traders yet</div>';
                 document.getElementById('leaderboardContainer').innerHTML = html;
-            } catch(e) { console.error("Leaderboard error:", e); document.getElementById('leaderboardContainer').innerHTML = '<div class="empty-message">Error loading leaderboard. Check Firestore index on users.totalEarned.</div>'; }
+            } catch(e) { 
+                console.error("Leaderboard error:", e);
+                document.getElementById('leaderboardContainer').innerHTML = '<div class="error-message">⚠️ Missing Firestore index. Please create index on "users": totalEarned (Descending). Click the link in your browser console or contact admin.</div>';
+            }
         }
         
         // Support Tickets
@@ -583,7 +614,10 @@
                 if(snap.empty) { document.getElementById('announcementsList').innerHTML = '<div class="empty-message">No announcements</div>'; return; }
                 let html=''; snap.forEach(d=>{ const a=d.data(); html+=`<div class="border-b p-3"><div class="font-bold">${a.title}</div><div>${a.content}</div><div class="text-xs text-gray-500">${a.createdAt?.toDate().toLocaleString()}</div></div>`; });
                 document.getElementById('announcementsList').innerHTML = html;
-            } catch(e) { console.error("Announcements error:", e); document.getElementById('announcementsList').innerHTML = '<div class="empty-message">Error loading announcements</div>'; }
+            } catch(e) { 
+                console.error("Announcements error:", e);
+                document.getElementById('announcementsList').innerHTML = '<div class="error-message">⚠️ Missing Firestore index. Please create index on "announcements": createdAt (Descending). Click the link in your browser console or contact admin.</div>';
+            }
         }
         
         // Investment plans with confirmation and cancelable timeout
@@ -794,7 +828,6 @@
         document.getElementById('resetDemoBtn').onclick = async()=>{ if(!isRealMode){ await updateDoc(doc(db,"users",currentUser.uid),{demoBalance:10000}); loadUserData(); showInfoModal("Demo Reset", "Demo balance reset to $10,000"); } else showInfoModal("Error", "Switch to Demo mode first"); };
         document.getElementById('topUpBalanceBtn').onclick=()=>activateSection('deposits');
         document.getElementById('depositNowLink').onclick=(e)=>{ e.preventDefault(); activateSection('deposits'); };
-        document.getElementById('exampleTradeBtn').onclick = async () => { document.getElementById('stakeAmount').value = tradingConfig.minStake; document.getElementById('multiplierSlider').value = 2; updateRiskReward(); requestTradeConfirmation('call'); };
         document.getElementById('quickWithdrawBtn').onclick = () => activateSection('withdrawals');
         document.getElementById('quickTopUpBtn').onclick = () => activateSection('deposits');
         document.getElementById('logoutBtn').onclick = async () => { await signOut(auth); window.location.href = "index.html"; };
