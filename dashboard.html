@@ -41,7 +41,7 @@
         @keyframes slideIn { from { transform:translateX(100%); opacity:0; } to { transform:translateX(0); opacity:1; } }
         .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:20000; justify-content:center; align-items:center; }
         .modal.active { display:flex; }
-        .modal-content { background:white; max-width:500px; width:90%; border-radius:1.5rem; padding:1.5rem; }
+        .modal-content { background:white; max-width:500px; width:90%; border-radius:1.5rem; padding:1.5rem; max-height:90vh; overflow-y:auto; }
         .profit-badge { background:#22c55e20; color:#15803d; border-radius:2rem; padding:0.2rem 0.8rem; font-weight:bold; }
         .deposit-method-btn { transition:all 0.2s; }
         .deposit-method-btn:hover { transform:translateY(-2px); }
@@ -90,6 +90,7 @@
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
         .investment-card { transition: transform 0.2s; }
         .investment-card:hover { transform: translateY(-4px); }
+        .empty-message { text-align: center; color: #9ca3af; padding: 2rem; font-style: italic; }
     </style>
 </head>
 <body class="bg-amber-50">
@@ -139,7 +140,7 @@
         </div>
 
         <main class="container mx-auto px-4 py-6 space-y-6">
-            <!-- TRADING SECTION (unchanged, but keep) -->
+            <!-- TRADING SECTION (same as before, working) -->
             <div id="trade" class="content-section active-section">
                 <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
                     <div id="globalTradeStatus" class="status-bar text-sm"><i class="fas fa-chart-simple"></i> <span id="statusText">✅ No active trades</span> <span id="statusTimer" class="font-mono"></span></div>
@@ -160,10 +161,7 @@
                             <div class="auto-trade-panel mb-3">
                                 <div><i class="fas fa-robot"></i> Auto Trade</div>
                                 <div class="flex gap-2 flex-wrap">
-                                    <select id="autoDirection" class="border rounded p-1 text-sm">
-                                        <option value="call">CALL ▲</option>
-                                        <option value="put">PUT ▼</option>
-                                    </select>
+                                    <select id="autoDirection" class="border rounded p-1 text-sm"><option value="call">CALL ▲</option><option value="put">PUT ▼</option></select>
                                     <button id="startAutoTradeBtn" class="bg-green-600 text-white px-3 py-1 rounded text-sm">Start</button>
                                     <button id="stopAutoTradeBtn" class="bg-red-600 text-white px-3 py-1 rounded text-sm" disabled>Stop</button>
                                 </div>
@@ -172,205 +170,62 @@
                                 <button id="positionsTabBtn" class="px-4 py-2 font-bold text-indigo-600 border-b-2 border-indigo-500">Active (60s)</button>
                                 <button id="historyTabBtn" class="px-4 py-2 font-bold text-gray-500">History</button>
                             </div>
-                            <div id="positionsPanel">
-                                <div class="text-sm mb-2 flex justify-between items-center"><span><i class="fas fa-chart-simple"></i> Live positions:</span><span id="activeCountBadge" class="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full text-xs font-bold">0</span></div>
-                                <div id="openPositionsList" class="space-y-2 max-h-80 overflow-y-auto"></div>
-                            </div>
-                            <div id="historyPanel" class="hidden">
-                                <div id="lastTradesList" class="space-y-2 max-h-64 overflow-y-auto"></div>
-                                <div class="mt-3 flex justify-between"><span>Last 10 P/L:</span><span id="last10Profit" class="profit-badge">$0.00</span><span>Win Rate:</span><span id="winRatePercent" class="font-bold">0%</span></div>
-                            </div>
+                            <div id="positionsPanel"><div class="text-sm mb-2 flex justify-between"><span>Live positions:</span><span id="activeCountBadge" class="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full text-xs font-bold">0</span></div><div id="openPositionsList" class="space-y-2 max-h-80 overflow-y-auto"></div></div>
+                            <div id="historyPanel" class="hidden"><div id="lastTradesList" class="space-y-2 max-h-64 overflow-y-auto"></div><div class="mt-3 flex justify-between"><span>Last 10 P/L:</span><span id="last10Profit" class="profit-badge">$0.00</span><span>Win Rate:</span><span id="winRatePercent" class="font-bold">0%</span></div></div>
                         </div>
                     </div>
                     <div class="space-y-4">
-                        <div class="card-glass p-4">
-                            <div class="flex justify-between items-center"><span class="font-bold text-lg">💰 Trading Balance</span><button id="topUpBalanceBtn" class="bg-indigo-600 text-white px-3 py-1 rounded-full text-sm"><i class="fas fa-plus-circle"></i> Top Up</button></div>
-                            <div id="liveBalance" class="text-3xl font-bold text-green-600 mt-2">$0.00</div>
-                            <div id="liveBalanceKES" class="text-sm text-gray-600"></div>
-                            <div id="insufficientAlert" class="balance-alert hidden mt-2"><i class="fas fa-exclamation-triangle"></i><span>Insufficient balance? <a href="#" id="depositNowLink" class="font-bold underline">Deposit now</a></span></div>
-                        </div>
+                        <div class="card-glass p-4"><div class="flex justify-between"><span class="font-bold text-lg">💰 Trading Balance</span><button id="topUpBalanceBtn" class="bg-indigo-600 text-white px-3 py-1 rounded-full text-sm"><i class="fas fa-plus-circle"></i> Top Up</button></div><div id="liveBalance" class="text-3xl font-bold text-green-600 mt-2">$0.00</div><div id="liveBalanceKES" class="text-sm text-gray-600"></div><div id="insufficientAlert" class="balance-alert hidden mt-2"><i class="fas fa-exclamation-triangle"></i><span>Insufficient balance? <a href="#" id="depositNowLink" class="font-bold underline">Deposit now</a></span></div></div>
                         <div class="card-glass p-4 text-center"><div class="text-sm text-gray-500">EUR/USD Live</div><div class="text-3xl font-bold text-indigo-700" id="livePrice">1.0892</div><div class="text-xs">Price updates every 2s</div></div>
-                        <div class="card-glass p-4">
-                            <div class="font-medium mb-2">Stake Amount <span id="stakeMinLabel">(Min $9)</span> <i class="fas fa-question-circle tooltip-icon"></i></div>
-                            <div class="grid grid-cols-5 gap-2 stake-buttons-grid" id="stakeButtonsContainer"></div>
-                            <input type="number" id="stakeAmount" class="w-full border rounded-xl p-2 mt-2 text-center" value="10" step="1">
-                            <div class="mt-3">
-                                <div class="flex justify-between text-sm"><span>💰 Potential Profit:</span><span id="potentialProfit" class="text-green-600 font-bold">$0.00</span></div>
-                                <div class="flex justify-between text-sm"><span>💸 Potential Loss:</span><span id="potentialLoss" class="text-red-600 font-bold">$0.00</span></div>
-                                <div class="risk-reward-bar mt-1"><div class="risk-reward-fill" id="riskRewardFill"></div></div>
-                            </div>
-                        </div>
-                        <div class="card-glass p-4" id="multiplierContainer">
-                            <div class="font-medium mb-2">Multiplier (1x - 10x) <i class="fas fa-question-circle tooltip-icon"></i></div>
-                            <input type="range" id="multiplierSlider" min="1" max="10" step="0.5" value="2" class="w-full">
-                            <div class="flex justify-between mt-1"><span>1x</span><span>5x</span><span>10x</span></div>
-                            <div class="mt-2 text-center"><span class="font-bold" id="multiplierValue">2.0x</span></div>
-                            <div class="mt-3"><span>Payout if Win: </span><span id="totalPayout" class="font-bold text-indigo-700">$20.00</span></div>
-                        </div>
+                        <div class="card-glass p-4"><div class="font-medium mb-2">Stake Amount <span id="stakeMinLabel">(Min $9)</span> <i class="fas fa-question-circle tooltip-icon"></i></div><div class="grid grid-cols-5 gap-2 stake-buttons-grid" id="stakeButtonsContainer"></div><input type="number" id="stakeAmount" class="w-full border rounded-xl p-2 mt-2 text-center" value="10" step="1"><div class="mt-3"><div class="flex justify-between text-sm"><span>💰 Potential Profit:</span><span id="potentialProfit" class="text-green-600 font-bold">$0.00</span></div><div class="flex justify-between text-sm"><span>💸 Potential Loss:</span><span id="potentialLoss" class="text-red-600 font-bold">$0.00</span></div><div class="risk-reward-bar mt-1"><div class="risk-reward-fill" id="riskRewardFill"></div></div></div></div>
+                        <div class="card-glass p-4" id="multiplierContainer"><div class="font-medium mb-2">Multiplier (1x - 10x) <i class="fas fa-question-circle tooltip-icon"></i></div><input type="range" id="multiplierSlider" min="1" max="10" step="0.5" value="2" class="w-full"><div class="flex justify-between mt-1"><span>1x</span><span>5x</span><span>10x</span></div><div class="mt-2 text-center"><span class="font-bold" id="multiplierValue">2.0x</span></div><div class="mt-3"><span>Payout if Win: </span><span id="totalPayout" class="font-bold text-indigo-700">$20.00</span></div></div>
                         <div class="grid grid-cols-2 gap-3"><button id="callTradeBtn" class="bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-bold">CALL ▲</button><button id="putTradeBtn" class="bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold">PUT ▼</button></div>
                         <div id="tradeFeedback" class="text-sm text-center text-gray-600"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- INVESTMENTS (enhanced) -->
-            <div id="investments" class="content-section">
-                <div class="card-glass p-6">
-                    <h2 class="text-2xl font-bold mb-3">Investment Dashboard</h2>
-                    <div id="investmentProductsList" class="grid md:grid-cols-2 gap-4 mb-6"></div>
-                    <h3 class="text-xl font-bold mb-2">Your Active Investments</h3>
-                    <div id="activeInvestmentsList" class="space-y-3"></div>
-                </div>
-            </div>
+            <!-- INVESTMENTS -->
+            <div id="investments" class="content-section"><div class="card-glass p-6"><h2 class="text-2xl font-bold mb-3">Investment Dashboard</h2><div id="investmentProductsList" class="grid md:grid-cols-2 gap-4 mb-6"></div><h3 class="text-xl font-bold mb-2">Your Active Investments</h3><div id="activeInvestmentsList" class="space-y-3"></div></div></div>
 
-            <!-- BALANCES with multiple currencies -->
-            <div id="balances" class="content-section">
-                <div class="card-glass p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-bold">💰 Balance Overview</h3>
-                        <div class="flex gap-2">
-                            <button id="quickWithdrawBtn" class="bg-red-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-hand-holding-usd"></i> Withdraw</button>
-                            <button id="quickTopUpBtn" class="bg-green-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-plus-circle"></i> Top Up</button>
-                        </div>
-                    </div>
-                    <div id="balanceDetails" class="space-y-2"></div>
-                    <div class="mt-4 p-3 bg-gray-100 rounded">
-                        <div class="font-medium">Exchange Rate (USD → KES): <span id="exchangeRate">1 USD = 0 KES</span></div>
-                    </div>
-                </div>
-            </div>
+            <!-- BALANCES -->
+            <div id="balances" class="content-section"><div class="card-glass p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold">💰 Balance Overview</h3><div class="flex gap-2"><button id="quickWithdrawBtn" class="bg-red-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-hand-holding-usd"></i> Withdraw</button><button id="quickTopUpBtn" class="bg-green-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-plus-circle"></i> Top Up</button></div></div><div id="balanceDetails" class="space-y-2"></div><div class="mt-4 p-3 bg-gray-100 rounded"><div class="font-medium">Exchange Rate (USD → KES): <span id="exchangeRate">1 USD = 0 KES</span></div></div></div></div>
 
-            <!-- TRANSACTIONS with all fields -->
-            <div id="transactions" class="content-section">
-                <div class="card-glass p-6">
-                    <h3 class="text-xl font-bold mb-3">📜 Transaction History</h3>
-                    <div id="historyList" class="space-y-2 max-h-96 overflow-y-auto"></div>
-                </div>
-            </div>
+            <!-- TRANSACTIONS -->
+            <div id="transactions" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">📜 Transaction History</h3><div id="historyList" class="space-y-2 max-h-96 overflow-y-auto"></div></div></div>
 
-            <!-- WITHDRAWALS with form and progress bar -->
-            <div id="withdrawals" class="content-section">
-                <div class="card-glass p-6">
-                    <h3 class="text-xl font-bold mb-3">🏦 Withdrawals</h3>
-                    <div id="withdrawBalanceInfo" class="mb-3 text-sm bg-gray-100 p-2 rounded"></div>
-                    <button id="openWithdrawFormBtn" class="mb-3 bg-blue-600 text-white px-4 py-2 rounded-lg">Request Withdrawal</button>
-                    <div id="withdrawalsList" class="space-y-2"></div>
-                </div>
-            </div>
+            <!-- WITHDRAWALS -->
+            <div id="withdrawals" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">🏦 Withdrawals</h3><div id="withdrawBalanceInfo" class="mb-3 text-sm bg-gray-100 p-2 rounded"></div><button id="openWithdrawFormBtn" class="mb-3 bg-blue-600 text-white px-4 py-2 rounded-lg">Request Withdrawal</button><div id="withdrawalsList" class="space-y-2"></div></div></div>
 
-            <!-- DEPOSITS with payment links and pending proof -->
-            <div id="deposits" class="content-section">
-                <div class="card-glass p-6">
-                    <h3 class="text-xl font-bold mb-3">💎 Deposit Funds</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" id="depositMethodsContainer">
-                        <button data-method="mpesa" class="deposit-method-btn bg-green-600 text-white py-3 rounded-xl"><i class="fas fa-mobile-alt"></i> M-Pesa</button>
-                        <button data-method="bank" class="deposit-method-btn bg-blue-600 text-white py-3 rounded-xl"><i class="fas fa-university"></i> Bank Transfer</button>
-                        <button data-method="crypto" class="deposit-method-btn bg-purple-600 text-white py-3 rounded-xl"><i class="fab fa-bitcoin"></i> Crypto</button>
-                    </div>
-                    <div class="mt-4 p-3 bg-yellow-50 rounded border-l-4 border-yellow-400">
-                        <p class="text-sm"><i class="fas fa-exclamation-triangle"></i> Already deposited but not reflected? <a href="#" id="reportDepositBtn" class="font-bold underline text-indigo-600">Click here</a> to report a pending deposit.</p>
-                    </div>
-                    <div id="depositsList" class="space-y-2 max-h-60 overflow-y-auto mt-4"></div>
-                </div>
-            </div>
+            <!-- DEPOSITS -->
+            <div id="deposits" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">💎 Deposit Funds</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" id="depositMethodsContainer"><button data-method="mpesa" class="deposit-method-btn bg-green-600 text-white py-3 rounded-xl"><i class="fas fa-mobile-alt"></i> M-Pesa</button><button data-method="bank" class="deposit-method-btn bg-blue-600 text-white py-3 rounded-xl"><i class="fas fa-university"></i> Bank Transfer</button><button data-method="crypto" class="deposit-method-btn bg-purple-600 text-white py-3 rounded-xl"><i class="fab fa-bitcoin"></i> Crypto</button></div><div class="mt-4 p-3 bg-yellow-50 rounded border-l-4 border-yellow-400"><p class="text-sm"><i class="fas fa-exclamation-triangle"></i> Already deposited but not reflected? <a href="#" id="reportDepositBtn" class="font-bold underline text-indigo-600">Click here</a> to report a pending deposit.</p></div><div id="depositsList" class="space-y-2 max-h-60 overflow-y-auto mt-4"></div></div></div>
 
-            <!-- REFERRALS with commission request -->
-            <div id="referrals" class="content-section">
-                <div class="card-glass p-6">
-                    <h3 class="text-xl font-bold">👥 Referral Program</h3>
-                    <div id="referralStats" class="my-3"></div>
-                    <div id="referralLinkDisplay" class="bg-gray-100 p-2 rounded break-all text-sm"></div>
-                    <button id="copyReferralLinkBtn" class="mt-2 bg-indigo-600 text-white px-3 py-1 rounded">Copy Link</button>
-                    <button id="requestCommissionBtn" class="mt-2 bg-green-600 text-white px-3 py-1 rounded ml-2">Request Commission</button>
-                    <div class="mt-4"><h4 class="font-bold">Referred Users</h4><div id="referredUsersList" class="space-y-1 text-sm"></div></div>
-                </div>
-            </div>
+            <!-- REFERRALS -->
+            <div id="referrals" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold">👥 Referral Program</h3><div id="referralStats" class="my-3"></div><div id="referralLinkDisplay" class="bg-gray-100 p-2 rounded break-all text-sm"></div><button id="copyReferralLinkBtn" class="mt-2 bg-indigo-600 text-white px-3 py-1 rounded">Copy Link</button><button id="requestCommissionBtn" class="mt-2 bg-green-600 text-white px-3 py-1 rounded ml-2">Request Commission</button><div class="mt-4"><h4 class="font-bold">Referred Users</h4><div id="referredUsersList" class="space-y-1 text-sm"></div></div></div></div>
 
             <!-- LEADERBOARD -->
-            <div id="leaderboard" class="content-section">
-                <div class="card-glass p-6">
-                    <h3 class="text-xl font-bold mb-3">🏆 Top Earners</h3>
-                    <div id="leaderboardContainer" class="space-y-2"></div>
-                </div>
-            </div>
+            <div id="leaderboard" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">🏆 Top Earners</h3><div id="leaderboardContainer" class="space-y-2"></div></div></div>
 
-            <!-- SUPPORT TICKETS with history -->
-            <div id="support" class="content-section">
-                <div class="card-glass p-6">
-                    <h3 class="text-xl font-bold mb-3">🎫 Support Tickets</h3>
-                    <button id="createTicketBtn" class="bg-green-600 text-white px-3 py-1 rounded mb-3">New Ticket</button>
-                    <div id="supportTicketsList" class="space-y-3 max-h-96 overflow-y-auto"></div>
-                </div>
-            </div>
+            <!-- SUPPORT TICKETS -->
+            <div id="support" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">🎫 Support Tickets</h3><button id="createTicketBtn" class="bg-green-600 text-white px-3 py-1 rounded mb-3">New Ticket</button><div id="supportTicketsList" class="space-y-3 max-h-96 overflow-y-auto"></div></div></div>
 
-            <!-- DAILY STREAK with KYC requirement -->
-            <div id="streak" class="content-section">
-                <div class="card-glass p-6">
-                    <h3 class="text-xl font-bold">🔥 Daily Streak (7 days)</h3>
-                    <div id="streakEmailAlert" class="hidden bg-yellow-100 p-3 rounded mb-3"><i class="fas fa-envelope"></i> Verify email to earn streak. <button id="sendVerifyEmailBtn" class="underline text-indigo-600">Resend</button></div>
-                    <div id="streakKYCWarning" class="hidden bg-red-100 p-3 rounded mb-3"><i class="fas fa-id-card"></i> KYC verification required to claim streak rewards. <a href="#" onclick="activateSection('kyc')" class="underline text-indigo-600">Complete KYC</a></div>
-                    <div id="streakGrid" class="streak-grid"></div>
-                    <div id="streakInfo" class="text-sm mt-2"></div>
-                </div>
-            </div>
+            <!-- DAILY STREAK -->
+            <div id="streak" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold">🔥 Daily Streak (7 days)</h3><div id="streakEmailAlert" class="hidden bg-yellow-100 p-3 rounded mb-3"><i class="fas fa-envelope"></i> Verify email to earn streak. <button id="sendVerifyEmailBtn" class="underline text-indigo-600">Resend</button></div><div id="streakKYCWarning" class="hidden bg-red-100 p-3 rounded mb-3"><i class="fas fa-id-card"></i> KYC verification required to claim streak rewards. <a href="#" onclick="activateSection('kyc')" class="underline text-indigo-600">Complete KYC</a></div><div id="streakGrid" class="streak-grid"></div><div id="streakInfo" class="text-sm mt-2"></div></div></div>
 
-            <!-- LIVE CHAT (unchanged but keep) -->
-            <div id="chat" class="content-section">
-                <div class="card-glass p-6">
-                    <h3 class="text-xl font-bold mb-3">💬 Live Chat (KYC Required)</h3>
-                    <div id="kycWarningMsg" class="hidden bg-red-100 p-2 rounded mb-2">⚠️ Complete KYC first.</div>
-                    <div><input type="text" id="chatNickname" placeholder="Nickname" class="border rounded p-1 w-40"><button id="buyMinutesBtn" class="bg-green-600 text-white px-3 py-1 rounded ml-2">Buy 30min ($0.40)</button><span class="chat-timer ml-4">⏱️ <span id="chatMinutesRemaining">0</span> min left</span></div>
-                    <div class="chat-messages mt-3" id="chatMessages"></div>
-                    <div class="flex gap-2 mt-2"><input type="text" id="chatInput" class="flex-1 border rounded-xl p-2" placeholder="Message..." disabled><button id="sendChatBtn" class="bg-indigo-600 text-white px-4 rounded-xl" disabled>Send</button></div>
-                </div>
-            </div>
+            <!-- LIVE CHAT -->
+            <div id="chat" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">💬 Live Chat (KYC Required)</h3><div id="kycWarningMsg" class="hidden bg-red-100 p-2 rounded mb-2">⚠️ Complete KYC first.</div><div><input type="text" id="chatNickname" placeholder="Nickname" class="border rounded p-1 w-40"><button id="buyMinutesBtn" class="bg-green-600 text-white px-3 py-1 rounded ml-2">Buy 30min ($0.40)</button><span class="chat-timer ml-4">⏱️ <span id="chatMinutesRemaining">0</span> min left</span></div><div class="chat-messages mt-3" id="chatMessages"></div><div class="flex gap-2 mt-2"><input type="text" id="chatInput" class="flex-1 border rounded-xl p-2" placeholder="Message..." disabled><button id="sendChatBtn" class="bg-indigo-600 text-white px-4 rounded-xl" disabled>Send</button></div></div></div>
 
-            <!-- KYC with URL paste and generate button -->
-            <div id="kyc" class="content-section">
-                <div class="card-glass p-6">
-                    <h3 class="text-xl font-bold mb-3">🪪 KYC Verification</h3>
-                    <div><span class="font-medium">Status:</span> <span id="kycStatusDisplay" class="px-2 py-1 rounded bg-yellow-100">unverified</span></div>
-                    <div class="mt-3">
-                        <label class="block font-medium">Document URL (Face + ID combined or separate):</label>
-                        <input type="url" id="kycDocumentUrl" placeholder="https://..." class="w-full border p-2 rounded mt-1">
-                        <button id="generateKycUrlBtn" class="mt-2 bg-gray-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-external-link-alt"></i> Generate URL</button>
-                    </div>
-                    <button id="submitKycUrlBtn" class="bg-indigo-600 text-white px-4 py-2 rounded w-full mt-3">Submit KYC</button>
-                </div>
-            </div>
+            <!-- KYC with separate URLs -->
+            <div id="kyc" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">🪪 KYC Verification</h3><div><span class="font-medium">Status:</span> <span id="kycStatusDisplay" class="px-2 py-1 rounded bg-yellow-100">unverified</span></div><div class="mt-3"><label class="block font-medium">Face Portrait URL (Google Drive, Imgur, etc.)</label><input type="url" id="faceUrl" placeholder="https://..." class="w-full border p-2 rounded mt-1"></div><div class="mt-3"><label class="block font-medium">ID Document URL (National ID / Passport)</label><input type="url" id="idUrl" placeholder="https://..." class="w-full border p-2 rounded mt-1"></div><button id="submitKycBtn" class="bg-indigo-600 text-white px-4 py-2 rounded w-full mt-3">Submit KYC</button></div></div>
 
             <!-- ANNOUNCEMENTS -->
-            <div id="announcements" class="content-section">
-                <div class="card-glass p-6">
-                    <h3 class="text-xl font-bold">📢 Announcements</h3>
-                    <div id="announcementsList" class="space-y-3"></div>
-                </div>
-            </div>
+            <div id="announcements" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold">📢 Announcements</h3><div id="announcementsList" class="space-y-3"></div></div></div>
 
-            <!-- CONTACT with social icons -->
-            <div id="contact" class="content-section">
-                <div class="card-glass p-7 text-center">
-                    <h2 class="text-2xl font-bold">📞 Contact Us</h2>
-                    <div class="flex justify-center gap-6 mt-4">
-                        <a id="whatsappLink" href="#" target="_blank" class="text-green-600 text-3xl"><i class="fab fa-whatsapp"></i></a>
-                        <a id="telegramLink" href="#" target="_blank" class="text-blue-500 text-3xl"><i class="fab fa-telegram"></i></a>
-                    </div>
-                    <div id="supportEmailDisplay" class="text-gray-600 mt-4">support@bestpay.com</div>
-                </div>
-            </div>
+            <!-- CONTACT -->
+            <div id="contact" class="content-section"><div class="card-glass p-7 text-center"><h2 class="text-2xl font-bold">📞 Contact Us</h2><div class="flex justify-center gap-6 mt-4"><a id="whatsappLink" href="#" target="_blank" class="text-green-600 text-3xl"><i class="fab fa-whatsapp"></i></a><a id="telegramLink" href="#" target="_blank" class="text-blue-500 text-3xl"><i class="fab fa-telegram"></i></a></div><div id="supportEmailDisplay" class="text-gray-600 mt-4">support@bestpay.com</div></div></div>
 
-            <!-- SETTINGS (unchanged) -->
-            <div id="settings" class="content-section">
-                <div class="card-glass p-6">
-                    <h3 class="text-xl font-bold">⚙️ Settings</h3>
-                    <input id="displayNameInput" class="border p-2 rounded w-full my-2" placeholder="Full Name">
-                    <button id="updateProfileBtn" class="bg-gray-700 text-white w-full py-2 rounded">Update Name</button>
-                    <input id="newEmailInput" type="email" class="border p-2 rounded w-full my-2" placeholder="New Email">
-                    <button id="updateEmailBtn" class="bg-indigo-600 text-white w-full py-2 rounded">Change Email</button>
-                    <input id="newPasswordInput" type="password" class="border p-2 rounded w-full my-2" placeholder="New Password">
-                    <button id="updatePasswordBtn" class="bg-red-600 text-white w-full py-2 rounded">Change Password</button>
-                </div>
-            </div>
+            <!-- SETTINGS -->
+            <div id="settings" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold">⚙️ Settings</h3><input id="displayNameInput" class="border p-2 rounded w-full my-2" placeholder="Full Name"><button id="updateProfileBtn" class="bg-gray-700 text-white w-full py-2 rounded">Update Name</button><input id="newEmailInput" type="email" class="border p-2 rounded w-full my-2" placeholder="New Email"><button id="updateEmailBtn" class="bg-indigo-600 text-white w-full py-2 rounded">Change Email</button><input id="newPasswordInput" type="password" class="border p-2 rounded w-full my-2" placeholder="New Password"><button id="updatePasswordBtn" class="bg-red-600 text-white w-full py-2 rounded">Change Password</button></div></div>
         </main>
     </div>
 
@@ -379,51 +234,13 @@
     <div id="tradeResultModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">📊 Trade Result</h3><div id="tradeResultBody"></div><button id="closeResultModalBtn" class="mt-4 bg-indigo-600 text-white px-6 py-2 rounded mx-auto block">OK</button></div></div>
     
     <!-- Withdrawal Form Modal -->
-    <div id="withdrawFormModal" class="modal">
-        <div class="modal-content">
-            <h3 class="text-xl font-bold mb-3">💸 Request Withdrawal</h3>
-            <div class="space-y-3">
-                <input type="number" id="withdrawAmount" placeholder="Amount ($)" class="w-full border p-2 rounded">
-                <select id="withdrawGateway" class="w-full border p-2 rounded">
-                    <option value="Bank Transfer">Bank Transfer</option>
-                    <option value="M-Pesa">M-Pesa</option>
-                    <option value="Crypto">Crypto</option>
-                </select>
-                <input type="text" id="withdrawDetails" placeholder="Wallet address / Account number" class="w-full border p-2 rounded">
-                <div class="progress-bar" id="withdrawProgressBar"><div class="progress-fill" id="withdrawProgressFill"></div></div>
-                <button id="confirmWithdrawStepBtn" class="bg-indigo-600 text-white w-full py-2 rounded">Confirm Withdrawal</button>
-                <button onclick="hideModal('withdrawFormModal')" class="bg-gray-500 text-white w-full py-2 rounded">Cancel</button>
-            </div>
-        </div>
-    </div>
+    <div id="withdrawFormModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">💸 Request Withdrawal</h3><div class="space-y-3"><input type="number" id="withdrawAmount" placeholder="Amount ($)" class="w-full border p-2 rounded"><select id="withdrawGateway" class="w-full border p-2 rounded"><option value="Bank Transfer">Bank Transfer</option><option value="M-Pesa">M-Pesa</option><option value="Crypto">Crypto</option></select><input type="text" id="withdrawDetails" placeholder="Wallet address / Account number" class="w-full border p-2 rounded"><div class="progress-bar" id="withdrawProgressBar"><div class="progress-fill" id="withdrawProgressFill"></div></div><button id="confirmWithdrawStepBtn" class="bg-indigo-600 text-white w-full py-2 rounded">Confirm Withdrawal</button><button id="cancelWithdrawBtn" class="bg-gray-500 text-white w-full py-2 rounded">Cancel</button></div></div></div>
 
     <!-- Report Deposit Modal -->
-    <div id="reportDepositModal" class="modal">
-        <div class="modal-content">
-            <h3 class="text-xl font-bold mb-3">📝 Report Pending Deposit</h3>
-            <div class="space-y-3">
-                <input type="number" id="reportAmount" placeholder="Amount ($)" class="w-full border p-2 rounded">
-                <input type="text" id="reportTransactionId" placeholder="Transaction ID / Reference" class="w-full border p-2 rounded">
-                <input type="email" id="reportEmail" placeholder="Your email (optional)" class="w-full border p-2 rounded">
-                <button id="submitReportDepositBtn" class="bg-green-600 text-white w-full py-2 rounded">Submit for Review</button>
-                <button onclick="hideModal('reportDepositModal')" class="bg-gray-500 text-white w-full py-2 rounded">Cancel</button>
-            </div>
-        </div>
-    </div>
+    <div id="reportDepositModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">📝 Report Pending Deposit</h3><div class="space-y-3"><input type="number" id="reportAmount" placeholder="Amount ($)" class="w-full border p-2 rounded"><input type="text" id="reportTransactionId" placeholder="Transaction ID / Reference" class="w-full border p-2 rounded"><input type="email" id="reportEmail" placeholder="Your email (optional)" class="w-full border p-2 rounded"><button id="submitReportDepositBtn" class="bg-green-600 text-white w-full py-2 rounded">Submit for Review</button><button id="cancelReportDepositBtn" class="bg-gray-500 text-white w-full py-2 rounded">Cancel</button></div></div></div>
 
     <!-- Commission Request Modal -->
-    <div id="commissionRequestModal" class="modal">
-        <div class="modal-content">
-            <h3 class="text-xl font-bold mb-3">💰 Request Commission</h3>
-            <div class="space-y-3">
-                <input type="text" id="commissionReferredEmail" placeholder="Referred user's email" class="w-full border p-2 rounded">
-                <input type="text" id="commissionReferredCode" placeholder="Their referral code (if any)" class="w-full border p-2 rounded">
-                <textarea id="commissionMessage" placeholder="Additional details..." rows="3" class="w-full border p-2 rounded"></textarea>
-                <button id="submitCommissionRequestBtn" class="bg-purple-600 text-white w-full py-2 rounded">Submit Ticket</button>
-                <button onclick="hideModal('commissionRequestModal')" class="bg-gray-500 text-white w-full py-2 rounded">Cancel</button>
-            </div>
-        </div>
-    </div>
+    <div id="commissionRequestModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">💰 Request Commission</h3><div class="space-y-3"><input type="text" id="commissionReferredEmail" placeholder="Referred user's email" class="w-full border p-2 rounded"><input type="text" id="commissionReferredCode" placeholder="Their referral code (if any)" class="w-full border p-2 rounded"><textarea id="commissionMessage" placeholder="Additional details..." rows="3" class="w-full border p-2 rounded"></textarea><button id="submitCommissionRequestBtn" class="bg-purple-600 text-white w-full py-2 rounded">Submit Ticket</button><button id="cancelCommissionRequestBtn" class="bg-gray-500 text-white w-full py-2 rounded">Cancel</button></div></div></div>
 
     <div id="spinnerModal" class="modal"><div class="modal-content text-center"><div class="spinner mb-3"></div><p id="spinnerText">Processing...</p></div></div>
     <div id="detailModal" class="modal"><div class="modal-content"><div class="flex justify-between"><h3 id="modalTitle" class="text-xl font-bold">Info</h3><button onclick="closeModal()">&times;</button></div><div id="modalBody"></div><button onclick="closeModal()" class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded">Close</button></div></div>
@@ -433,13 +250,12 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut, updateProfile, updateEmail, updatePassword, sendEmailVerification, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, orderBy, serverTimestamp, addDoc, increment, Timestamp, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+        import { getStorage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
         
         const firebaseConfig = { apiKey: "AIzaSyDtGN7KCK0A4fhztLN0CgxsKkGROcO_-vI", authDomain: "bestpay-5b78c.firebaseapp.com", projectId: "bestpay-5b78c", storageBucket: "bestpay-5b78c.firebasestorage.app", messagingSenderId: "583230068716", appId: "1:583230068716:web:3e8d298b4d00b46c8652c9" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const storage = getStorage(app);
         let currentUser, currentUserData, isRealMode = true;
         let activeTimers = new Map();
         let pendingTrade = null;
@@ -447,47 +263,24 @@
         let autoTradeInterval = null;
         let currentPrice = 1.0892;
         let withdrawalConfig = { minAmount: 10, feePercent: 3 };
-        let exchangeRate = 130; // default KES per USD
-        let streakRewards = [0.04, 0.05, 0.06, 0.07, 0.05, 0.06, 0.06]; // default $ rewards per day
+        let exchangeRate = 130;
+        let streakRewards = [0.04, 0.05, 0.06, 0.07, 0.05, 0.06, 0.06];
         
-        // Helper functions
         function showNotification(msg, type='success'){ const d=document.createElement('div'); d.className=`notification ${type==='error'?'bg-red-700':type==='info'?'bg-blue-700':'bg-gray-800'}`; d.innerHTML=msg; document.body.appendChild(d); setTimeout(()=>d.remove(),3000); }
         function showModal(modalId){ document.getElementById(modalId).classList.add('active'); }
         function hideModal(modalId){ document.getElementById(modalId).classList.remove('active'); }
         window.closeModal = () => hideModal('detailModal');
         window.closeReAuthModal = () => hideModal('reAuthModal');
         
-        async function loadExchangeRate() {
-            try {
-                const rateDoc = await getDoc(doc(db,"settings","currencyRates"));
-                if(rateDoc.exists()) exchangeRate = rateDoc.data().usdToKes || 130;
-            } catch(e) { console.warn("Using default rate"); }
-            document.getElementById('exchangeRate').innerText = `1 USD = ${exchangeRate.toFixed(2)} KES`;
-        }
+        // Cancel buttons for modals
+        document.getElementById('cancelWithdrawBtn')?.addEventListener('click', () => hideModal('withdrawFormModal'));
+        document.getElementById('cancelReportDepositBtn')?.addEventListener('click', () => hideModal('reportDepositModal'));
+        document.getElementById('cancelCommissionRequestBtn')?.addEventListener('click', () => hideModal('commissionRequestModal'));
         
-        async function loadStreakRewards() {
-            try {
-                const streakDoc = await getDoc(doc(db,"streak_config","weekly"));
-                if(streakDoc.exists()) streakRewards = streakDoc.data().rewards;
-            } catch(e) { console.warn("Using default streak rewards"); }
-        }
-        
-        async function loadWithdrawalConfig() {
-            try {
-                const configDoc = await getDoc(doc(db, "settings", "withdrawalConfig"));
-                if(configDoc.exists()) withdrawalConfig = configDoc.data();
-            } catch(e) { console.warn("Using default withdrawal config"); }
-        }
-        
-        async function loadSocialLinks() {
-            try {
-                const links = await getDoc(doc(db,"settings","socialLinks"));
-                if(links.exists()) {
-                    document.getElementById('whatsappLink').href = links.data().whatsapp || '#';
-                    document.getElementById('telegramLink').href = links.data().telegram || '#';
-                }
-            } catch(e) { console.warn("Social links not configured"); }
-        }
+        async function loadExchangeRate() { try { const rateDoc = await getDoc(doc(db,"settings","currencyRates")); if(rateDoc.exists()) exchangeRate = rateDoc.data().usdToKes || 130; } catch(e) {} document.getElementById('exchangeRate').innerText = `1 USD = ${exchangeRate.toFixed(2)} KES`; }
+        async function loadStreakRewards() { try { const streakDoc = await getDoc(doc(db,"streak_config","weekly")); if(streakDoc.exists()) streakRewards = streakDoc.data().rewards; } catch(e) {} }
+        async function loadWithdrawalConfig() { try { const configDoc = await getDoc(doc(db, "settings", "withdrawalConfig")); if(configDoc.exists()) withdrawalConfig = configDoc.data(); } catch(e) {} }
+        async function loadSocialLinks() { try { const links = await getDoc(doc(db,"settings","socialLinks")); if(links.exists()) { document.getElementById('whatsappLink').href = links.data().whatsapp || '#'; document.getElementById('telegramLink').href = links.data().telegram || '#'; } } catch(e) {} }
         
         async function loadUserData() { 
             const snap = await getDoc(doc(db,"users",currentUser.uid)); 
@@ -497,12 +290,7 @@
             document.getElementById('liveBalance').innerText = `$${bal.toFixed(2)}`;
             document.getElementById('liveBalanceKES').innerHTML = `≈ KES ${(bal * exchangeRate).toFixed(2)}`;
             document.getElementById('userShort').innerText = currentUserData.displayName?.split(' ')[0] || currentUser.email.split('@')[0]; 
-            document.getElementById('balanceDetails').innerHTML = `
-                <div class="flex justify-between"><span>💰 Real Balance (USD):</span><span class="font-bold">$${(currentUserData.realBalance||0).toFixed(2)}</span></div>
-                <div class="flex justify-between"><span>💰 Real Balance (KES):</span><span class="font-bold">KES ${((currentUserData.realBalance||0) * exchangeRate).toFixed(2)}</span></div>
-                <div class="flex justify-between"><span>🎮 Demo Balance:</span><span class="font-bold">$${(currentUserData.demoBalance||10000).toFixed(2)}</span></div>
-                <div class="flex justify-between"><span>🏆 Total Earned:</span><span class="font-bold">$${(currentUserData.totalEarned||0).toFixed(2)}</span></div>
-            `;
+            document.getElementById('balanceDetails').innerHTML = `<div class="flex justify-between"><span>💰 Real Balance (USD):</span><span class="font-bold">$${(currentUserData.realBalance||0).toFixed(2)}</span></div><div class="flex justify-between"><span>💰 Real Balance (KES):</span><span class="font-bold">KES ${((currentUserData.realBalance||0) * exchangeRate).toFixed(2)}</span></div><div class="flex justify-between"><span>🎮 Demo Balance:</span><span class="font-bold">$${(currentUserData.demoBalance||10000).toFixed(2)}</span></div><div class="flex justify-between"><span>🏆 Total Earned:</span><span class="font-bold">$${(currentUserData.totalEarned||0).toFixed(2)}</span></div>`;
             document.getElementById('withdrawBalanceInfo').innerHTML = `💰 Available Balance: $${bal.toFixed(2)} (≈ KES ${(bal * exchangeRate).toFixed(2)})<br>💸 Minimum withdrawal: $${withdrawalConfig.minAmount} | Fee: ${withdrawalConfig.feePercent}%`;
             document.getElementById('kycStatusDisplay').innerHTML = `<span class="px-2 py-1 rounded ${currentUserData.kycStatus==='verified'?'bg-green-100':'bg-yellow-100'}">${currentUserData.kycStatus || 'unverified'}</span>`;
         }
@@ -525,7 +313,6 @@
         document.getElementById('multiplierSlider').addEventListener('input', updateRiskReward);
         document.getElementById('stakeAmount').addEventListener('input', updateRiskReward);
         
-        // Core trade execution (same as before, keep working)
         async function executeTrade(direction, stake, multiplier) {
             const currentBalance = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||10000);
             if(stake > currentBalance) { showNotification(`Insufficient ${isRealMode?'real':'demo'} balance`,"error"); return false; }
@@ -558,7 +345,7 @@
             const resultHtml = `<div class="text-center"><div class="text-2xl mb-3 ${won?'text-green-600':'text-red-600'}">${won?'🎉 WINNER! 🎉':'💔 LOSS 💔'}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Direction:</b> ${direction.toUpperCase()}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Stake:</b> $${stake.toFixed(2)}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Multiplier:</b> ${multiplier}x</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Entry:</b> ${entryPrice.toFixed(5)}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Exit:</b> ${finalPrice.toFixed(5)}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Payout:</b> $${payoutAmount.toFixed(2)}</div><div class="text-xl font-bold ${won?'text-green-600':'text-red-600'} mt-2">${won?`+$${(payoutAmount-stake).toFixed(2)}`:`-$${stake.toFixed(2)}`}</div></div>`;
             document.getElementById('tradeResultBody').innerHTML = resultHtml;
             showModal('tradeResultModal');
-            loadOpenTrades(); loadHistory(); loadUserData();
+            loadOpenTrades(); loadHistory(); loadUserData(); loadTransactions(); loadWithdrawals(); loadDeposits();
         }
         document.getElementById('closeResultModalBtn').onclick = () => hideModal('tradeResultModal');
         
@@ -569,7 +356,7 @@
             const container = document.getElementById('openPositionsList');
             const badge = document.getElementById('activeCountBadge');
             badge.innerText = snap.size;
-            if(snap.empty){ container.innerHTML='<div class="text-gray-500 text-center py-4">No active trades</div>'; document.getElementById('globalTradeStatus').innerHTML = '<i class="fas fa-chart-simple"></i> ✅ No active trades'; document.getElementById('chartCountdown').innerHTML = '⏱️ No active trade'; return; }
+            if(snap.empty){ container.innerHTML='<div class="empty-message">No active trades</div>'; document.getElementById('globalTradeStatus').innerHTML = '<i class="fas fa-chart-simple"></i> ✅ No active trades'; document.getElementById('chartCountdown').innerHTML = '⏱️ No active trade'; return; }
             let earliestExpiry = null;
             let html='';
             snap.forEach(docSnap=>{
@@ -618,7 +405,7 @@
             const snap=await getDocs(q);
             let html='', totalP=0, wins=0;
             snap.forEach(d=>{ const t=d.data(); const profit=t.profit||0; totalP+=profit; if(profit>0) wins++; html+=`<div class="flex justify-between border-b py-1">${t.direction} $${t.amount} (${t.multiplier||2}x) ${profit>=0?`+${profit.toFixed(2)}`:profit.toFixed(2)}</div>`; });
-            document.getElementById('lastTradesList').innerHTML=html||'No history';
+            document.getElementById('lastTradesList').innerHTML=html||'<div class="empty-message">No trade history</div>';
             document.getElementById('last10Profit').innerHTML=`$${totalP.toFixed(2)}`;
             document.getElementById('winRatePercent').innerHTML=snap.size?((wins/snap.size)*100).toFixed(1)+'%':'0%';
         }
@@ -640,7 +427,6 @@
         document.getElementById('callTradeBtn').onclick=()=>requestTradeConfirmation('call');
         document.getElementById('putTradeBtn').onclick=()=>requestTradeConfirmation('put');
         
-        // Auto Trade
         function startAutoTrade() {
             if(autoTradeInterval) clearInterval(autoTradeInterval);
             const direction = document.getElementById('autoDirection').value;
@@ -672,7 +458,6 @@
             if(!gateway || !details) { showNotification("All fields required","error"); return; }
             const fee = (amount * withdrawalConfig.feePercent) / 100;
             const netAmount = amount - fee;
-            // Show progress bar animation
             const progressFill = document.getElementById('withdrawProgressFill');
             progressFill.style.width = '0%';
             let width = 0;
@@ -698,34 +483,25 @@
         
         async function loadWithdrawals() {
             const snap = await getDocs(query(collection(db,"withdrawals"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")));
+            if(snap.empty) { document.getElementById('withdrawalsList').innerHTML = '<div class="empty-message">No withdrawal requests</div>'; return; }
             let html=''; 
             snap.forEach(d=>{ const w=d.data(); 
-                html+=`<div class="border-b py-2"><b>$${w.amount}</b> - ${w.status}<br>
-                Fee: $${(w.fee||0).toFixed(2)} | Net: $${(w.netAmount||w.amount).toFixed(2)}<br>
-                Gateway: ${w.gateway||'-'} | Created: ${w.createdAt?.toDate().toLocaleString()}<br>
-                ${w.processedAt ? `Processed: ${w.processedAt.toDate().toLocaleString()}` : ''}
-                ${w.status === 'pending' ? '<span class="text-yellow-600">⏳ Pending approval</span>' : (w.status === 'paid' ? '<span class="text-green-600">✅ Paid</span>' : '<span class="text-red-600">❌ Failed</span>')}
-                </div>`; 
+                html+=`<div class="border-b py-3"><div class="flex justify-between"><span class="font-bold">$${w.amount}</span><span class="text-sm ${w.status==='pending'?'text-yellow-600':w.status==='paid'?'text-green-600':'text-red-600'}">${w.status.toUpperCase()}</span></div><div class="text-sm">Fee: $${(w.fee||0).toFixed(2)} | Net: $${(w.netAmount||w.amount).toFixed(2)} | Gateway: ${w.gateway}</div><div class="text-xs text-gray-500">Created: ${w.createdAt?.toDate().toLocaleString()} ${w.processedAt ? `| Processed: ${w.processedAt.toDate().toLocaleString()}` : ''}</div></div>`; 
             });
-            document.getElementById('withdrawalsList').innerHTML=html||'No withdrawals';
+            document.getElementById('withdrawalsList').innerHTML = html;
         }
         
-        // Transactions with all fields
         async function loadTransactions() {
             const snap = await getDocs(query(collection(db,"transactions"), where("userId","==",currentUser.uid), orderBy("timestamp","desc"), limit(50)));
+            if(snap.empty) { document.getElementById('historyList').innerHTML = '<div class="empty-message">No transactions yet</div>'; return; }
             let html=''; 
             snap.forEach(d=>{ const t=d.data(); 
-                html+=`<div class="border-b py-2">
-                    <span class="font-medium">${t.type}</span> - $${t.amount.toFixed(2)}<br>
-                    <span class="text-xs text-gray-500">${t.description || ''}</span><br>
-                    <span class="text-xs">Status: ${t.status || 'completed'} | Ref: ${t.reference || 'N/A'}</span><br>
-                    <span class="text-xs">${t.timestamp?.toDate().toLocaleString()}</span>
-                </div>`; 
+                html+=`<div class="border-b py-2"><div class="flex justify-between"><span class="font-medium">${t.type}</span><span class="font-bold ${t.amount>=0?'text-green-600':'text-red-600'}">$${t.amount.toFixed(2)}</span></div><div class="text-sm">${t.description || ''}</div><div class="text-xs text-gray-500">Status: ${t.status || 'completed'} | Ref: ${t.reference || 'N/A'} | ${t.timestamp?.toDate().toLocaleString()}</div></div>`; 
             });
-            document.getElementById('historyList').innerHTML=html||'No transactions';
+            document.getElementById('historyList').innerHTML = html;
         }
         
-        // Deposits with payment links and report
+        // Deposits
         async function initDepositButtons() {
             const methods = ['mpesa', 'bank', 'crypto'];
             for(let method of methods) {
@@ -755,17 +531,19 @@
             document.getElementById('reportAmount').value = '';
             document.getElementById('reportTransactionId').value = '';
             document.getElementById('reportEmail').value = '';
+            loadDeposits();
         };
         async function loadDeposits() {
             const snap = await getDocs(query(collection(db,"deposits"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")));
-            let html='<h4 class="font-bold mt-4">Completed Deposits</h4>';
-            snap.forEach(d=>{ const dp=d.data(); html+=`<div class="border-b py-1">$${dp.amount} - ${dp.status||'pending'} - ${dp.method} - ${dp.createdAt?.toDate().toLocaleString()}</div>`; });
+            let html = '<h4 class="font-bold">✅ Completed Deposits</h4>';
+            if(snap.empty) html += '<div class="empty-message">No completed deposits</div>';
+            else snap.forEach(d=>{ const dp=d.data(); html+=`<div class="border-b py-2">$${dp.amount} - ${dp.method} - ${dp.status} - ${dp.createdAt?.toDate().toLocaleString()}</div>`; });
             const pendingSnap = await getDocs(query(collection(db,"pending_deposits"), where("userId","==",currentUser.uid), where("status","==","pending_review")));
             if(!pendingSnap.empty) {
-                html = '<h4 class="font-bold text-yellow-600">Pending Deposits (Under Review)</h4>' + html;
-                pendingSnap.forEach(d=>{ const dp=d.data(); html+=`<div class="border-b py-1 bg-yellow-50">$${dp.amount} - ${dp.status} - ${dp.reference} - ${dp.createdAt?.toDate().toLocaleString()}</div>`; });
+                html = '<h4 class="font-bold text-yellow-600">⏳ Pending Deposits (Under Review)</h4>' + html;
+                pendingSnap.forEach(d=>{ const dp=d.data(); html+=`<div class="border-b py-2 bg-yellow-50">$${dp.amount} - Reference: ${dp.reference} - ${dp.createdAt?.toDate().toLocaleString()}</div>`; });
             }
-            document.getElementById('depositsList').innerHTML=html||'No deposits';
+            document.getElementById('depositsList').innerHTML = html;
         }
         
         // Referrals
@@ -776,6 +554,7 @@
             snap.forEach(r=>{ earnedComm += r.data().commissionEarned||0; referredList.push(r.data().referredId); });
             document.getElementById('referralStats').innerHTML = `Referred: ${snap.size} | Earned Commission: $${earnedComm.toFixed(2)} | Pending: $0.00 (manual approval)`;
             document.getElementById('referralLinkDisplay').innerText = `${window.location.origin}/?ref=${currentUser.uid}`;
+            if(referredList.length === 0) { document.getElementById('referredUsersList').innerHTML = '<div class="empty-message">No referred users yet.</div>'; return; }
             let refHtml = '<ul class="list-disc pl-4">';
             for(let refId of referredList) {
                 const userSnap = await getDoc(doc(db,"users",refId));
@@ -783,7 +562,7 @@
                 else refHtml += `<li>${refId}</li>`;
             }
             refHtml += '</ul>';
-            document.getElementById('referredUsersList').innerHTML = refHtml || 'No referred users yet.';
+            document.getElementById('referredUsersList').innerHTML = refHtml;
         }
         document.getElementById('requestCommissionBtn').onclick = () => showModal('commissionRequestModal');
         document.getElementById('submitCommissionRequestBtn').onclick = async () => {
@@ -801,29 +580,27 @@
             document.getElementById('commissionReferredEmail').value = '';
             document.getElementById('commissionReferredCode').value = '';
             document.getElementById('commissionMessage').value = '';
+            loadSupportTickets();
         };
         
         // Leaderboard
         async function loadLeaderboard() {
             const snap = await getDocs(query(collection(db,"users"), orderBy("totalEarned","desc"), limit(10)));
+            if(snap.empty) { document.getElementById('leaderboardContainer').innerHTML = '<div class="empty-message">No data yet</div>'; return; }
             let i=1,html=''; snap.forEach(d=>{ const u=d.data(); if(u.role!=='admin') html+=`<div class="flex justify-between border-b py-2"><span>${i++}. ${u.displayName||u.email}</span><span class="font-bold">$${(u.totalEarned||0).toFixed(2)}</span></div>`; });
-            document.getElementById('leaderboardContainer').innerHTML=html;
+            if(html === '') html = '<div class="empty-message">No traders yet</div>';
+            document.getElementById('leaderboardContainer').innerHTML = html;
         }
         
-        // Support Tickets with full details
+        // Support Tickets
         async function loadSupportTickets() {
             const snap = await getDocs(query(collection(db,"support_tickets"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")));
+            if(snap.empty) { document.getElementById('supportTicketsList').innerHTML = '<div class="empty-message">No support tickets</div>'; return; }
             let html=''; 
             snap.forEach(d=>{ const t=d.data(); 
-                html+=`<div class="border rounded p-3">
-                    <div class="flex justify-between"><span class="font-bold">#${d.id.slice(-6)}</span><span class="text-xs ${t.status==='open'?'text-green-600':'text-gray-500'}">${t.status}</span></div>
-                    <div><b>Subject:</b> ${t.subject}</div>
-                    <div><b>Message:</b> ${t.message}</div>
-                    <div class="text-xs text-gray-500">Created: ${t.createdAt?.toDate().toLocaleString()} | Resolved: ${t.resolvedAt?.toDate().toLocaleString() || '—'}</div>
-                    ${t.note ? `<div class="text-sm bg-gray-50 p-1 mt-1"><b>Admin Note:</b> ${t.note}</div>` : ''}
-                </div>`; 
+                html+=`<div class="border rounded p-3"><div class="flex justify-between"><span class="font-bold">#${d.id.slice(-6)}</span><span class="text-xs ${t.status==='open'?'text-green-600':'text-gray-500'}">${t.status}</span></div><div><b>Subject:</b> ${t.subject}</div><div><b>Message:</b> ${t.message}</div><div class="text-xs text-gray-500">Created: ${t.createdAt?.toDate().toLocaleString()} | Resolved: ${t.resolvedAt?.toDate().toLocaleString() || '—'}</div>${t.note ? `<div class="text-sm bg-gray-50 p-1 mt-1"><b>Admin Note:</b> ${t.note}</div>` : ''}</div>`; 
             });
-            document.getElementById('supportTicketsList').innerHTML=html||'No tickets';
+            document.getElementById('supportTicketsList').innerHTML = html;
         }
         document.getElementById('createTicketBtn').onclick = async () => {
             const subject = prompt("Subject:");
@@ -835,14 +612,14 @@
             loadSupportTickets();
         };
         
-        // Daily Streaks (requires KYC verified)
+        // Daily Streaks
         async function loadStreak() {
             const kycStatus = currentUserData.kycStatus;
             const kycWarning = document.getElementById('streakKYCWarning');
             const streakGrid = document.getElementById('streakGrid');
             if(kycStatus !== 'verified') {
                 kycWarning.classList.remove('hidden');
-                streakGrid.innerHTML = '<div class="text-center text-gray-500 col-span-7">KYC verification required to participate in daily streaks</div>';
+                streakGrid.innerHTML = '<div class="empty-message col-span-7 text-center">KYC verification required to participate in daily streaks</div>';
                 return;
             }
             kycWarning.classList.add('hidden');
@@ -858,16 +635,11 @@
                 else if(canClaim && i === streakData.currentStreak) dayStatus = 'available';
                 else if(i < streakData.currentStreak && (!streakData.claimedDays || !streakData.claimedDays.includes(i))) dayStatus = 'expired';
                 let reward = streakRewards[i] || 0;
-                html += `<div class="streak-box ${dayStatus}" data-day="${i}" data-reward="${reward}">
-                            <div class="font-bold">Day ${i+1}</div>
-                            <div class="text-sm">$${reward}</div>
-                            ${dayStatus==='available' ? '<i class="fas fa-gift"></i>' : (dayStatus==='claimed' ? '<i class="fas fa-check-circle"></i>' : (dayStatus==='expired' ? '<i class="fas fa-times-circle"></i>' : '<i class="fas fa-lock"></i>'))}
-                         </div>`;
+                html += `<div class="streak-box ${dayStatus}" data-day="${i}" data-reward="${reward}"><div class="font-bold">Day ${i+1}</div><div class="text-sm">$${reward}</div>${dayStatus==='available' ? '<i class="fas fa-gift"></i>' : (dayStatus==='claimed' ? '<i class="fas fa-check-circle"></i>' : (dayStatus==='expired' ? '<i class="fas fa-times-circle"></i>' : '<i class="fas fa-lock"></i>'))}</div>`;
             }
             html += '</div>';
             streakGrid.innerHTML = html;
             document.getElementById('streakInfo').innerHTML = `Current streak: ${streakData.currentStreak} days | ${canClaim ? 'Click today\'s box to claim reward!' : 'Come back tomorrow for next streak!'}`;
-            // add click handler for available box
             document.querySelectorAll('.streak-box.available').forEach(box => {
                 box.onclick = async () => {
                     const day = parseInt(box.dataset.day);
@@ -882,15 +654,13 @@
             });
         }
         
-        // KYC with URL and generate button
-        document.getElementById('generateKycUrlBtn').onclick = () => {
-            window.open('https://www.urllink.com/upload', '_blank');
-        };
-        document.getElementById('submitKycUrlBtn').onclick = async () => {
-            const url = document.getElementById('kycDocumentUrl').value;
-            if(!url) { showNotification("Please paste a document URL","error"); return; }
+        // KYC with separate URLs
+        document.getElementById('submitKycBtn').onclick = async () => {
+            const faceUrl = document.getElementById('faceUrl').value;
+            const idUrl = document.getElementById('idUrl').value;
+            if(!faceUrl || !idUrl) { showNotification("Both Face Portrait URL and ID Document URL are required","error"); return; }
             await setDoc(doc(db,"kyc_requests",currentUser.uid), {
-                userId: currentUser.uid, faceUrl: url, idUrl: url, idType: "URL", status: "pending", timestamp: serverTimestamp()
+                userId: currentUser.uid, faceUrl: faceUrl, idUrl: idUrl, idType: "URL", status: "pending", timestamp: serverTimestamp()
             });
             await updateDoc(doc(db,"users",currentUser.uid), { kycStatus: "pending" });
             showNotification("KYC submitted for review");
@@ -899,27 +669,22 @@
         
         // Announcements
         async function loadAnnouncements() {
-            const snap = await getDocs(query(collection(db,"announcements"), orderBy("createdAt","desc"), limit(5)));
-            let html=''; snap.forEach(d=>{ const a=d.data(); html+=`<div class="border-b p-3"><b>${a.title}</b><br>${a.content}<br><span class="text-xs text-gray-500">${a.createdAt?.toDate().toLocaleString()}</span></div>`; });
-            document.getElementById('announcementsList').innerHTML=html||'No announcements';
+            const snap = await getDocs(query(collection(db,"announcements"), orderBy("createdAt","desc"), limit(10)));
+            if(snap.empty) { document.getElementById('announcementsList').innerHTML = '<div class="empty-message">No announcements</div>'; return; }
+            let html=''; snap.forEach(d=>{ const a=d.data(); html+=`<div class="border-b p-3"><div class="font-bold">${a.title}</div><div>${a.content}</div><div class="text-xs text-gray-500">${a.createdAt?.toDate().toLocaleString()}</div></div>`; });
+            document.getElementById('announcementsList').innerHTML = html;
         }
         
-        // Investment plans with image, daily earnings
+        // Investment plans with image
         async function loadInvestmentPlans(){ 
             const snap=await getDocs(collection(db,"investment_plans")); 
+            if(snap.empty) { document.getElementById('investmentProductsList').innerHTML = '<div class="empty-message">No investment plans available</div>'; return; }
             let html=''; 
             snap.forEach(d=>{ const p=d.data(); 
                 const dailyEarnings = (p.minAmount * p.dailyROI / 100).toFixed(2);
-                html+=`<div class="investment-card border rounded-lg p-4 shadow-sm">
-                    ${p.imageUrl ? `<img src="${p.imageUrl}" class="w-full h-32 object-cover rounded mb-2">` : '<div class="w-full h-32 bg-gray-200 rounded mb-2 flex items-center justify-center"><i class="fas fa-chart-line text-4xl text-gray-400"></i></div>'}
-                    <h3 class="font-bold text-lg">${p.name}</h3>
-                    <div class="text-sm">Min: $${p.minAmount} | ROI: ${p.dailyROI}% daily</div>
-                    <div class="text-sm">Daily Earnings: $${dailyEarnings}</div>
-                    <div class="text-sm">Duration: ${p.durationDays} days</div>
-                    <button onclick="window.investInPlan('${d.id}', ${p.minAmount}, ${p.dailyROI}, ${p.durationDays})" class="mt-2 bg-green-600 text-white px-3 py-1 rounded text-sm w-full">Invest</button>
-                </div>`; 
+                html+=`<div class="investment-card border rounded-lg p-4 shadow-sm">${p.imageUrl ? `<img src="${p.imageUrl}" class="w-full h-32 object-cover rounded mb-2" onerror="this.src='https://via.placeholder.com/300x150?text=No+Image'">` : '<div class="w-full h-32 bg-gray-200 rounded mb-2 flex items-center justify-center"><i class="fas fa-chart-line text-4xl text-gray-400"></i></div>'}<h3 class="font-bold text-lg">${p.name}</h3><div class="text-sm">Min: $${p.minAmount} | ROI: ${p.dailyROI}% daily</div><div class="text-sm">Daily Earnings: $${dailyEarnings}</div><div class="text-sm">Duration: ${p.durationDays} days</div><button onclick="window.investInPlan('${d.id}', ${p.minAmount}, ${p.dailyROI}, ${p.durationDays})" class="mt-2 bg-green-600 text-white px-3 py-1 rounded text-sm w-full">Invest</button></div>`; 
             }); 
-            document.getElementById('investmentProductsList').innerHTML=html||'No plans available'; 
+            document.getElementById('investmentProductsList').innerHTML = html; 
         }
         window.investInPlan=async(planId, minAmount, roi, duration)=>{
             const amount=parseFloat(prompt(`Enter amount (min $${minAmount}):`));
@@ -933,24 +698,21 @@
         };
         async function loadActiveInvestments(){ 
             const snap=await getDocs(query(collection(db,"user_investments"), where("userId","==",currentUser.uid), where("status","==","active"))); 
+            if(snap.empty) { document.getElementById('activeInvestmentsList').innerHTML = '<div class="empty-message">No active investments</div>'; return; }
             let html=''; 
             for(const inv of snap.docs){ 
                 const data=inv.data(); 
                 const daysActive=Math.floor((Date.now()-data.startDate.toDate())/86400000); 
                 const expectedROI = data.amount * data.dailyROI / 100 * daysActive;
-                html+=`<div class="border rounded p-3 flex justify-between">
-                    <div><span class="font-bold">${data.planName}</span><br>Amount: $${data.amount}<br>Daily ROI: ${data.dailyROI}%</div>
-                    <div class="text-right">Earned so far: $${expectedROI.toFixed(2)}<br>Days active: ${daysActive}/${data.durationDays}</div>
-                </div>`; 
+                html+=`<div class="border rounded p-3 flex justify-between"><div><span class="font-bold">${data.planName}</span><br>Amount: $${data.amount}<br>Daily ROI: ${data.dailyROI}%</div><div class="text-right">Earned so far: $${expectedROI.toFixed(2)}<br>Days active: ${daysActive}/${data.durationDays}</div></div>`; 
             } 
-            document.getElementById('activeInvestmentsList').innerHTML=html||'No active investments'; 
+            document.getElementById('activeInvestmentsList').innerHTML = html; 
         }
         
         // Quick action buttons
         document.getElementById('quickWithdrawBtn').onclick = () => activateSection('withdrawals');
         document.getElementById('quickTopUpBtn').onclick = () => activateSection('deposits');
         
-        // Navigation & section loading
         function activateSection(id){
             document.querySelectorAll('.content-section').forEach(s=>s.classList.remove('active-section'));
             document.getElementById(id).classList.add('active-section');
@@ -975,7 +737,6 @@
         // stake buttons
         for(let i=1;i<=9;i++){ const btn=document.createElement('button'); btn.innerText=i; btn.className='number-btn'; btn.onclick=()=>{ document.getElementById('stakeAmount').value=i; updateRiskReward(); }; document.getElementById('stakeButtonsContainer').appendChild(btn); }
         
-        // Mode toggles
         document.getElementById('realModeBtn').onclick=()=>{ isRealMode=true; document.getElementById('modeLabel').innerHTML='🔴 REAL ACCOUNT'; loadUserData(); loadOpenTrades(); loadHistory(); };
         document.getElementById('demoModeBtn').onclick=()=>{ isRealMode=false; document.getElementById('modeLabel').innerHTML='🟢 DEMO MODE'; loadUserData(); loadOpenTrades(); loadHistory(); };
         document.getElementById('resetDemoBtn').onclick=async()=>{ if(!isRealMode){ await updateDoc(doc(db,"users",currentUser.uid),{demoBalance:10000}); loadUserData(); showNotification("Demo reset to $10,000"); } else showNotification("Switch to Demo mode first","info"); };
