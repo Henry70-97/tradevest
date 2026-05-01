@@ -79,6 +79,17 @@
         }
         .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #4f46e5; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .progress-bar { width: 100%; background-color: #e2e8f0; border-radius: 1rem; overflow: hidden; height: 10px; margin: 10px 0; }
+        .progress-fill { width: 0%; height: 100%; background-color: #4f46e5; transition: width 0.3s; }
+        .streak-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 0.5rem; margin: 1rem 0; }
+        .streak-box { background: #f3f4f6; border-radius: 0.75rem; padding: 1rem 0.5rem; text-align: center; cursor: pointer; border: 2px solid transparent; }
+        .streak-box.claimed { background: #d1fae5; border-color: #10b981; cursor: default; opacity: 0.7; }
+        .streak-box.available { background: #818cf8; color: white; animation: pulse 1s infinite; cursor: pointer; }
+        .streak-box.expired { background: #e5e7eb; border-color: #ef4444; cursor: not-allowed; opacity: 0.5; text-decoration: line-through; }
+        .streak-box.disabled { background: #e5e7eb; cursor: not-allowed; opacity: 0.5; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+        .investment-card { transition: transform 0.2s; }
+        .investment-card:hover { transform: translateY(-4px); }
     </style>
 </head>
 <body class="bg-amber-50">
@@ -128,13 +139,12 @@
         </div>
 
         <main class="container mx-auto px-4 py-6 space-y-6">
-            <!-- TRADING SECTION -->
+            <!-- TRADING SECTION (unchanged, but keep) -->
             <div id="trade" class="content-section active-section">
                 <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
                     <div id="globalTradeStatus" class="status-bar text-sm"><i class="fas fa-chart-simple"></i> <span id="statusText">✅ No active trades</span> <span id="statusTimer" class="font-mono"></span></div>
                     <button id="resetDemoBtn" class="reset-btn"><i class="fas fa-sync-alt mr-1"></i> Reset Demo</button>
                 </div>
-
                 <div class="grid lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-2 space-y-4">
                         <div class="guide-card flex items-center justify-between" id="tradeGuideBtn"><div><i class="fas fa-book-open text-indigo-600 text-2xl mr-3"></i> <strong>📘 Trading Guide</strong> – 60 sec trades: CALL=price UP, PUT=price DOWN | Win = Stake × Multiplier</div><i class="fas fa-chevron-right"></i></div>
@@ -147,8 +157,6 @@
                             </div>
                             <div id="lastTradeSummary" class="last-trade-mini mb-3">📋 Last trade: —</div>
                             <div class="streak-dots" id="streakDots"></div>
-                            
-                            <!-- AUTO TRADE PANEL -->
                             <div class="auto-trade-panel mb-3">
                                 <div><i class="fas fa-robot"></i> Auto Trade</div>
                                 <div class="flex gap-2 flex-wrap">
@@ -160,7 +168,6 @@
                                     <button id="stopAutoTradeBtn" class="bg-red-600 text-white px-3 py-1 rounded text-sm" disabled>Stop</button>
                                 </div>
                             </div>
-
                             <div class="flex gap-5 border-b mb-3 mt-2">
                                 <button id="positionsTabBtn" class="px-4 py-2 font-bold text-indigo-600 border-b-2 border-indigo-500">Active (60s)</button>
                                 <button id="historyTabBtn" class="px-4 py-2 font-bold text-gray-500">History</button>
@@ -179,11 +186,12 @@
                         <div class="card-glass p-4">
                             <div class="flex justify-between items-center"><span class="font-bold text-lg">💰 Trading Balance</span><button id="topUpBalanceBtn" class="bg-indigo-600 text-white px-3 py-1 rounded-full text-sm"><i class="fas fa-plus-circle"></i> Top Up</button></div>
                             <div id="liveBalance" class="text-3xl font-bold text-green-600 mt-2">$0.00</div>
+                            <div id="liveBalanceKES" class="text-sm text-gray-600"></div>
                             <div id="insufficientAlert" class="balance-alert hidden mt-2"><i class="fas fa-exclamation-triangle"></i><span>Insufficient balance? <a href="#" id="depositNowLink" class="font-bold underline">Deposit now</a></span></div>
                         </div>
                         <div class="card-glass p-4 text-center"><div class="text-sm text-gray-500">EUR/USD Live</div><div class="text-3xl font-bold text-indigo-700" id="livePrice">1.0892</div><div class="text-xs">Price updates every 2s</div></div>
                         <div class="card-glass p-4">
-                            <div class="font-medium mb-2">Stake Amount <span id="stakeMinLabel">(Min $9)</span> <i class="fas fa-question-circle tooltip-icon" title="Amount you risk. If wrong, you lose this amount."></i></div>
+                            <div class="font-medium mb-2">Stake Amount <span id="stakeMinLabel">(Min $9)</span> <i class="fas fa-question-circle tooltip-icon"></i></div>
                             <div class="grid grid-cols-5 gap-2 stake-buttons-grid" id="stakeButtonsContainer"></div>
                             <input type="number" id="stakeAmount" class="w-full border rounded-xl p-2 mt-2 text-center" value="10" step="1">
                             <div class="mt-3">
@@ -192,8 +200,8 @@
                                 <div class="risk-reward-bar mt-1"><div class="risk-reward-fill" id="riskRewardFill"></div></div>
                             </div>
                         </div>
-                        <div class="card-glass p-4 advanced-feature" id="multiplierContainer">
-                            <div class="font-medium mb-2">Multiplier (1x - 10x) <i class="fas fa-question-circle tooltip-icon" title="Win profit = stake × (multiplier-1). Higher risk."></i></div>
+                        <div class="card-glass p-4" id="multiplierContainer">
+                            <div class="font-medium mb-2">Multiplier (1x - 10x) <i class="fas fa-question-circle tooltip-icon"></i></div>
                             <input type="range" id="multiplierSlider" min="1" max="10" step="0.5" value="2" class="w-full">
                             <div class="flex justify-between mt-1"><span>1x</span><span>5x</span><span>10x</span></div>
                             <div class="mt-2 text-center"><span class="font-bold" id="multiplierValue">2.0x</span></div>
@@ -205,41 +213,218 @@
                 </div>
             </div>
 
-            <!-- INVESTMENTS -->
-            <div id="investments" class="content-section"><div class="card-glass p-6"><h2 class="text-2xl font-bold mb-3">Investment Dashboard</h2><div id="investmentProductsList" class="grid gap-3 mb-6"></div><h3 class="text-xl font-bold mb-2">Your Active Investments</h3><div id="activeInvestmentsList" class="space-y-3"></div></div></div>
-            <!-- BALANCES -->
-            <div id="balances" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">💰 Balance Overview</h3><div id="balanceDetails" class="space-y-2"></div></div></div>
-            <!-- TRANSACTIONS (real data) -->
-            <div id="transactions" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">📜 Transaction History</h3><div id="historyList" class="space-y-2 max-h-96 overflow-y-auto"></div></div></div>
-            <!-- WITHDRAWALS with dynamic fee and min amount -->
-            <div id="withdrawals" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">🏦 Withdrawals</h3><div id="withdrawBalanceInfo" class="mb-3 text-sm bg-gray-100 p-2 rounded"></div><button id="requestWithdrawalBtn" class="mb-3 bg-blue-600 text-white px-4 py-2 rounded-lg">Request Withdrawal</button><div id="withdrawalsList" class="space-y-2"></div></div></div>
-            <!-- DEPOSITS -->
-            <div id="deposits" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">💎 Deposit Funds</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"><button id="mpesaDepositBtn" class="deposit-method-btn bg-green-600 text-white py-3 rounded-xl"><i class="fas fa-mobile-alt"></i> M-Pesa</button><button id="bankDepositBtn" class="deposit-method-btn bg-blue-600 text-white py-3 rounded-xl"><i class="fas fa-university"></i> Bank Transfer</button><button id="cryptoDepositBtn" class="deposit-method-btn bg-purple-600 text-white py-3 rounded-xl"><i class="fab fa-bitcoin"></i> Crypto</button></div><div id="depositsList" class="space-y-2 max-h-60 overflow-y-auto"></div></div></div>
-            <!-- REFERRALS (both referrer and referred) -->
-            <div id="referrals" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold">👥 Referral Program</h3><div id="referralStats" class="my-3"></div><div id="referralLinkDisplay" class="bg-gray-100 p-2 rounded break-all text-sm"></div><button id="copyReferralLinkBtn" class="mt-2 bg-indigo-600 text-white px-3 py-1 rounded">Copy Link</button><button id="requestCommissionBtn" class="mt-2 bg-green-600 text-white px-3 py-1 rounded ml-2">Request Commission</button><div class="mt-4"><h4 class="font-bold">Referred Users</h4><div id="referredUsersList" class="space-y-1 text-sm"></div></div></div></div>
+            <!-- INVESTMENTS (enhanced) -->
+            <div id="investments" class="content-section">
+                <div class="card-glass p-6">
+                    <h2 class="text-2xl font-bold mb-3">Investment Dashboard</h2>
+                    <div id="investmentProductsList" class="grid md:grid-cols-2 gap-4 mb-6"></div>
+                    <h3 class="text-xl font-bold mb-2">Your Active Investments</h3>
+                    <div id="activeInvestmentsList" class="space-y-3"></div>
+                </div>
+            </div>
+
+            <!-- BALANCES with multiple currencies -->
+            <div id="balances" class="content-section">
+                <div class="card-glass p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">💰 Balance Overview</h3>
+                        <div class="flex gap-2">
+                            <button id="quickWithdrawBtn" class="bg-red-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-hand-holding-usd"></i> Withdraw</button>
+                            <button id="quickTopUpBtn" class="bg-green-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-plus-circle"></i> Top Up</button>
+                        </div>
+                    </div>
+                    <div id="balanceDetails" class="space-y-2"></div>
+                    <div class="mt-4 p-3 bg-gray-100 rounded">
+                        <div class="font-medium">Exchange Rate (USD → KES): <span id="exchangeRate">1 USD = 0 KES</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TRANSACTIONS with all fields -->
+            <div id="transactions" class="content-section">
+                <div class="card-glass p-6">
+                    <h3 class="text-xl font-bold mb-3">📜 Transaction History</h3>
+                    <div id="historyList" class="space-y-2 max-h-96 overflow-y-auto"></div>
+                </div>
+            </div>
+
+            <!-- WITHDRAWALS with form and progress bar -->
+            <div id="withdrawals" class="content-section">
+                <div class="card-glass p-6">
+                    <h3 class="text-xl font-bold mb-3">🏦 Withdrawals</h3>
+                    <div id="withdrawBalanceInfo" class="mb-3 text-sm bg-gray-100 p-2 rounded"></div>
+                    <button id="openWithdrawFormBtn" class="mb-3 bg-blue-600 text-white px-4 py-2 rounded-lg">Request Withdrawal</button>
+                    <div id="withdrawalsList" class="space-y-2"></div>
+                </div>
+            </div>
+
+            <!-- DEPOSITS with payment links and pending proof -->
+            <div id="deposits" class="content-section">
+                <div class="card-glass p-6">
+                    <h3 class="text-xl font-bold mb-3">💎 Deposit Funds</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" id="depositMethodsContainer">
+                        <button data-method="mpesa" class="deposit-method-btn bg-green-600 text-white py-3 rounded-xl"><i class="fas fa-mobile-alt"></i> M-Pesa</button>
+                        <button data-method="bank" class="deposit-method-btn bg-blue-600 text-white py-3 rounded-xl"><i class="fas fa-university"></i> Bank Transfer</button>
+                        <button data-method="crypto" class="deposit-method-btn bg-purple-600 text-white py-3 rounded-xl"><i class="fab fa-bitcoin"></i> Crypto</button>
+                    </div>
+                    <div class="mt-4 p-3 bg-yellow-50 rounded border-l-4 border-yellow-400">
+                        <p class="text-sm"><i class="fas fa-exclamation-triangle"></i> Already deposited but not reflected? <a href="#" id="reportDepositBtn" class="font-bold underline text-indigo-600">Click here</a> to report a pending deposit.</p>
+                    </div>
+                    <div id="depositsList" class="space-y-2 max-h-60 overflow-y-auto mt-4"></div>
+                </div>
+            </div>
+
+            <!-- REFERRALS with commission request -->
+            <div id="referrals" class="content-section">
+                <div class="card-glass p-6">
+                    <h3 class="text-xl font-bold">👥 Referral Program</h3>
+                    <div id="referralStats" class="my-3"></div>
+                    <div id="referralLinkDisplay" class="bg-gray-100 p-2 rounded break-all text-sm"></div>
+                    <button id="copyReferralLinkBtn" class="mt-2 bg-indigo-600 text-white px-3 py-1 rounded">Copy Link</button>
+                    <button id="requestCommissionBtn" class="mt-2 bg-green-600 text-white px-3 py-1 rounded ml-2">Request Commission</button>
+                    <div class="mt-4"><h4 class="font-bold">Referred Users</h4><div id="referredUsersList" class="space-y-1 text-sm"></div></div>
+                </div>
+            </div>
+
             <!-- LEADERBOARD -->
-            <div id="leaderboard" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">🏆 Top Earners</h3><div id="leaderboardContainer" class="space-y-2"></div></div></div>
-            <!-- SUPPORT TICKETS -->
-            <div id="support" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold">🎫 Support Tickets</h3><button id="createTicketBtn" class="bg-green-600 text-white px-3 py-1 rounded mb-3">New Ticket</button><div id="supportTicketsList" class="space-y-2"></div></div></div>
-            <!-- DAILY STREAK -->
-            <div id="streak" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold">🔥 Daily Streak (7 days)</h3><div id="streakEmailAlert" class="hidden bg-yellow-100 p-3 rounded mb-3"><i class="fas fa-envelope"></i> Verify email to earn streak. <button id="sendVerifyEmailBtn" class="underline text-indigo-600">Resend</button></div><div id="streakGrid" class="streak-grid"></div><div id="streakInfo" class="text-sm mt-2"></div></div></div>
-            <!-- LIVE CHAT -->
-            <div id="chat" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">💬 Live Chat (KYC Required)</h3><div id="kycWarningMsg" class="hidden bg-red-100 p-2 rounded mb-2">⚠️ Complete KYC first.</div><div><input type="text" id="chatNickname" placeholder="Nickname" class="border rounded p-1 w-40"><button id="buyMinutesBtn" class="bg-green-600 text-white px-3 py-1 rounded ml-2">Buy 30min ($0.40)</button><span class="chat-timer ml-4">⏱️ <span id="chatMinutesRemaining">0</span> min left</span></div><div class="chat-messages mt-3" id="chatMessages"></div><div class="flex gap-2 mt-2"><input type="text" id="chatInput" class="flex-1 border rounded-xl p-2" placeholder="Message..." disabled><button id="sendChatBtn" class="bg-indigo-600 text-white px-4 rounded-xl" disabled>Send</button></div></div></div>
-            <!-- KYC -->
-            <div id="kyc" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">🪪 KYC Verification</h3><div><span class="font-medium">Status:</span> <span id="kycStatusDisplay" class="px-2 py-1 rounded bg-yellow-100">unverified</span></div><div class="kyc-upload-area mt-3"><label>Face Portrait</label><input type="file" id="facePortraitFile" accept="image/*" class="w-full border p-2 mt-1 rounded"><div id="facePreview" class="text-xs text-gray-500 mt-1"></div></div><div class="kyc-upload-area"><label>ID Document</label><select id="idType" class="w-full border p-2 rounded mb-2"><option>National ID</option><option>Passport</option></select><input type="file" id="idFile" accept="image/*" class="w-full border p-2 rounded"><div id="idPreview" class="text-xs text-gray-500 mt-1"></div></div><button id="submitKycBtn" class="bg-indigo-600 text-white px-4 py-2 rounded w-full mt-3">Submit KYC</button></div></div>
+            <div id="leaderboard" class="content-section">
+                <div class="card-glass p-6">
+                    <h3 class="text-xl font-bold mb-3">🏆 Top Earners</h3>
+                    <div id="leaderboardContainer" class="space-y-2"></div>
+                </div>
+            </div>
+
+            <!-- SUPPORT TICKETS with history -->
+            <div id="support" class="content-section">
+                <div class="card-glass p-6">
+                    <h3 class="text-xl font-bold mb-3">🎫 Support Tickets</h3>
+                    <button id="createTicketBtn" class="bg-green-600 text-white px-3 py-1 rounded mb-3">New Ticket</button>
+                    <div id="supportTicketsList" class="space-y-3 max-h-96 overflow-y-auto"></div>
+                </div>
+            </div>
+
+            <!-- DAILY STREAK with KYC requirement -->
+            <div id="streak" class="content-section">
+                <div class="card-glass p-6">
+                    <h3 class="text-xl font-bold">🔥 Daily Streak (7 days)</h3>
+                    <div id="streakEmailAlert" class="hidden bg-yellow-100 p-3 rounded mb-3"><i class="fas fa-envelope"></i> Verify email to earn streak. <button id="sendVerifyEmailBtn" class="underline text-indigo-600">Resend</button></div>
+                    <div id="streakKYCWarning" class="hidden bg-red-100 p-3 rounded mb-3"><i class="fas fa-id-card"></i> KYC verification required to claim streak rewards. <a href="#" onclick="activateSection('kyc')" class="underline text-indigo-600">Complete KYC</a></div>
+                    <div id="streakGrid" class="streak-grid"></div>
+                    <div id="streakInfo" class="text-sm mt-2"></div>
+                </div>
+            </div>
+
+            <!-- LIVE CHAT (unchanged but keep) -->
+            <div id="chat" class="content-section">
+                <div class="card-glass p-6">
+                    <h3 class="text-xl font-bold mb-3">💬 Live Chat (KYC Required)</h3>
+                    <div id="kycWarningMsg" class="hidden bg-red-100 p-2 rounded mb-2">⚠️ Complete KYC first.</div>
+                    <div><input type="text" id="chatNickname" placeholder="Nickname" class="border rounded p-1 w-40"><button id="buyMinutesBtn" class="bg-green-600 text-white px-3 py-1 rounded ml-2">Buy 30min ($0.40)</button><span class="chat-timer ml-4">⏱️ <span id="chatMinutesRemaining">0</span> min left</span></div>
+                    <div class="chat-messages mt-3" id="chatMessages"></div>
+                    <div class="flex gap-2 mt-2"><input type="text" id="chatInput" class="flex-1 border rounded-xl p-2" placeholder="Message..." disabled><button id="sendChatBtn" class="bg-indigo-600 text-white px-4 rounded-xl" disabled>Send</button></div>
+                </div>
+            </div>
+
+            <!-- KYC with URL paste and generate button -->
+            <div id="kyc" class="content-section">
+                <div class="card-glass p-6">
+                    <h3 class="text-xl font-bold mb-3">🪪 KYC Verification</h3>
+                    <div><span class="font-medium">Status:</span> <span id="kycStatusDisplay" class="px-2 py-1 rounded bg-yellow-100">unverified</span></div>
+                    <div class="mt-3">
+                        <label class="block font-medium">Document URL (Face + ID combined or separate):</label>
+                        <input type="url" id="kycDocumentUrl" placeholder="https://..." class="w-full border p-2 rounded mt-1">
+                        <button id="generateKycUrlBtn" class="mt-2 bg-gray-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-external-link-alt"></i> Generate URL</button>
+                    </div>
+                    <button id="submitKycUrlBtn" class="bg-indigo-600 text-white px-4 py-2 rounded w-full mt-3">Submit KYC</button>
+                </div>
+            </div>
+
             <!-- ANNOUNCEMENTS -->
-            <div id="announcements" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold">📢 Announcements</h3><div id="announcementsList" class="space-y-3"></div></div></div>
-            <!-- CONTACT -->
-            <div id="contact" class="content-section"><div class="card-glass p-7 text-center"><h2 class="text-2xl font-bold">📞 Contact</h2><div id="supportEmailDisplay" class="text-gray-600 mt-2">support@bestpay.com</div></div></div>
-            <!-- SETTINGS -->
-            <div id="settings" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold">⚙️ Settings</h3><input id="displayNameInput" class="border p-2 rounded w-full my-2" placeholder="Full Name"><button id="updateProfileBtn" class="bg-gray-700 text-white w-full py-2 rounded">Update Name</button><input id="newEmailInput" type="email" class="border p-2 rounded w-full my-2" placeholder="New Email"><button id="updateEmailBtn" class="bg-indigo-600 text-white w-full py-2 rounded">Change Email</button><input id="newPasswordInput" type="password" class="border p-2 rounded w-full my-2" placeholder="New Password"><button id="updatePasswordBtn" class="bg-red-600 text-white w-full py-2 rounded">Change Password</button></div></div>
+            <div id="announcements" class="content-section">
+                <div class="card-glass p-6">
+                    <h3 class="text-xl font-bold">📢 Announcements</h3>
+                    <div id="announcementsList" class="space-y-3"></div>
+                </div>
+            </div>
+
+            <!-- CONTACT with social icons -->
+            <div id="contact" class="content-section">
+                <div class="card-glass p-7 text-center">
+                    <h2 class="text-2xl font-bold">📞 Contact Us</h2>
+                    <div class="flex justify-center gap-6 mt-4">
+                        <a id="whatsappLink" href="#" target="_blank" class="text-green-600 text-3xl"><i class="fab fa-whatsapp"></i></a>
+                        <a id="telegramLink" href="#" target="_blank" class="text-blue-500 text-3xl"><i class="fab fa-telegram"></i></a>
+                    </div>
+                    <div id="supportEmailDisplay" class="text-gray-600 mt-4">support@bestpay.com</div>
+                </div>
+            </div>
+
+            <!-- SETTINGS (unchanged) -->
+            <div id="settings" class="content-section">
+                <div class="card-glass p-6">
+                    <h3 class="text-xl font-bold">⚙️ Settings</h3>
+                    <input id="displayNameInput" class="border p-2 rounded w-full my-2" placeholder="Full Name">
+                    <button id="updateProfileBtn" class="bg-gray-700 text-white w-full py-2 rounded">Update Name</button>
+                    <input id="newEmailInput" type="email" class="border p-2 rounded w-full my-2" placeholder="New Email">
+                    <button id="updateEmailBtn" class="bg-indigo-600 text-white w-full py-2 rounded">Change Email</button>
+                    <input id="newPasswordInput" type="password" class="border p-2 rounded w-full my-2" placeholder="New Password">
+                    <button id="updatePasswordBtn" class="bg-red-600 text-white w-full py-2 rounded">Change Password</button>
+                </div>
+            </div>
         </main>
     </div>
 
     <!-- MODALS -->
     <div id="confirmTradeModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">⚠️ Confirm Trade</h3><div id="confirmTradeDetails"></div><div class="flex gap-3 mt-4"><button id="confirmTradeYes" class="bg-green-600 text-white px-4 py-2 rounded">Confirm</button><button id="confirmTradeNo" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
     <div id="tradeResultModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">📊 Trade Result</h3><div id="tradeResultBody"></div><button id="closeResultModalBtn" class="mt-4 bg-indigo-600 text-white px-6 py-2 rounded mx-auto block">OK</button></div></div>
-    <div id="withdrawConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">💸 Confirm Withdrawal</h3><div id="withdrawConfirmDetails"></div><div class="flex gap-3 mt-4"><button id="confirmWithdrawYes" class="bg-green-600 text-white px-4 py-2 rounded">Confirm</button><button id="confirmWithdrawNo" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
+    
+    <!-- Withdrawal Form Modal -->
+    <div id="withdrawFormModal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-3">💸 Request Withdrawal</h3>
+            <div class="space-y-3">
+                <input type="number" id="withdrawAmount" placeholder="Amount ($)" class="w-full border p-2 rounded">
+                <select id="withdrawGateway" class="w-full border p-2 rounded">
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="M-Pesa">M-Pesa</option>
+                    <option value="Crypto">Crypto</option>
+                </select>
+                <input type="text" id="withdrawDetails" placeholder="Wallet address / Account number" class="w-full border p-2 rounded">
+                <div class="progress-bar" id="withdrawProgressBar"><div class="progress-fill" id="withdrawProgressFill"></div></div>
+                <button id="confirmWithdrawStepBtn" class="bg-indigo-600 text-white w-full py-2 rounded">Confirm Withdrawal</button>
+                <button onclick="hideModal('withdrawFormModal')" class="bg-gray-500 text-white w-full py-2 rounded">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Deposit Modal -->
+    <div id="reportDepositModal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-3">📝 Report Pending Deposit</h3>
+            <div class="space-y-3">
+                <input type="number" id="reportAmount" placeholder="Amount ($)" class="w-full border p-2 rounded">
+                <input type="text" id="reportTransactionId" placeholder="Transaction ID / Reference" class="w-full border p-2 rounded">
+                <input type="email" id="reportEmail" placeholder="Your email (optional)" class="w-full border p-2 rounded">
+                <button id="submitReportDepositBtn" class="bg-green-600 text-white w-full py-2 rounded">Submit for Review</button>
+                <button onclick="hideModal('reportDepositModal')" class="bg-gray-500 text-white w-full py-2 rounded">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Commission Request Modal -->
+    <div id="commissionRequestModal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-3">💰 Request Commission</h3>
+            <div class="space-y-3">
+                <input type="text" id="commissionReferredEmail" placeholder="Referred user's email" class="w-full border p-2 rounded">
+                <input type="text" id="commissionReferredCode" placeholder="Their referral code (if any)" class="w-full border p-2 rounded">
+                <textarea id="commissionMessage" placeholder="Additional details..." rows="3" class="w-full border p-2 rounded"></textarea>
+                <button id="submitCommissionRequestBtn" class="bg-purple-600 text-white w-full py-2 rounded">Submit Ticket</button>
+                <button onclick="hideModal('commissionRequestModal')" class="bg-gray-500 text-white w-full py-2 rounded">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <div id="spinnerModal" class="modal"><div class="modal-content text-center"><div class="spinner mb-3"></div><p id="spinnerText">Processing...</p></div></div>
     <div id="detailModal" class="modal"><div class="modal-content"><div class="flex justify-between"><h3 id="modalTitle" class="text-xl font-bold">Info</h3><button onclick="closeModal()">&times;</button></div><div id="modalBody"></div><button onclick="closeModal()" class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded">Close</button></div></div>
     <div id="reAuthModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold">Re-authenticate</h3><input type="password" id="reAuthPassword" placeholder="Password" class="border p-2 w-full rounded"><button id="submitReAuthBtn" class="bg-indigo-600 text-white w-full mt-3 py-2 rounded">Confirm</button><button onclick="closeReAuthModal()" class="mt-2 text-gray-500">Cancel</button></div></div>
@@ -261,7 +446,9 @@
         let lastTradesResults = [];
         let autoTradeInterval = null;
         let currentPrice = 1.0892;
-        let withdrawalConfig = { minAmount: 10, feePercent: 3 }; // fallback
+        let withdrawalConfig = { minAmount: 10, feePercent: 3 };
+        let exchangeRate = 130; // default KES per USD
+        let streakRewards = [0.04, 0.05, 0.06, 0.07, 0.05, 0.06, 0.06]; // default $ rewards per day
         
         // Helper functions
         function showNotification(msg, type='success'){ const d=document.createElement('div'); d.className=`notification ${type==='error'?'bg-red-700':type==='info'?'bg-blue-700':'bg-gray-800'}`; d.innerHTML=msg; document.body.appendChild(d); setTimeout(()=>d.remove(),3000); }
@@ -270,25 +457,54 @@
         window.closeModal = () => hideModal('detailModal');
         window.closeReAuthModal = () => hideModal('reAuthModal');
         
+        async function loadExchangeRate() {
+            try {
+                const rateDoc = await getDoc(doc(db,"settings","currencyRates"));
+                if(rateDoc.exists()) exchangeRate = rateDoc.data().usdToKes || 130;
+            } catch(e) { console.warn("Using default rate"); }
+            document.getElementById('exchangeRate').innerText = `1 USD = ${exchangeRate.toFixed(2)} KES`;
+        }
+        
+        async function loadStreakRewards() {
+            try {
+                const streakDoc = await getDoc(doc(db,"streak_config","weekly"));
+                if(streakDoc.exists()) streakRewards = streakDoc.data().rewards;
+            } catch(e) { console.warn("Using default streak rewards"); }
+        }
+        
         async function loadWithdrawalConfig() {
             try {
                 const configDoc = await getDoc(doc(db, "settings", "withdrawalConfig"));
-                if(configDoc.exists()) {
-                    withdrawalConfig = configDoc.data();
-                }
+                if(configDoc.exists()) withdrawalConfig = configDoc.data();
             } catch(e) { console.warn("Using default withdrawal config"); }
+        }
+        
+        async function loadSocialLinks() {
+            try {
+                const links = await getDoc(doc(db,"settings","socialLinks"));
+                if(links.exists()) {
+                    document.getElementById('whatsappLink').href = links.data().whatsapp || '#';
+                    document.getElementById('telegramLink').href = links.data().telegram || '#';
+                }
+            } catch(e) { console.warn("Social links not configured"); }
         }
         
         async function loadUserData() { 
             const snap = await getDoc(doc(db,"users",currentUser.uid)); 
-            currentUserData = snap.data() || { realBalance:0, demoBalance:10000, totalEarned:0, chatMinutes:0 }; 
+            currentUserData = snap.data() || { realBalance:0, demoBalance:10000, totalEarned:0, chatMinutes:0, kycStatus:"unverified" }; 
             if(currentUserData.demoBalance===undefined) await updateDoc(doc(db,"users",currentUser.uid),{demoBalance:10000});
             const bal = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||10000);
-            document.getElementById('liveBalance').innerText = `$${bal.toFixed(2)}`; 
+            document.getElementById('liveBalance').innerText = `$${bal.toFixed(2)}`;
+            document.getElementById('liveBalanceKES').innerHTML = `≈ KES ${(bal * exchangeRate).toFixed(2)}`;
             document.getElementById('userShort').innerText = currentUserData.displayName?.split(' ')[0] || currentUser.email.split('@')[0]; 
-            document.getElementById('balanceDetails').innerHTML = `Real: $${(currentUserData.realBalance||0).toFixed(2)}<br>Demo: $${(currentUserData.demoBalance||10000).toFixed(2)}`; 
-            // update withdrawal info
-            document.getElementById('withdrawBalanceInfo').innerHTML = `💰 Available Balance: $${bal.toFixed(2)}<br>💸 Minimum withdrawal: $${withdrawalConfig.minAmount} | Fee: ${withdrawalConfig.feePercent}%`;
+            document.getElementById('balanceDetails').innerHTML = `
+                <div class="flex justify-between"><span>💰 Real Balance (USD):</span><span class="font-bold">$${(currentUserData.realBalance||0).toFixed(2)}</span></div>
+                <div class="flex justify-between"><span>💰 Real Balance (KES):</span><span class="font-bold">KES ${((currentUserData.realBalance||0) * exchangeRate).toFixed(2)}</span></div>
+                <div class="flex justify-between"><span>🎮 Demo Balance:</span><span class="font-bold">$${(currentUserData.demoBalance||10000).toFixed(2)}</span></div>
+                <div class="flex justify-between"><span>🏆 Total Earned:</span><span class="font-bold">$${(currentUserData.totalEarned||0).toFixed(2)}</span></div>
+            `;
+            document.getElementById('withdrawBalanceInfo').innerHTML = `💰 Available Balance: $${bal.toFixed(2)} (≈ KES ${(bal * exchangeRate).toFixed(2)})<br>💸 Minimum withdrawal: $${withdrawalConfig.minAmount} | Fee: ${withdrawalConfig.feePercent}%`;
+            document.getElementById('kycStatusDisplay').innerHTML = `<span class="px-2 py-1 rounded ${currentUserData.kycStatus==='verified'?'bg-green-100':'bg-yellow-100'}">${currentUserData.kycStatus || 'unverified'}</span>`;
         }
         async function updateBalanceByMode(changeAmount, isReal) { const field = isReal ? 'realBalance' : 'demoBalance'; await updateDoc(doc(db,"users",currentUser.uid), { [field]: increment(changeAmount), totalEarned: increment(changeAmount>0?changeAmount:0) }); await loadUserData(); }
         
@@ -309,7 +525,7 @@
         document.getElementById('multiplierSlider').addEventListener('input', updateRiskReward);
         document.getElementById('stakeAmount').addEventListener('input', updateRiskReward);
         
-        // Core trade execution
+        // Core trade execution (same as before, keep working)
         async function executeTrade(direction, stake, multiplier) {
             const currentBalance = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||10000);
             if(stake > currentBalance) { showNotification(`Insufficient ${isRealMode?'real':'demo'} balance`,"error"); return false; }
@@ -334,12 +550,11 @@
             const netProfit = won ? (stake * multiplier) - stake : -stake;
             await updateDoc(doc(db,"binary_trades",tradeId), { status:"closed", result:won?"win":"loss", closePrice:finalPrice, profit:netProfit });
             if(won) { await updateBalanceByMode(payoutAmount, isRealTrade); } else { await updateBalanceByMode(-stake, isRealTrade); }
-            await addDoc(collection(db,"transactions"), { userId:currentUser.uid, type:won?"trade_win":"trade_loss", amount:won?payoutAmount:-stake, description:`${direction} ${multiplier}x 60s ${isRealTrade?'real':'demo'}`, timestamp:serverTimestamp(), status:"completed" });
+            await addDoc(collection(db,"transactions"), { userId:currentUser.uid, type:won?"trade_win":"trade_loss", amount:won?payoutAmount:-stake, description:`${direction} ${multiplier}x 60s ${isRealTrade?'real':'demo'}`, timestamp:serverTimestamp(), status:"completed", reference: tradeId });
             showNotification(won ? `🎉 WIN! +$${(payoutAmount - stake).toFixed(2)}` : `❌ LOSS -$${stake}`, won?"success":"error");
             lastTradesResults.unshift(won?'win':'loss'); if(lastTradesResults.length>5) lastTradesResults.pop();
             updateStreakDots();
             document.getElementById('lastTradeSummary').innerHTML = `📋 Last trade: ${direction.toUpperCase()} $${stake} (${multiplier}x) → ${won?'✅ WIN +$'+(payoutAmount-stake).toFixed(2):'❌ LOSS -$'+stake}`;
-            // Show result modal with OK button
             const resultHtml = `<div class="text-center"><div class="text-2xl mb-3 ${won?'text-green-600':'text-red-600'}">${won?'🎉 WINNER! 🎉':'💔 LOSS 💔'}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Direction:</b> ${direction.toUpperCase()}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Stake:</b> $${stake.toFixed(2)}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Multiplier:</b> ${multiplier}x</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Entry:</b> ${entryPrice.toFixed(5)}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Exit:</b> ${finalPrice.toFixed(5)}</div><div class="bg-gray-100 p-3 rounded mb-2"><b>Payout:</b> $${payoutAmount.toFixed(2)}</div><div class="text-xl font-bold ${won?'text-green-600':'text-red-600'} mt-2">${won?`+$${(payoutAmount-stake).toFixed(2)}`:`-$${stake.toFixed(2)}`}</div></div>`;
             document.getElementById('tradeResultBody').innerHTML = resultHtml;
             showModal('tradeResultModal');
@@ -445,113 +660,302 @@
         document.getElementById('startAutoTradeBtn').onclick = startAutoTrade;
         document.getElementById('stopAutoTradeBtn').onclick = stopAutoTrade;
         
-        // Withdrawal with fee, min amount, gateway details, spinner, pending status
-        async function requestWithdrawal() {
+        // Withdrawal with progress bar
+        document.getElementById('openWithdrawFormBtn').onclick = () => showModal('withdrawFormModal');
+        document.getElementById('confirmWithdrawStepBtn').onclick = async () => {
+            const amount = parseFloat(document.getElementById('withdrawAmount').value);
+            const gateway = document.getElementById('withdrawGateway').value;
+            const details = document.getElementById('withdrawDetails').value;
             const bal = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||0);
-            if(!isRealMode) { showNotification("Withdrawals only available in REAL mode","error"); return; }
-            const amount = parseFloat(prompt(`Enter amount (min $${withdrawalConfig.minAmount}, max $${bal.toFixed(2)}):`));
+            if(!isRealMode) { showNotification("Withdrawals only in REAL mode","error"); return; }
             if(isNaN(amount) || amount < withdrawalConfig.minAmount || amount > bal) { showNotification(`Invalid amount. Min $${withdrawalConfig.minAmount}`, "error"); return; }
-            const gateway = prompt("Select gateway: Bank Transfer / M-Pesa / Crypto");
-            if(!gateway) return;
-            const details = prompt("Enter wallet address or account details:");
-            if(!details) return;
+            if(!gateway || !details) { showNotification("All fields required","error"); return; }
             const fee = (amount * withdrawalConfig.feePercent) / 100;
             const netAmount = amount - fee;
-            const confirmHtml = `<p><strong>Amount:</strong> $${amount.toFixed(2)}</p><p><strong>Fee (${withdrawalConfig.feePercent}%):</strong> $${fee.toFixed(2)}</p><p><strong>Net:</strong> $${netAmount.toFixed(2)}</p><p><strong>Gateway:</strong> ${gateway}</p><p><strong>Details:</strong> ${details}</p>`;
-            document.getElementById('withdrawConfirmDetails').innerHTML = confirmHtml;
-            window.pendingWithdrawal = { amount, gateway, details, fee, netAmount };
-            showModal('withdrawConfirmModal');
-        }
-        document.getElementById('confirmWithdrawYes').onclick = async () => {
-            if(!window.pendingWithdrawal) return;
-            hideModal('withdrawConfirmModal');
-            showModal('spinnerModal');
-            document.getElementById('spinnerText').innerText = "Processing withdrawal request...";
-            try {
-                const { amount, gateway, details, fee, netAmount } = window.pendingWithdrawal;
+            // Show progress bar animation
+            const progressFill = document.getElementById('withdrawProgressFill');
+            progressFill.style.width = '0%';
+            let width = 0;
+            const interval = setInterval(() => { if(width >= 100) clearInterval(interval); else { width+=20; progressFill.style.width = width+'%'; } }, 100);
+            setTimeout(async () => {
+                clearInterval(interval);
+                progressFill.style.width = '100%';
                 await addDoc(collection(db, "withdrawals"), {
-                    userId: currentUser.uid,
-                    amount: amount,
-                    fee: fee,
-                    netAmount: netAmount,
-                    gateway: gateway,
-                    details: details,
-                    status: "pending",
-                    createdAt: serverTimestamp()
+                    userId: currentUser.uid, amount: amount, fee: fee, netAmount: netAmount, gateway: gateway, details: details,
+                    status: "pending", createdAt: serverTimestamp()
                 });
                 await addDoc(collection(db, "transactions"), {
-                    userId: currentUser.uid,
-                    type: "withdrawal_request",
-                    amount: -amount,
-                    description: `Withdrawal request $${amount} via ${gateway} (pending)`,
-                    timestamp: serverTimestamp(),
-                    status: "pending"
+                    userId: currentUser.uid, type: "withdrawal_request", amount: -amount, description: `Withdrawal request $${amount} via ${gateway} (pending)`,
+                    timestamp: serverTimestamp(), status: "pending", reference: `WD_${Date.now()}`
                 });
-                hideModal('spinnerModal');
+                hideModal('withdrawFormModal');
                 showNotification("Withdrawal request submitted! Pending admin approval.", "success");
-                loadWithdrawals();
-                loadTransactions();
-            } catch(e) { hideModal('spinnerModal'); showNotification("Error: "+e.message, "error"); }
-            window.pendingWithdrawal = null;
+                loadWithdrawals(); loadTransactions();
+                document.getElementById('withdrawAmount').value = '';
+                document.getElementById('withdrawDetails').value = '';
+            }, 1000);
         };
-        document.getElementById('confirmWithdrawNo').onclick = () => { hideModal('withdrawConfirmModal'); window.pendingWithdrawal = null; };
-        document.getElementById('requestWithdrawalBtn').onclick = requestWithdrawal;
         
         async function loadWithdrawals() {
             const snap = await getDocs(query(collection(db,"withdrawals"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")));
-            let html=''; snap.forEach(d=>{ const w=d.data(); html+=`<div class="border-b py-2">$${w.amount} - ${w.status} - ${w.gateway||''} ${w.createdAt?.toDate().toLocaleString()}</div>`; });
+            let html=''; 
+            snap.forEach(d=>{ const w=d.data(); 
+                html+=`<div class="border-b py-2"><b>$${w.amount}</b> - ${w.status}<br>
+                Fee: $${(w.fee||0).toFixed(2)} | Net: $${(w.netAmount||w.amount).toFixed(2)}<br>
+                Gateway: ${w.gateway||'-'} | Created: ${w.createdAt?.toDate().toLocaleString()}<br>
+                ${w.processedAt ? `Processed: ${w.processedAt.toDate().toLocaleString()}` : ''}
+                ${w.status === 'pending' ? '<span class="text-yellow-600">⏳ Pending approval</span>' : (w.status === 'paid' ? '<span class="text-green-600">✅ Paid</span>' : '<span class="text-red-600">❌ Failed</span>')}
+                </div>`; 
+            });
             document.getElementById('withdrawalsList').innerHTML=html||'No withdrawals';
         }
+        
+        // Transactions with all fields
         async function loadTransactions() {
             const snap = await getDocs(query(collection(db,"transactions"), where("userId","==",currentUser.uid), orderBy("timestamp","desc"), limit(50)));
-            let html=''; snap.forEach(d=>{ const t=d.data(); html+=`<div class="border-b py-1">${t.type}: $${t.amount.toFixed(2)} - ${t.description||''} (${t.status||'completed'})</div>`; });
+            let html=''; 
+            snap.forEach(d=>{ const t=d.data(); 
+                html+=`<div class="border-b py-2">
+                    <span class="font-medium">${t.type}</span> - $${t.amount.toFixed(2)}<br>
+                    <span class="text-xs text-gray-500">${t.description || ''}</span><br>
+                    <span class="text-xs">Status: ${t.status || 'completed'} | Ref: ${t.reference || 'N/A'}</span><br>
+                    <span class="text-xs">${t.timestamp?.toDate().toLocaleString()}</span>
+                </div>`; 
+            });
             document.getElementById('historyList').innerHTML=html||'No transactions';
         }
+        
+        // Deposits with payment links and report
+        async function initDepositButtons() {
+            const methods = ['mpesa', 'bank', 'crypto'];
+            for(let method of methods) {
+                const btn = document.querySelector(`[data-method="${method}"]`);
+                if(btn) btn.onclick = async () => {
+                    const linkDoc = await getDoc(doc(db,"payment_links",method === 'bank' ? 'bank_transfer' : method));
+                    if(linkDoc.exists() && linkDoc.data().url) {
+                        window.open(linkDoc.data().url, '_blank');
+                    } else {
+                        showNotification(`Payment link for ${method} not configured by admin`, "error");
+                    }
+                };
+            }
+        }
+        document.getElementById('reportDepositBtn').onclick = () => showModal('reportDepositModal');
+        document.getElementById('submitReportDepositBtn').onclick = async () => {
+            const amount = parseFloat(document.getElementById('reportAmount').value);
+            const transactionId = document.getElementById('reportTransactionId').value;
+            const email = document.getElementById('reportEmail').value;
+            if(!amount || !transactionId) { showNotification("Amount and Transaction ID required","error"); return; }
+            await addDoc(collection(db,"pending_deposits"), {
+                userId: currentUser.uid, amount: amount, method: "user_report", reference: transactionId, userEmail: email,
+                status: "pending_review", createdAt: serverTimestamp()
+            });
+            hideModal('reportDepositModal');
+            showNotification("Deposit reported. Admin will review and credit.", "success");
+            document.getElementById('reportAmount').value = '';
+            document.getElementById('reportTransactionId').value = '';
+            document.getElementById('reportEmail').value = '';
+        };
+        async function loadDeposits() {
+            const snap = await getDocs(query(collection(db,"deposits"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")));
+            let html='<h4 class="font-bold mt-4">Completed Deposits</h4>';
+            snap.forEach(d=>{ const dp=d.data(); html+=`<div class="border-b py-1">$${dp.amount} - ${dp.status||'pending'} - ${dp.method} - ${dp.createdAt?.toDate().toLocaleString()}</div>`; });
+            const pendingSnap = await getDocs(query(collection(db,"pending_deposits"), where("userId","==",currentUser.uid), where("status","==","pending_review")));
+            if(!pendingSnap.empty) {
+                html = '<h4 class="font-bold text-yellow-600">Pending Deposits (Under Review)</h4>' + html;
+                pendingSnap.forEach(d=>{ const dp=d.data(); html+=`<div class="border-b py-1 bg-yellow-50">$${dp.amount} - ${dp.status} - ${dp.reference} - ${dp.createdAt?.toDate().toLocaleString()}</div>`; });
+            }
+            document.getElementById('depositsList').innerHTML=html||'No deposits';
+        }
+        
+        // Referrals
         async function loadReferrals() {
             const snap = await getDocs(query(collection(db,"referrals"), where("referrerId","==",currentUser.uid)));
-            let commission = 0;
+            let earnedComm = 0;
             let referredList = [];
-            snap.forEach(r=>{ commission += r.data().commissionEarned||0; referredList.push(r.data().referredId); });
-            document.getElementById('referralStats').innerHTML = `Referred: ${snap.size} | Total Commission: $${commission.toFixed(2)}`;
+            snap.forEach(r=>{ earnedComm += r.data().commissionEarned||0; referredList.push(r.data().referredId); });
+            document.getElementById('referralStats').innerHTML = `Referred: ${snap.size} | Earned Commission: $${earnedComm.toFixed(2)} | Pending: $0.00 (manual approval)`;
             document.getElementById('referralLinkDisplay').innerText = `${window.location.origin}/?ref=${currentUser.uid}`;
             let refHtml = '<ul class="list-disc pl-4">';
             for(let refId of referredList) {
                 const userSnap = await getDoc(doc(db,"users",refId));
-                if(userSnap.exists()) refHtml += `<li>${userSnap.data().displayName || refId}</li>`;
+                if(userSnap.exists()) refHtml += `<li>${userSnap.data().displayName || refId} - ${userSnap.data().totalEarned ? `Traded: $${userSnap.data().totalEarned}` : 'No activity'}</li>`;
                 else refHtml += `<li>${refId}</li>`;
             }
             refHtml += '</ul>';
             document.getElementById('referredUsersList').innerHTML = refHtml || 'No referred users yet.';
         }
+        document.getElementById('requestCommissionBtn').onclick = () => showModal('commissionRequestModal');
+        document.getElementById('submitCommissionRequestBtn').onclick = async () => {
+            const referredEmail = document.getElementById('commissionReferredEmail').value;
+            const code = document.getElementById('commissionReferredCode').value;
+            const msg = document.getElementById('commissionMessage').value;
+            if(!referredEmail) { showNotification("Referred user email required","error"); return; }
+            await addDoc(collection(db,"support_tickets"), {
+                userId: currentUser.uid, subject: "Commission Request", 
+                message: `Referred email: ${referredEmail}\nCode: ${code}\nDetails: ${msg}`,
+                status: "open", createdAt: serverTimestamp()
+            });
+            hideModal('commissionRequestModal');
+            showNotification("Commission request submitted as ticket. Admin will review.", "success");
+            document.getElementById('commissionReferredEmail').value = '';
+            document.getElementById('commissionReferredCode').value = '';
+            document.getElementById('commissionMessage').value = '';
+        };
+        
+        // Leaderboard
         async function loadLeaderboard() {
             const snap = await getDocs(query(collection(db,"users"), orderBy("totalEarned","desc"), limit(10)));
-            let i=1,html=''; snap.forEach(d=>{ const u=d.data(); if(u.role!=='admin') html+=`<div>${i++}. ${u.displayName||u.email} - $${(u.totalEarned||0).toFixed(2)}</div>`; });
+            let i=1,html=''; snap.forEach(d=>{ const u=d.data(); if(u.role!=='admin') html+=`<div class="flex justify-between border-b py-2"><span>${i++}. ${u.displayName||u.email}</span><span class="font-bold">$${(u.totalEarned||0).toFixed(2)}</span></div>`; });
             document.getElementById('leaderboardContainer').innerHTML=html;
         }
-        async function loadStreak() {
-            const streakDoc = await getDoc(doc(db,"login_streaks",currentUser.uid));
-            if(streakDoc.exists()) {
-                const data = streakDoc.data();
-                document.getElementById('streakInfo').innerHTML = `Current streak: ${data.currentStreak || 0} days`;
-                // grid visualization can be added but simplified
-            } else { document.getElementById('streakInfo').innerHTML = 'Login daily to build streak!'; }
+        
+        // Support Tickets with full details
+        async function loadSupportTickets() {
+            const snap = await getDocs(query(collection(db,"support_tickets"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")));
+            let html=''; 
+            snap.forEach(d=>{ const t=d.data(); 
+                html+=`<div class="border rounded p-3">
+                    <div class="flex justify-between"><span class="font-bold">#${d.id.slice(-6)}</span><span class="text-xs ${t.status==='open'?'text-green-600':'text-gray-500'}">${t.status}</span></div>
+                    <div><b>Subject:</b> ${t.subject}</div>
+                    <div><b>Message:</b> ${t.message}</div>
+                    <div class="text-xs text-gray-500">Created: ${t.createdAt?.toDate().toLocaleString()} | Resolved: ${t.resolvedAt?.toDate().toLocaleString() || '—'}</div>
+                    ${t.note ? `<div class="text-sm bg-gray-50 p-1 mt-1"><b>Admin Note:</b> ${t.note}</div>` : ''}
+                </div>`; 
+            });
+            document.getElementById('supportTicketsList').innerHTML=html||'No tickets';
         }
+        document.getElementById('createTicketBtn').onclick = async () => {
+            const subject = prompt("Subject:");
+            if(!subject) return;
+            const message = prompt("Message:");
+            if(!message) return;
+            await addDoc(collection(db,"support_tickets"), { userId: currentUser.uid, subject, message, status: "open", createdAt: serverTimestamp() });
+            showNotification("Ticket created");
+            loadSupportTickets();
+        };
+        
+        // Daily Streaks (requires KYC verified)
+        async function loadStreak() {
+            const kycStatus = currentUserData.kycStatus;
+            const kycWarning = document.getElementById('streakKYCWarning');
+            const streakGrid = document.getElementById('streakGrid');
+            if(kycStatus !== 'verified') {
+                kycWarning.classList.remove('hidden');
+                streakGrid.innerHTML = '<div class="text-center text-gray-500 col-span-7">KYC verification required to participate in daily streaks</div>';
+                return;
+            }
+            kycWarning.classList.add('hidden');
+            const streakDoc = await getDoc(doc(db,"login_streaks",currentUser.uid));
+            let streakData = streakDoc.exists() ? streakDoc.data() : { currentStreak:0, lastClaimDate: null, claimedDays: [] };
+            const today = new Date().toDateString();
+            const lastClaim = streakData.lastClaimDate ? new Date(streakData.lastClaimDate).toDateString() : null;
+            let canClaim = (lastClaim !== today) && (kycStatus === 'verified');
+            let html = '<div class="streak-grid">';
+            for(let i=0; i<7; i++) {
+                let dayStatus = 'disabled';
+                if(streakData.claimedDays && streakData.claimedDays.includes(i)) dayStatus = 'claimed';
+                else if(canClaim && i === streakData.currentStreak) dayStatus = 'available';
+                else if(i < streakData.currentStreak && (!streakData.claimedDays || !streakData.claimedDays.includes(i))) dayStatus = 'expired';
+                let reward = streakRewards[i] || 0;
+                html += `<div class="streak-box ${dayStatus}" data-day="${i}" data-reward="${reward}">
+                            <div class="font-bold">Day ${i+1}</div>
+                            <div class="text-sm">$${reward}</div>
+                            ${dayStatus==='available' ? '<i class="fas fa-gift"></i>' : (dayStatus==='claimed' ? '<i class="fas fa-check-circle"></i>' : (dayStatus==='expired' ? '<i class="fas fa-times-circle"></i>' : '<i class="fas fa-lock"></i>'))}
+                         </div>`;
+            }
+            html += '</div>';
+            streakGrid.innerHTML = html;
+            document.getElementById('streakInfo').innerHTML = `Current streak: ${streakData.currentStreak} days | ${canClaim ? 'Click today\'s box to claim reward!' : 'Come back tomorrow for next streak!'}`;
+            // add click handler for available box
+            document.querySelectorAll('.streak-box.available').forEach(box => {
+                box.onclick = async () => {
+                    const day = parseInt(box.dataset.day);
+                    const reward = parseFloat(box.dataset.reward);
+                    await updateBalanceByMode(reward, isRealMode);
+                    const newStreak = (streakData.currentStreak + 1) % 7;
+                    const newClaimed = [...(streakData.claimedDays || []), day];
+                    await setDoc(doc(db,"login_streaks",currentUser.uid), { currentStreak: newStreak, lastClaimDate: serverTimestamp(), claimedDays: newClaimed });
+                    showNotification(`🎉 Streak day ${day+1} claimed! +$${reward} added to your balance.`);
+                    loadStreak(); loadUserData();
+                };
+            });
+        }
+        
+        // KYC with URL and generate button
+        document.getElementById('generateKycUrlBtn').onclick = () => {
+            window.open('https://www.urllink.com/upload', '_blank');
+        };
+        document.getElementById('submitKycUrlBtn').onclick = async () => {
+            const url = document.getElementById('kycDocumentUrl').value;
+            if(!url) { showNotification("Please paste a document URL","error"); return; }
+            await setDoc(doc(db,"kyc_requests",currentUser.uid), {
+                userId: currentUser.uid, faceUrl: url, idUrl: url, idType: "URL", status: "pending", timestamp: serverTimestamp()
+            });
+            await updateDoc(doc(db,"users",currentUser.uid), { kycStatus: "pending" });
+            showNotification("KYC submitted for review");
+            loadUserData();
+        };
+        
+        // Announcements
         async function loadAnnouncements() {
             const snap = await getDocs(query(collection(db,"announcements"), orderBy("createdAt","desc"), limit(5)));
-            let html=''; snap.forEach(d=>{ const a=d.data(); html+=`<div class="border-b p-2"><b>${a.title}</b><br>${a.content}</div>`; });
+            let html=''; snap.forEach(d=>{ const a=d.data(); html+=`<div class="border-b p-3"><b>${a.title}</b><br>${a.content}<br><span class="text-xs text-gray-500">${a.createdAt?.toDate().toLocaleString()}</span></div>`; });
             document.getElementById('announcementsList').innerHTML=html||'No announcements';
         }
-        async function loadInvestmentPlans(){ const snap=await getDocs(collection(db,"investment_plans")); let html=''; snap.forEach(d=>{ const p=d.data(); html+=`<div class="border rounded p-3"><b>${p.name}</b> - Min $${p.minAmount} - ROI ${p.dailyROI}% daily (${p.durationDays}d)<button onclick="window.investInPlan('${d.id}')" class="mt-2 bg-green-600 text-white px-3 py-1 rounded text-sm">Invest</button></div>`; }); document.getElementById('investmentProductsList').innerHTML=html||'No plans available'; }
-        window.investInPlan=async(planId)=>{ const planSnap=await getDoc(doc(db,"investment_plans",planId)); if(!planSnap.exists()) return; const plan=planSnap.data(); const amount=parseFloat(prompt(`Invest min $${plan.minAmount}`)); const balance=isRealMode?(currentUserData.realBalance||0):(currentUserData.demoBalance||10000); if(amount>=plan.minAmount && amount<=balance){ await updateBalanceByMode(-amount, isRealMode); await addDoc(collection(db,"user_investments"),{ userId:currentUser.uid, planId, planName:plan.name, amount, dailyROI:plan.dailyROI, durationDays:plan.durationDays, startDate:serverTimestamp(), status:"active" }); showNotification(`Invested $${amount} in ${plan.name}`); loadUserData(); loadActiveInvestments(); } else showNotification("Insufficient balance","error"); };
-        async function loadActiveInvestments(){ const snap=await getDocs(query(collection(db,"user_investments"), where("userId","==",currentUser.uid), where("status","==","active"))); let html=''; for(const inv of snap.docs){ const data=inv.data(); const daysActive=Math.floor((Date.now()-data.startDate.toDate())/86400000); const totalROI=data.amount*data.dailyROI/100*daysActive; html+=`<div class="border rounded p-3">${data.planName} - $${data.amount} - ROI earned: $${totalROI.toFixed(2)}</div>`; } document.getElementById('activeInvestmentsList').innerHTML=html||'No active investments'; }
-        async function loadDeposits(){ const snap=await getDocs(query(collection(db,"deposits"), where("userId","==",currentUser.uid), orderBy("createdAt","desc"))); let html=''; snap.forEach(d=>{ const dp=d.data(); html+=`<div class="border-b py-1">$${dp.amount} - ${dp.status||'pending'} - ${dp.createdAt?.toDate().toLocaleString()}</div>`; }); document.getElementById('depositsList').innerHTML=html||'No deposits'; }
-        function initDepositButtons(){ ['mpesa','bank','crypto'].forEach(m=>{ document.getElementById(`${m}DepositBtn`).onclick=()=>{ const amt=parseFloat(prompt(`Amount (USD) for ${m.toUpperCase()}`)); if(amt>0){ addDoc(collection(db,"deposits"),{ userId:currentUser.uid, amount:amt, method:m, status:"pending", reference:"manual-"+Date.now(), createdAt:serverTimestamp() }).then(()=>{ showNotification(`Deposit request $${amt} submitted`); loadDeposits(); }); } }; }); }
         
+        // Investment plans with image, daily earnings
+        async function loadInvestmentPlans(){ 
+            const snap=await getDocs(collection(db,"investment_plans")); 
+            let html=''; 
+            snap.forEach(d=>{ const p=d.data(); 
+                const dailyEarnings = (p.minAmount * p.dailyROI / 100).toFixed(2);
+                html+=`<div class="investment-card border rounded-lg p-4 shadow-sm">
+                    ${p.imageUrl ? `<img src="${p.imageUrl}" class="w-full h-32 object-cover rounded mb-2">` : '<div class="w-full h-32 bg-gray-200 rounded mb-2 flex items-center justify-center"><i class="fas fa-chart-line text-4xl text-gray-400"></i></div>'}
+                    <h3 class="font-bold text-lg">${p.name}</h3>
+                    <div class="text-sm">Min: $${p.minAmount} | ROI: ${p.dailyROI}% daily</div>
+                    <div class="text-sm">Daily Earnings: $${dailyEarnings}</div>
+                    <div class="text-sm">Duration: ${p.durationDays} days</div>
+                    <button onclick="window.investInPlan('${d.id}', ${p.minAmount}, ${p.dailyROI}, ${p.durationDays})" class="mt-2 bg-green-600 text-white px-3 py-1 rounded text-sm w-full">Invest</button>
+                </div>`; 
+            }); 
+            document.getElementById('investmentProductsList').innerHTML=html||'No plans available'; 
+        }
+        window.investInPlan=async(planId, minAmount, roi, duration)=>{
+            const amount=parseFloat(prompt(`Enter amount (min $${minAmount}):`));
+            const balance=isRealMode?(currentUserData.realBalance||0):(currentUserData.demoBalance||10000);
+            if(amount>=minAmount && amount<=balance){
+                await updateBalanceByMode(-amount, isRealMode);
+                await addDoc(collection(db,"user_investments"),{ userId:currentUser.uid, planId, planName: "Investment", amount, dailyROI:roi, durationDays:duration, startDate:serverTimestamp(), status:"active" });
+                showNotification(`Invested $${amount} successfully!`);
+                loadUserData(); loadActiveInvestments();
+            } else showNotification("Insufficient balance or amount below minimum","error");
+        };
+        async function loadActiveInvestments(){ 
+            const snap=await getDocs(query(collection(db,"user_investments"), where("userId","==",currentUser.uid), where("status","==","active"))); 
+            let html=''; 
+            for(const inv of snap.docs){ 
+                const data=inv.data(); 
+                const daysActive=Math.floor((Date.now()-data.startDate.toDate())/86400000); 
+                const expectedROI = data.amount * data.dailyROI / 100 * daysActive;
+                html+=`<div class="border rounded p-3 flex justify-between">
+                    <div><span class="font-bold">${data.planName}</span><br>Amount: $${data.amount}<br>Daily ROI: ${data.dailyROI}%</div>
+                    <div class="text-right">Earned so far: $${expectedROI.toFixed(2)}<br>Days active: ${daysActive}/${data.durationDays}</div>
+                </div>`; 
+            } 
+            document.getElementById('activeInvestmentsList').innerHTML=html||'No active investments'; 
+        }
+        
+        // Quick action buttons
+        document.getElementById('quickWithdrawBtn').onclick = () => activateSection('withdrawals');
+        document.getElementById('quickTopUpBtn').onclick = () => activateSection('deposits');
+        
+        // Navigation & section loading
         function activateSection(id){
             document.querySelectorAll('.content-section').forEach(s=>s.classList.remove('active-section'));
             document.getElementById(id).classList.add('active-section');
             if(id==='trade'){ loadOpenTrades(); loadHistory(); }
-            if(id==='deposits') loadDeposits();
+            if(id==='deposits') { loadDeposits(); initDepositButtons(); }
             if(id==='withdrawals') { loadWithdrawals(); loadUserData(); }
             if(id==='transactions') loadTransactions();
             if(id==='leaderboard') loadLeaderboard();
@@ -559,6 +963,9 @@
             if(id==='announcements') loadAnnouncements();
             if(id==='investments'){ loadInvestmentPlans(); loadActiveInvestments(); }
             if(id==='referrals') loadReferrals();
+            if(id==='support') loadSupportTickets();
+            if(id==='kyc') loadUserData();
+            if(id==='balances') { loadUserData(); loadExchangeRate(); }
         }
         document.querySelectorAll('.sidebar-nav a').forEach(link=>link.addEventListener('click',(e)=>{ e.preventDefault(); activateSection(link.dataset.section); document.getElementById('sidebarOverlay').click(); }));
         document.getElementById('hamburgerBtn').onclick=()=>{ document.getElementById('mainSidebar').classList.add('open'); document.getElementById('sidebarOverlay').classList.add('active'); };
@@ -579,7 +986,10 @@
         onAuthStateChanged(auth, async(user)=>{
             if(!user){ window.location.href="index.html"; return; }
             currentUser=user;
+            await loadExchangeRate();
+            await loadStreakRewards();
             await loadWithdrawalConfig();
+            await loadSocialLinks();
             await loadUserData();
             await loadInvestmentPlans(); await loadActiveInvestments();
             await loadDeposits(); await loadWithdrawals(); await loadTransactions();
@@ -587,18 +997,11 @@
             setInterval(()=>{ if(document.getElementById('trade').classList.contains('active-section')) loadOpenTrades(); }, 3000);
             document.getElementById('logoutBtn').onclick=async()=>{ await signOut(auth); window.location.href="index.html"; };
             initDepositButtons();
-            // other settings buttons same as original but keep functional
             document.getElementById('copyReferralLinkBtn').onclick=()=>{ navigator.clipboard.writeText(document.getElementById('referralLinkDisplay').innerText); showNotification("Copied"); };
-            document.getElementById('requestCommissionBtn').onclick=()=>showNotification("Commission requested (simulated)","info");
             document.getElementById('updateProfileBtn').onclick=async()=>{ const name=document.getElementById('displayNameInput').value; if(name){ await updateProfile(currentUser,{displayName:name}); await updateDoc(doc(db,"users",currentUser.uid),{displayName:name}); showNotification("Profile updated"); } };
-            // email/password update modals simplified
             document.getElementById('updateEmailBtn').onclick=()=>{ const email=document.getElementById('newEmailInput').value; if(email) { const modal=document.getElementById('reAuthModal'); modal.classList.add('active'); document.getElementById('submitReAuthBtn').onclick=async()=>{ const pwd=document.getElementById('reAuthPassword').value; const cred=EmailAuthProvider.credential(currentUser.email,pwd); try{ await reauthenticateWithCredential(currentUser,cred); await updateEmail(currentUser,email); modal.classList.remove('active'); showNotification("Email updated"); }catch(e){ showNotification("Auth failed","error"); } }; } };
             document.getElementById('updatePasswordBtn').onclick=()=>{ const pwd=document.getElementById('newPasswordInput').value; if(pwd){ const modal=document.getElementById('reAuthModal'); modal.classList.add('active'); document.getElementById('submitReAuthBtn').onclick=async()=>{ const oldPwd=document.getElementById('reAuthPassword').value; const cred=EmailAuthProvider.credential(currentUser.email,oldPwd); try{ await reauthenticateWithCredential(currentUser,cred); await updatePassword(currentUser,pwd); modal.classList.remove('active'); showNotification("Password updated"); }catch(e){ showNotification("Auth failed","error"); } }; } };
-            // KYC upload similar to original
-            let faceURL="", idURL="";
-            document.getElementById('facePortraitFile').addEventListener('change',async(e)=>{ const file=e.target.files[0]; if(file){ const storageRef=ref(storage,`kyc/${currentUser.uid}/face.jpg`); await uploadBytes(storageRef,file); faceURL=await getDownloadURL(storageRef); document.getElementById('facePreview').innerHTML='✅ Uploaded'; } });
-            document.getElementById('idFile').addEventListener('change',async(e)=>{ const file=e.target.files[0]; if(file){ const storageRef=ref(storage,`kyc/${currentUser.uid}/id.jpg`); await uploadBytes(storageRef,file); idURL=await getDownloadURL(storageRef); document.getElementById('idPreview').innerHTML='✅ Uploaded'; } });
-            document.getElementById('submitKycBtn').onclick=async()=>{ if(!faceURL||!idURL) return showNotification("Upload both images","error"); await setDoc(doc(db,"kyc_requests",currentUser.uid),{ userId:currentUser.uid, faceUrl:faceURL, idUrl:idURL, idType:document.getElementById('idType').value, status:"pending", timestamp:serverTimestamp() }); await updateDoc(doc(db,"users",currentUser.uid),{ kycStatus:"pending" }); showNotification("KYC submitted"); };
+            document.getElementById('sendVerifyEmailBtn')?.addEventListener('click', async()=>{ await sendEmailVerification(currentUser); showNotification("Verification email sent"); });
         });
         updateRiskReward();
     </script>
