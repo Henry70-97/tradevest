@@ -88,6 +88,7 @@
             .reset-btn { padding: 4px 10px; font-size: 11px; }
             .video-rectangle { max-width: 220px; }
         }
+        .error-message { color: #ef4444; padding: 1rem; text-align: center; }
     </style>
 </head>
 <body class="bg-amber-50">
@@ -200,10 +201,10 @@
         </main>
     </div>
 
-    <!-- MODALS (all confirmation and progress) -->
+    <!-- MODALS -->
     <div id="confirmTradeModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">⚠️ Confirm Trade</h3><div id="confirmTradeDetails"></div><div class="flex gap-3 mt-4"><button id="confirmTradeYes" class="bg-green-600 text-white px-4 py-2 rounded">Confirm</button><button id="confirmTradeNo" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
     <div id="tradeResultModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">📊 Trade Result</h3><div id="tradeResultBody"></div><button id="closeResultModalBtn" class="mt-4 bg-indigo-600 text-white px-6 py-2 rounded mx-auto block">OK</button></div></div>
-    <div id="withdrawConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">💸 Confirm Withdrawal</h3><div id="withdrawConfirmDetails"></div><div class="progress-bar my-3 hidden" id="withdrawProgressBar"><div class="progress-fill" id="withdrawProgressFill"></div></div><div class="flex gap-3 mt-4"><button id="confirmWithdrawBtn" class="bg-green-600 text-white px-4 py-2 rounded">Confirm</button><button id="cancelWithdrawConfirmBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
+    <div id="withdrawConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">💸 Request Withdrawal</h3><div id="withdrawConfirmDetails"></div><div class="progress-bar my-3 hidden" id="withdrawProgressBar"><div class="progress-fill" id="withdrawProgressFill"></div></div><div class="flex gap-3 mt-4"><button id="confirmWithdrawBtn" class="bg-green-600 text-white px-4 py-2 rounded">Confirm</button><button id="cancelWithdrawConfirmBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
     <div id="reportDepositConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">📝 Report Pending Deposit</h3><div id="reportDepositDetails"></div><div class="flex gap-3 mt-4"><button id="confirmReportDepositBtn" class="bg-green-600 text-white px-4 py-2 rounded">Submit</button><button id="cancelReportDepositConfirmBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
     <div id="commissionRequestConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">💰 Request Commission</h3><div id="commissionRequestDetails"></div><div class="flex gap-3 mt-4"><button id="confirmCommissionRequestBtn" class="bg-green-600 text-white px-4 py-2 rounded">Submit Ticket</button><button id="cancelCommissionRequestConfirmBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
     <div id="investConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">📊 Confirm Investment</h3><div id="investConfirmDetails"></div><div class="progress-bar my-3 hidden" id="investProgressBar"><div class="progress-fill" id="investProgressFill"></div></div><div id="investSpinner" class="hidden"><div class="spinner"></div><p>Checking your account balance...</p></div><div class="flex gap-3 mt-4"><button id="confirmInvestBtn" class="bg-green-600 text-white px-4 py-2 rounded">Confirm</button><button id="cancelInvestBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
@@ -216,7 +217,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut, updateProfile, updateEmail, updatePassword, sendEmailVerification, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, orderBy, serverTimestamp, addDoc, increment, Timestamp, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getStorage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
         
         const firebaseConfig = { apiKey: "AIzaSyDtGN7KCK0A4fhztLN0CgxsKkGROcO_-vI", authDomain: "bestpay-5b78c.firebaseapp.com", projectId: "bestpay-5b78c", storageBucket: "bestpay-5b78c.firebasestorage.app", messagingSenderId: "583230068716", appId: "1:583230068716:web:3e8d298b4d00b46c8652c9" };
         const app = initializeApp(firebaseConfig);
@@ -232,6 +232,8 @@
         let tradingConfig = { minStake: 9 };
         let exchangeRate = 130;
         let streakRewards = [0.04, 0.05, 0.06, 0.07, 0.05, 0.06, 0.06];
+        let activeInvestmentTimeout = null;
+        let investmentCancelled = false;
         
         function showModal(modalId){ document.getElementById(modalId).classList.add('active'); }
         function hideModal(modalId){ document.getElementById(modalId).classList.remove('active'); }
@@ -342,7 +344,7 @@
         }
         document.getElementById('closeResultModalBtn').onclick = () => hideModal('tradeResultModal');
         
-        async function loadOpenTrades() { /* same as before but with error handling */ 
+        async function loadOpenTrades() { 
             if(!currentUser) return;
             try {
                 const q = query(collection(db,"binary_trades"), where("userId","==",currentUser.uid), where("status","==","active"), where("isReal","==",isRealMode), orderBy("createdAt","desc"));
@@ -392,7 +394,7 @@
                     },1000);
                     activeTimers.set(tradeId,interval);
                 });
-            } catch(e) { console.error(e); }
+            } catch(e) { console.error("Open trades error:", e); }
         }
         
         async function loadHistory(){
@@ -404,7 +406,7 @@
                 document.getElementById('lastTradesList').innerHTML=html||'<div class="empty-message">No trade history</div>';
                 document.getElementById('last10Profit').innerHTML=`$${totalP.toFixed(2)}`;
                 document.getElementById('winRatePercent').innerHTML=snap.size?((wins/snap.size)*100).toFixed(1)+'%':'0%';
-            } catch(e) { console.error(e); }
+            } catch(e) { console.error("History error:", e); }
         }
         
         function updateStreakDots() { const container = document.getElementById('streakDots'); container.innerHTML = lastTradesResults.slice(-5).reverse().map(res => `<div class="${res==='win'?'dot-win':'dot-loss'}"></div>`).join(''); }
@@ -483,7 +485,7 @@
                 if(snap.empty) { document.getElementById('withdrawalsList').innerHTML = '<div class="empty-message">No withdrawal requests</div>'; return; }
                 let html=''; snap.forEach(d=>{ const w=d.data(); html+=`<div class="border-b py-3"><div class="flex justify-between"><span class="font-bold">$${w.amount}</span><span class="text-sm ${w.status==='pending'?'text-yellow-600':w.status==='paid'?'text-green-600':'text-red-600'}">${w.status.toUpperCase()}</span></div><div class="text-sm">Fee: $${(w.fee||0).toFixed(2)} | Net: $${(w.netAmount||w.amount).toFixed(2)} | Gateway: ${w.gateway}</div><div class="text-xs text-gray-500">Created: ${w.createdAt?.toDate().toLocaleString()} ${w.processedAt ? `| Processed: ${w.processedAt.toDate().toLocaleString()}` : ''}</div></div>`; });
                 document.getElementById('withdrawalsList').innerHTML = html;
-            } catch(e) { console.error(e); document.getElementById('withdrawalsList').innerHTML = '<div class="empty-message">Error loading withdrawals</div>'; }
+            } catch(e) { console.error("Withdrawals error:", e); document.getElementById('withdrawalsList').innerHTML = '<div class="empty-message">Error loading withdrawals</div>'; }
         }
         
         async function loadTransactions() {
@@ -492,7 +494,7 @@
                 if(snap.empty) { document.getElementById('historyList').innerHTML = '<div class="empty-message">No transactions yet</div>'; return; }
                 let html=''; snap.forEach(d=>{ const t=d.data(); html+=`<div class="border-b py-2"><div class="flex justify-between"><span class="font-medium">${t.type}</span><span class="font-bold ${t.amount>=0?'text-green-600':'text-red-600'}">$${t.amount.toFixed(2)}</span></div><div class="text-sm">${t.description || ''}</div><div class="text-xs text-gray-500">Status: ${t.status || 'completed'} | Ref: ${t.reference || 'N/A'} | ${t.timestamp?.toDate().toLocaleString()}</div></div>`; });
                 document.getElementById('historyList').innerHTML = html;
-            } catch(e) { console.error(e); document.getElementById('historyList').innerHTML = '<div class="empty-message">Error loading transactions</div>'; }
+            } catch(e) { console.error("Transactions error:", e); document.getElementById('historyList').innerHTML = '<div class="empty-message">Error loading transactions. Make sure Firestore index exists.</div>'; }
         }
         
         // Deposits with pending/completed separate
@@ -510,7 +512,7 @@
                     html += '</div>';
                 }
                 document.getElementById('depositsList').innerHTML = html;
-            } catch(e) { console.error(e); }
+            } catch(e) { console.error("Deposits error:", e); document.getElementById('depositsList').innerHTML = '<div class="empty-message">Error loading deposits</div>'; }
         }
         
         // Report deposit confirmation
@@ -555,7 +557,7 @@
                 let i=1,html=''; snap.forEach(d=>{ const u=d.data(); if(u.role!=='admin') html+=`<div class="flex justify-between border-b py-2"><span>${i++}. ${u.displayName||u.email}</span><span class="font-bold">$${(u.totalEarned||0).toFixed(2)}</span></div>`; });
                 if(html === '') html = '<div class="empty-message">No traders yet</div>';
                 document.getElementById('leaderboardContainer').innerHTML = html;
-            } catch(e) { console.error(e); document.getElementById('leaderboardContainer').innerHTML = '<div class="empty-message">Error loading leaderboard</div>'; }
+            } catch(e) { console.error("Leaderboard error:", e); document.getElementById('leaderboardContainer').innerHTML = '<div class="empty-message">Error loading leaderboard. Check Firestore index on users.totalEarned.</div>'; }
         }
         
         // Support Tickets
@@ -565,7 +567,7 @@
                 if(snap.empty) { document.getElementById('supportTicketsList').innerHTML = '<div class="empty-message">No support tickets</div>'; return; }
                 let html=''; snap.forEach(d=>{ const t=d.data(); html+=`<div class="border rounded p-3"><div class="flex justify-between"><span class="font-bold">#${d.id.slice(-6)}</span><span class="text-xs ${t.status==='open'?'text-green-600':'text-gray-500'}">${t.status}</span></div><div><b>Subject:</b> ${t.subject}</div><div><b>Message:</b> ${t.message}</div><div class="text-xs text-gray-500">Created: ${t.createdAt?.toDate().toLocaleString()} | Resolved: ${t.resolvedAt?.toDate().toLocaleString() || '—'}</div>${t.note ? `<div class="text-sm bg-gray-50 p-1 mt-1"><b>Admin Note:</b> ${t.note}</div>` : ''}</div>`; });
                 document.getElementById('supportTicketsList').innerHTML = html;
-            } catch(e) { console.error(e); document.getElementById('supportTicketsList').innerHTML = '<div class="empty-message">Error loading tickets</div>'; }
+            } catch(e) { console.error("Support tickets error:", e); document.getElementById('supportTicketsList').innerHTML = '<div class="empty-message">Error loading tickets</div>'; }
         }
         document.getElementById('createTicketBtn').onclick = async () => {
             const subject = prompt("Subject:"); if(!subject) return;
@@ -581,10 +583,10 @@
                 if(snap.empty) { document.getElementById('announcementsList').innerHTML = '<div class="empty-message">No announcements</div>'; return; }
                 let html=''; snap.forEach(d=>{ const a=d.data(); html+=`<div class="border-b p-3"><div class="font-bold">${a.title}</div><div>${a.content}</div><div class="text-xs text-gray-500">${a.createdAt?.toDate().toLocaleString()}</div></div>`; });
                 document.getElementById('announcementsList').innerHTML = html;
-            } catch(e) { console.error(e); document.getElementById('announcementsList').innerHTML = '<div class="empty-message">Error loading announcements</div>'; }
+            } catch(e) { console.error("Announcements error:", e); document.getElementById('announcementsList').innerHTML = '<div class="empty-message">Error loading announcements</div>'; }
         }
         
-        // Investments and profit claim with confirmation
+        // Investment plans with confirmation and cancelable timeout
         async function loadInvestmentPlans(){ 
             const snap=await getDocs(collection(db,"investment_plans")); 
             if(snap.empty) { document.getElementById('investmentProductsList').innerHTML = '<div class="empty-message">No investment plans available</div>'; return; }
@@ -612,8 +614,15 @@
             spinner.classList.remove('hidden'); progressBar.classList.remove('hidden');
             const progressFill = document.getElementById('investProgressFill');
             let width = 0;
+            investmentCancelled = false;
             const interval = setInterval(() => { if(width >= 100) clearInterval(interval); else { width+=20; progressFill.style.width = width+'%'; } }, 100);
-            setTimeout(async () => {
+            if(activeInvestmentTimeout) clearTimeout(activeInvestmentTimeout);
+            activeInvestmentTimeout = setTimeout(async () => {
+                if(investmentCancelled) {
+                    clearInterval(interval);
+                    spinner.classList.add('hidden'); progressBar.classList.add('hidden');
+                    return;
+                }
                 clearInterval(interval);
                 await updateBalanceByMode(-amount, isRealMode);
                 await addDoc(collection(db,"user_investments"),{ userId:currentUser.uid, planId, planName: "Investment", amount, dailyROI:roi, durationDays:duration, startDate:serverTimestamp(), status:"active", lastProfitClaim: Timestamp.fromDate(new Date(0)) });
@@ -624,7 +633,16 @@
                 window.pendingInvestment = null;
             }, 1000);
         };
-        document.getElementById('cancelInvestBtn').onclick = () => hideModal('investConfirmModal');
+        document.getElementById('cancelInvestBtn').onclick = () => {
+            if(activeInvestmentTimeout) {
+                clearTimeout(activeInvestmentTimeout);
+                activeInvestmentTimeout = null;
+                investmentCancelled = true;
+            }
+            hideModal('investConfirmModal');
+            showInfoModal("Cancelled", "Investment cancelled. No balance deducted.");
+            window.pendingInvestment = null;
+        };
         
         async function loadActiveInvestments(){ 
             try {
@@ -722,6 +740,27 @@
             });
         }
         
+        // Referrals (simple load)
+        async function loadReferrals() {
+            try {
+                const snap = await getDocs(query(collection(db,"referrals"), where("referrerId","==",currentUser.uid)));
+                let earnedComm = 0, referredList = [];
+                snap.forEach(r=>{ earnedComm += r.data().commissionEarned||0; referredList.push(r.data().referredId); });
+                document.getElementById('referralStats').innerHTML = `Referred: ${snap.size} | Earned Commission: $${earnedComm.toFixed(2)} | Pending: $0.00 (manual approval)`;
+                document.getElementById('referralLinkDisplay').innerText = `${window.location.origin}/?ref=${currentUser.uid}`;
+                if(referredList.length === 0) { document.getElementById('referredUsersList').innerHTML = '<div class="empty-message">No referred users yet.</div>'; return; }
+                let refHtml = '<ul class="list-disc pl-4">';
+                for(let refId of referredList) {
+                    const userSnap = await getDoc(doc(db,"users",refId));
+                    if(userSnap.exists()) refHtml += `<li>${userSnap.data().displayName || refId} - ${userSnap.data().totalEarned ? `Traded: $${userSnap.data().totalEarned}` : 'No activity'}</li>`;
+                    else refHtml += `<li>${refId}</li>`;
+                }
+                refHtml += '</ul>';
+                document.getElementById('referredUsersList').innerHTML = refHtml;
+            } catch(e) { console.error(e); }
+        }
+        document.getElementById('copyReferralLinkBtn').onclick=()=>{ navigator.clipboard.writeText(document.getElementById('referralLinkDisplay').innerText); showInfoModal("Copied", "Referral link copied to clipboard!"); };
+        
         // Navigation
         function activateSection(id){
             document.querySelectorAll('.content-section').forEach(s=>s.classList.remove('active-section'));
@@ -759,27 +798,6 @@
         document.getElementById('quickWithdrawBtn').onclick = () => activateSection('withdrawals');
         document.getElementById('quickTopUpBtn').onclick = () => activateSection('deposits');
         document.getElementById('logoutBtn').onclick = async () => { await signOut(auth); window.location.href = "index.html"; };
-        
-        // Referrals (simple load)
-        async function loadReferrals() {
-            try {
-                const snap = await getDocs(query(collection(db,"referrals"), where("referrerId","==",currentUser.uid)));
-                let earnedComm = 0, referredList = [];
-                snap.forEach(r=>{ earnedComm += r.data().commissionEarned||0; referredList.push(r.data().referredId); });
-                document.getElementById('referralStats').innerHTML = `Referred: ${snap.size} | Earned Commission: $${earnedComm.toFixed(2)} | Pending: $0.00 (manual approval)`;
-                document.getElementById('referralLinkDisplay').innerText = `${window.location.origin}/?ref=${currentUser.uid}`;
-                if(referredList.length === 0) { document.getElementById('referredUsersList').innerHTML = '<div class="empty-message">No referred users yet.</div>'; return; }
-                let refHtml = '<ul class="list-disc pl-4">';
-                for(let refId of referredList) {
-                    const userSnap = await getDoc(doc(db,"users",refId));
-                    if(userSnap.exists()) refHtml += `<li>${userSnap.data().displayName || refId} - ${userSnap.data().totalEarned ? `Traded: $${userSnap.data().totalEarned}` : 'No activity'}</li>`;
-                    else refHtml += `<li>${refId}</li>`;
-                }
-                refHtml += '</ul>';
-                document.getElementById('referredUsersList').innerHTML = refHtml;
-            } catch(e) { console.error(e); }
-        }
-        document.getElementById('copyReferralLinkBtn').onclick=()=>{ navigator.clipboard.writeText(document.getElementById('referralLinkDisplay').innerText); showInfoModal("Copied", "Referral link copied to clipboard!"); };
         
         // Settings
         document.getElementById('updateProfileBtn').onclick=async()=>{ const name=document.getElementById('displayNameInput').value; if(name){ await updateProfile(currentUser,{displayName:name}); await updateDoc(doc(db,"users",currentUser.uid),{displayName:name}); showInfoModal("Success", "Profile updated"); } };
