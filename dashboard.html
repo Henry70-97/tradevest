@@ -19,19 +19,23 @@
         .content-section { display: none; animation: fadeIn 0.2s ease; }
         .content-section.active-section { display: block; }
         @keyframes fadeIn { from { opacity:0; transform:translateY(8px);} to { opacity:1; transform:translateY(0);} }
-        .investment-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
-        .stats-card { background: white; border-radius: 1rem; padding: 1rem; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+        .tradingview-widget-container { width:100%; height:70vh; min-height:520px; border-radius:1.25rem; overflow:hidden; background:#fff; }
+        @media (max-width:768px){ .tradingview-widget-container { height:55vh; min-height:400px; } .grid-cols-3 { grid-template-columns: 1fr !important; } .number-btn { width: 40px; height: 40px; } .stake-buttons-grid { grid-template-columns: repeat(5, 1fr); gap: 0.5rem; } .mode-toggle button { padding: 0.3rem 0.8rem; font-size: 0.7rem; } }
+        .number-btn { width:48px; height:48px; font-weight:bold; background:#eef2ff; border-radius:1rem; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; transition:0.1s; }
+        .number-btn:hover { background:#c7d2fe; transform:scale(0.96); }
+        .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:20000; justify-content:center; align-items:center; }
+        .modal.active { display:flex; }
+        .modal-content { background:white; max-width:500px; width:90%; border-radius:1.5rem; padding:1.5rem; max-height:90vh; overflow-y:auto; text-align:center; }
+        .stats-card { background: white; border-radius: 1rem; padding: 1rem; box-shadow: 0 2px 6px rgba(0,0,0,0.05); text-align: center; border: 1px solid #eef2ff; }
         .stats-value { font-size: 1.8rem; font-weight: bold; color: #1e293b; }
-        .active-invest-card { transition: transform 0.2s; background: white; border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .countdown-small { font-family: monospace; font-weight: bold; font-size: 0.9rem; }
-        .deposit-method-btn { transition: all 0.2s; background: #1e293b; color: white; padding: 0.75rem; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
-        .deposit-method-btn:hover { transform: translateY(-2px); opacity: 0.9; }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 20000; justify-content: center; align-items: center; }
-        .modal.active { display: flex; }
-        .modal-content { background: white; max-width: 500px; width: 90%; border-radius: 1.5rem; padding: 1.5rem; max-height: 90vh; overflow-y: auto; }
-        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #4f46e5; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .withdrawal-detail { background: #f8fafc; border-radius: 0.75rem; padding: 0.75rem; margin-bottom: 0.75rem; border-left: 4px solid #4f46e5; }
+        .investment-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .deposit-method-btn { transition:all 0.2s; cursor: pointer; background: #1e293b; }
+        .deposit-method-btn:hover { transform:translateY(-2px); opacity:0.9; }
+        .video-rectangle { width:100%; max-width:280px; border-radius:1rem; overflow:hidden; background:black; margin:0 auto; }
+        .video-rectangle video { width:100%; aspect-ratio:16/9; object-fit:cover; }
+        .active-invest-card { transition: transform 0.2s; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; }
+        .countdown-live { font-family: monospace; font-weight: bold; font-size: 1rem; background: #f1f5f9; padding: 0.2rem 0.8rem; border-radius: 2rem; display: inline-block; }
+        .claim-btn:disabled { opacity: 0.6; cursor: not-allowed; }
     </style>
 </head>
 <body class="bg-amber-50">
@@ -76,282 +80,398 @@
             </div>
         </header>
 
+        <div class="container mx-auto px-4 pt-2">
+            <div class="video-container"><div class="video-rectangle"><video src="video.mp4" autoplay muted loop playsinline controls></video></div></div>
+        </div>
+
         <main class="container mx-auto px-4 py-6 space-y-6" id="mainContent">
+            <!-- TRADING SECTION (core unchanged) -->
             <div id="trade" class="content-section active-section">
-                <div class="card-glass p-6 text-center"><h2 class="text-xl font-bold">Trading Dashboard Active</h2><p class="text-gray-500">Full trading system operational (60s binary options)</p><button id="exampleTradeBtn" class="mt-3 bg-indigo-600 text-white px-4 py-2 rounded">Try Demo Trade</button></div>
+                <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
+                    <div id="globalTradeStatus" class="status-bar text-sm"><i class="fas fa-chart-simple"></i> <span id="statusText">✅ No active trades</span> <span id="statusTimer" class="font-mono"></span></div>
+                    <button id="resetDemoBtn" class="reset-btn"><i class="fas fa-sync-alt mr-1"></i> Reset Demo</button>
+                </div>
+                <div class="grid lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 space-y-4">
+                        <div class="guide-card flex items-center justify-between" id="tradeGuideBtn"><div><i class="fas fa-book-open text-indigo-600 text-2xl mr-3"></i> <strong>📘 Trading Guide</strong> – 60 sec trades: CALL=price UP, PUT=price DOWN | Win = Stake × Multiplier</div><i class="fas fa-chevron-right"></i></div>
+                        <div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>{"allow_symbol_change":true,"interval":"1","symbol":"OANDA:EURUSD","theme":"light","autosize":true}</script></div>
+                        <div class="bg-indigo-50 p-2 rounded-xl text-center font-mono text-lg" id="chartCountdown">⏱️ No active trade</div>
+                        <div class="card-glass p-4"><div class="flex justify-between items-center mb-3 flex-wrap gap-3"><button id="exampleTradeBtn" class="bg-purple-600 text-white px-3 py-1 rounded-full text-sm"><i class="fas fa-magic"></i> Try Example</button><span id="modeLabel" class="text-sm font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">🔴 REAL ACCOUNT</span></div><div id="lastTradeSummary" class="last-trade-mini mb-3">📋 Last trade: —</div><div class="streak-dots" id="streakDots"></div><div class="auto-trade-panel mb-3"><div><i class="fas fa-robot"></i> Auto Trade</div><div class="flex gap-2 flex-wrap"><select id="autoDirection" class="border rounded p-1 text-sm"><option value="call">CALL ▲</option><option value="put">PUT ▼</option></select><button id="startAutoTradeBtn" class="bg-green-600 text-white px-3 py-1 rounded text-sm">Start</button><button id="stopAutoTradeBtn" class="bg-red-600 text-white px-3 py-1 rounded text-sm" disabled>Stop</button></div></div><div class="flex gap-5 border-b mb-3 mt-2"><button id="positionsTabBtn" class="px-4 py-2 font-bold text-indigo-600 border-b-2 border-indigo-500">Active (60s)</button><button id="historyTabBtn" class="px-4 py-2 font-bold text-gray-500">Trade History</button></div><div id="positionsPanel"><div class="text-sm mb-2 flex justify-between"><span>Live positions:</span><span id="activeCountBadge" class="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full text-xs font-bold">0</span></div><div id="openPositionsList" class="space-y-2 max-h-80 overflow-y-auto"></div></div><div id="historyPanel" class="hidden"><div id="lastTradesList" class="space-y-2 max-h-64 overflow-y-auto"></div><div class="mt-3 flex justify-between"><span>Last 10 P/L:</span><span id="last10Profit" class="profit-badge">$0.00</span><span>Win Rate:</span><span id="winRatePercent" class="font-bold">0%</span></div></div></div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="card-glass p-4"><div class="flex justify-between"><span class="font-bold text-lg">💰 Trading Balance</span><button id="topUpBalanceBtn" class="bg-indigo-600 text-white px-3 py-1 rounded-full text-sm"><i class="fas fa-plus-circle"></i> Top Up</button></div><div id="liveBalance" class="text-3xl font-bold text-green-600 mt-2">$0.00</div><div id="liveBalanceKES" class="text-sm text-gray-600"></div></div>
+                        <div class="card-glass p-4 text-center"><div class="text-sm text-gray-500">EUR/USD Live</div><div class="text-3xl font-bold text-indigo-700" id="livePrice">1.17304</div></div>
+                        <div class="card-glass p-4"><div class="font-medium mb-2">Stake Amount <span id="stakeMinLabel">(Min $9)</span></div><div class="grid grid-cols-5 gap-2 stake-buttons-grid" id="stakeButtonsContainer"></div><input type="number" id="stakeAmount" class="w-full border rounded-xl p-2 mt-2 text-center" value="10" step="1"><div class="mt-3"><div class="flex justify-between text-sm"><span>💰 Potential Profit:</span><span id="potentialProfit" class="text-green-600 font-bold">$0.00</span></div><div class="flex justify-between text-sm"><span>💸 Potential Loss:</span><span id="potentialLoss" class="text-red-600 font-bold">$0.00</span></div><div class="risk-reward-bar mt-1"><div class="risk-reward-fill" id="riskRewardFill"></div></div></div></div>
+                        <div class="card-glass p-4"><div class="font-medium mb-2">Multiplier (1x - 10x)</div><input type="range" id="multiplierSlider" min="1" max="10" step="0.5" value="2" class="w-full"><div class="flex justify-between mt-1"><span>1x</span><span>5x</span><span>10x</span></div><div class="mt-2 text-center"><span class="font-bold" id="multiplierValue">2.0x</span></div><div class="mt-3"><span>Payout if Win: </span><span id="totalPayout" class="font-bold text-indigo-700">$20.00</span></div></div>
+                        <div class="grid grid-cols-2 gap-3"><button id="callTradeBtn" class="bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-bold">CALL ▲</button><button id="putTradeBtn" class="bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold">PUT ▼</button></div>
+                    </div>
+                </div>
             </div>
-            <div id="investments" class="content-section"><div class="card-glass p-6"><h2 class="text-2xl font-bold mb-4">📊 Investment Dashboard</h2><div id="investmentStatsDashboard" class="investment-stat-grid"></div><h3 class="text-xl font-bold mt-4 mb-2">📦 Investment Products</h3><div id="investmentProductsList" class="grid md:grid-cols-2 gap-4 mb-8"></div><h3 class="text-xl font-bold mb-3">📌 Your Active Investments (Image + Start/End + Live Claim Countdown)</h3><div id="activeInvestmentsList" class="space-y-4"></div></div></div>
-            <div id="balances" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-4">💰 Balance Overview</h3><div id="balanceDetails" class="space-y-2"></div><div class="mt-5 p-3 bg-indigo-50 rounded-xl"><h4 class="font-bold"><i class="fas fa-chart-line mr-1"></i> Investment Finance Statistics</h4><div id="investmentFinanceStats" class="grid grid-cols-2 gap-3 mt-2 text-sm"></div></div></div></div>
+
+            <!-- INVESTMENTS with STATS DASHBOARD, image, live countdown -->
+            <div id="investments" class="content-section"><div class="card-glass p-6"><h2 class="text-2xl font-bold mb-4">📊 Investment Dashboard</h2><div id="investmentStatsDashboard" class="investment-stat-grid"></div><h3 class="text-xl font-bold mt-4 mb-2">📦 Investment Products</h3><div id="investmentProductsList" class="grid md:grid-cols-2 gap-4 mb-8"></div><h3 class="text-xl font-bold mb-3">📌 Your Active Investments (Start/End date + image + live countdown)</h3><div id="activeInvestmentsList" class="space-y-4"></div></div></div>
+            
+            <!-- BALANCES with Investment Finance Statics -->
+            <div id="balances" class="content-section"><div class="card-glass p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold">💰 Balance Overview</h3><div class="flex gap-2"><button id="quickWithdrawBtn" class="bg-red-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-hand-holding-usd"></i> Withdraw</button><button id="quickTopUpBtn" class="bg-green-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-plus-circle"></i> Top Up</button></div></div><div id="balanceDetails" class="space-y-2"></div><div class="mt-5 p-3 bg-indigo-50 rounded-xl border border-indigo-100"><h4 class="font-bold text-indigo-800"><i class="fas fa-chart-line mr-1"></i> Investment Finance Statistics</h4><div id="investmentFinanceStats" class="grid grid-cols-2 gap-3 mt-2 text-sm"></div></div><div class="mt-4 p-3 bg-gray-100 rounded"><div class="font-medium">Exchange Rate (USD → KES): <span id="exchangeRate">1 USD = 0 KES</span></div></div></div></div>
+            
+            <!-- TRANSACTIONS (all types) -->
             <div id="transactions" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">📜 Full Transaction History</h3><div id="historyList" class="space-y-2 max-h-96 overflow-y-auto"></div></div></div>
-            <div id="withdrawals" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">🏦 Withdrawal Requests</h3><div id="withdrawBalanceInfo" class="mb-3 text-sm bg-gray-100 p-2 rounded"></div><button id="openWithdrawFormBtn" class="mb-3 bg-blue-600 text-white px-4 py-2 rounded-lg">Request Withdrawal</button><div id="withdrawalsList" class="space-y-3"></div></div></div>
-            <div id="deposits" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">💎 Deposit Funds</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" id="depositMethodsContainer"></div><div id="depositsList" class="space-y-2 max-h-60 overflow-y-auto mt-4"></div></div></div>
-            <div id="referrals" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold">👥 Referral Program</h3><div id="referralStats" class="my-3"></div><div id="referralLinkDisplay" class="bg-gray-100 p-2 rounded break-all text-sm"></div><button id="copyReferralLinkBtn" class="mt-2 bg-indigo-600 text-white px-3 py-1 rounded">Copy Link</button></div></div>
+            <div id="withdrawals" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">🏦 Withdrawals</h3><div id="withdrawBalanceInfo" class="mb-3 text-sm bg-gray-100 p-2 rounded"></div><button id="openWithdrawFormBtn" class="mb-3 bg-blue-600 text-white px-4 py-2 rounded-lg">Request Withdrawal</button><div id="withdrawalsList" class="space-y-3 max-h-96 overflow-y-auto"></div></div></div>
+            
+            <!-- DEPOSITS with dynamic payment methods + error handling -->
+            <div id="deposits" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">💎 Deposit Funds</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" id="depositMethodsContainer"></div><div class="mt-4 p-3 bg-yellow-50 rounded border-l-4 border-yellow-400"><p class="text-sm"><i class="fas fa-exclamation-triangle"></i> Already deposited but not reflected? <a href="#" id="reportDepositBtn" class="font-bold underline text-indigo-600">Click here</a> to report a pending deposit.</p></div><div id="depositsList" class="space-y-2 max-h-60 overflow-y-auto mt-4"></div></div></div>
+            
+            <div id="referrals" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold">👥 Referral Program</h3><div id="referralStats" class="my-3"></div><div id="referralLinkDisplay" class="bg-gray-100 p-2 rounded break-all text-sm"></div><button id="copyReferralLinkBtn" class="mt-2 bg-indigo-600 text-white px-3 py-1 rounded">Copy Link</button><button id="requestCommissionBtn" class="mt-2 bg-green-600 text-white px-3 py-1 rounded ml-2">Request Commission</button><div class="mt-4"><h4 class="font-bold">Referred Users</h4><div id="referredUsersList" class="space-y-1 text-sm"></div></div></div></div>
             <div id="leaderboard" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">🏆 Top Earners</h3><div id="leaderboardContainer" class="space-y-2"></div></div></div>
             <div id="support" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">🎫 Support Tickets</h3><button id="createTicketBtn" class="bg-green-600 text-white px-3 py-1 rounded mb-3">New Ticket</button><div id="supportTicketsList" class="space-y-3 max-h-96 overflow-y-auto"></div></div></div>
-            <div id="streak" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold">🔥 Daily Streak</h3><div id="streakGrid" class="streak-grid"></div></div></div>
-            <div id="chat" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">💬 Live Chat</h3><div class="coming-soon-placeholder text-center p-8 bg-gray-100 rounded-xl"><i class="fas fa-comments text-4xl text-gray-400 mb-2 block"></i><p class="font-medium">⭐ Live Chat Feature Coming Soon ⭐</p></div></div></div>
-            <div id="kyc" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">🪪 KYC Verification</h3><div><span class="font-medium">Status:</span> <span id="kycStatusDisplay" class="px-2 py-1 rounded bg-yellow-100">unverified</span></div><button id="submitKycBtn" class="bg-indigo-600 text-white px-4 py-2 rounded w-full mt-3">Submit KYC</button></div></div>
+            <div id="streak" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold">🔥 Daily Streak (7 days)</h3><div id="streakGrid" class="streak-grid"></div></div></div>
+            <div id="chat" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">💬 Live Chat</h3><div class="coming-soon-placeholder text-center p-6 bg-gray-100 rounded"><i class="fas fa-comments text-4xl text-gray-400 mb-2 block"></i><p class="font-medium">⭐ Live Chat Feature Coming Soon ⭐</p></div></div></div>
+            <div id="kyc" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">🪪 KYC Verification</h3><div><span class="font-medium">Status:</span> <span id="kycStatusDisplay" class="px-2 py-1 rounded bg-yellow-100">unverified</span></div><div class="mt-3"><label class="block font-medium">Face Portrait URL</label><div class="flex gap-2"><input type="url" id="faceUrl" placeholder="https://..." class="flex-1 border p-2 rounded mt-1"><button id="generateFaceUrlBtn" class="mt-1 bg-gray-600 text-white px-3 py-2 rounded text-sm"><i class="fas fa-external-link-alt"></i> Generate URL</button></div></div><div class="mt-3"><label class="block font-medium">ID Document URL</label><div class="flex gap-2"><input type="url" id="idUrl" placeholder="https://..." class="flex-1 border p-2 rounded mt-1"><button id="generateIdUrlBtn" class="mt-1 bg-gray-600 text-white px-3 py-2 rounded text-sm"><i class="fas fa-external-link-alt"></i> Generate URL</button></div></div><button id="submitKycBtn" class="bg-indigo-600 text-white px-4 py-2 rounded w-full mt-3">Submit KYC</button></div></div>
             <div id="announcements" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold">📢 Announcements</h3><div id="announcementsList" class="space-y-3"></div></div></div>
-            <div id="contact" class="content-section"><div class="card-glass p-7 text-center"><h2 class="text-2xl font-bold">📞 Contact Us</h2><div class="flex justify-center gap-6 mt-4"><a id="whatsappLink" href="#" target="_blank" class="text-green-600 text-3xl"><i class="fab fa-whatsapp"></i></a><a id="telegramLink" href="#" target="_blank" class="text-blue-500 text-3xl"><i class="fab fa-telegram"></i></a></div></div></div>
-            <div id="settings" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold">⚙️ Settings</h3><input id="displayNameInput" class="border p-2 rounded w-full my-2" placeholder="Full Name"><button id="updateProfileBtn" class="bg-gray-700 text-white w-full py-2 rounded">Update Name</button></div></div>
+            <div id="contact" class="content-section"><div class="card-glass p-7 text-center"><h2 class="text-2xl font-bold">📞 Contact Us</h2><div class="flex justify-center gap-6 mt-4"><a id="whatsappLink" href="#" target="_blank" class="text-green-600 text-3xl"><i class="fab fa-whatsapp"></i></a><a id="telegramLink" href="#" target="_blank" class="text-blue-500 text-3xl"><i class="fab fa-telegram"></i></a></div><div id="supportEmailDisplay" class="text-gray-600 mt-4">support@bestpay.com</div></div></div>
+            <div id="settings" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold">⚙️ Settings</h3><input id="displayNameInput" class="border p-2 rounded w-full my-2" placeholder="Full Name"><button id="updateProfileBtn" class="bg-gray-700 text-white w-full py-2 rounded">Update Name</button><input id="newEmailInput" type="email" class="border p-2 rounded w-full my-2" placeholder="New Email"><button id="updateEmailBtn" class="bg-indigo-600 text-white w-full py-2 rounded">Change Email</button><input id="newPasswordInput" type="password" class="border p-2 rounded w-full my-2" placeholder="New Password"><button id="updatePasswordBtn" class="bg-red-600 text-white w-full py-2 rounded">Change Password</button></div></div>
         </main>
     </div>
 
     <!-- MODALS -->
-    <div id="withdrawConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">💸 Withdrawal Request</h3><div id="withdrawConfirmDetails"></div><div class="flex gap-3 mt-4"><button id="confirmWithdrawBtn" class="bg-green-600 text-white px-4 py-2 rounded">Confirm</button><button id="cancelWithdrawConfirmBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
-    <div id="investConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">📊 Confirm Investment</h3><div id="investConfirmDetails"></div><div id="investSpinner" class="hidden"><div class="spinner"></div></div><div class="flex gap-3 mt-4"><button id="confirmInvestBtn" class="bg-green-600 text-white px-4 py-2 rounded">Confirm</button><button id="cancelInvestBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
+    <div id="confirmTradeModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">⚠️ Confirm Trade</h3><div id="confirmTradeDetails"></div><div class="flex gap-3 mt-4"><button id="confirmTradeYes" class="bg-green-600 text-white px-4 py-2 rounded">Confirm</button><button id="confirmTradeNo" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
+    <div id="tradeResultModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">📊 Trade Result</h3><div id="tradeResultBody"></div><div id="tradeFeedbackMessage" class="mt-3 text-sm text-gray-600"></div><button id="closeResultModalBtn" class="mt-4 bg-indigo-600 text-white px-6 py-2 rounded mx-auto block">OK</button></div></div>
+    <div id="withdrawConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">💸 Request Withdrawal</h3><div id="withdrawConfirmDetails"></div><div class="flex gap-3 mt-4"><button id="confirmWithdrawBtn" class="bg-green-600 text-white px-4 py-2 rounded">Confirm</button><button id="cancelWithdrawConfirmBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
+    <div id="reportDepositConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">📝 Report Pending Deposit</h3><div id="reportDepositDetails"></div><div class="flex gap-3 mt-4"><button id="confirmReportDepositBtn" class="bg-green-600 text-white px-4 py-2 rounded">Submit</button><button id="cancelReportDepositConfirmBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
+    <div id="commissionRequestConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">💰 Request Commission</h3><div id="commissionRequestDetails"></div><div class="flex gap-3 mt-4"><button id="confirmCommissionRequestBtn" class="bg-green-600 text-white px-4 py-2 rounded">Submit Ticket</button><button id="cancelCommissionRequestConfirmBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
+    <div id="investConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">📊 Confirm Investment</h3><div id="investConfirmDetails"></div><div id="investSpinner" class="hidden"><div class="spinner"></div><p>Processing...</p></div><div class="flex gap-3 mt-4"><button id="confirmInvestBtn" class="bg-green-600 text-white px-4 py-2 rounded">Confirm</button><button id="cancelInvestBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
     <div id="profitClaimConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">📈 Claim Daily Profit</h3><div id="profitClaimDetails"></div><div class="flex gap-3 mt-4"><button id="confirmClaimProfitBtn" class="bg-green-600 text-white px-4 py-2 rounded">Claim Now</button><button id="cancelClaimProfitBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
+    <div id="withdrawInvestmentModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-3">💰 Withdraw Investment</h3><div id="withdrawInvestmentDetails"></div><div class="flex gap-3 mt-4"><button id="confirmWithdrawInvestmentBtn" class="bg-green-600 text-white px-4 py-2 rounded">Confirm Withdrawal</button><button id="cancelWithdrawInvestmentBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
     <div id="infoModal" class="modal"><div class="modal-content"><h3 id="infoModalTitle" class="text-xl font-bold mb-3">Info</h3><p id="infoModalMessage"></p><button id="closeInfoModalBtn" class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded">OK</button></div></div>
+    <div id="reAuthModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold">Re-authenticate</h3><input type="password" id="reAuthPassword" placeholder="Password" class="border p-2 w-full rounded"><button id="submitReAuthBtn" class="bg-indigo-600 text-white w-full mt-3 py-2 rounded">Confirm</button><button onclick="closeModal('reAuthModal')" class="mt-2 text-gray-500">Cancel</button></div></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signOut, updateProfile, updateEmail, updatePassword, sendEmailVerification, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, orderBy, serverTimestamp, addDoc, increment, Timestamp, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         
         const firebaseConfig = { apiKey: "AIzaSyDtGN7KCK0A4fhztLN0CgxsKkGROcO_-vI", authDomain: "bestpay-5b78c.firebaseapp.com", projectId: "bestpay-5b78c", storageBucket: "bestpay-5b78c.firebasestorage.app", messagingSenderId: "583230068716", appId: "1:583230068716:web:3e8d298b4d00b46c8652c9" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        let currentUser, currentUserData, isRealMode = true, exchangeRate = 130;
+        let currentUser, currentUserData, isRealMode = true;
+        let exchangeRate = 130;
+        let withdrawalConfig = { minAmount: 10, feePercent: 3 };
         
-        function showModal(id) { document.getElementById(id).classList.add('active'); }
-        function hideModal(id) { document.getElementById(id).classList.remove('active'); }
-        function showInfo(title, msg) { document.getElementById('infoModalTitle').innerText = title; document.getElementById('infoModalMessage').innerHTML = msg; showModal('infoModal'); }
+        function showModal(id){ document.getElementById(id).classList.add('active'); }
+        function hideModal(id){ document.getElementById(id).classList.remove('active'); }
+        window.closeModal = hideModal;
+        function showInfoModal(title, message) { document.getElementById('infoModalTitle').innerText = title; document.getElementById('infoModalMessage').innerHTML = message; showModal('infoModal'); }
         document.getElementById('closeInfoModalBtn').onclick = () => hideModal('infoModal');
-
-        async function loadUserData() {
-            const snap = await getDoc(doc(db,"users",currentUser.uid));
+        
+        async function loadUserData() { 
+            const snap = await getDoc(doc(db,"users",currentUser.uid)); 
             currentUserData = snap.data() || { realBalance:0, demoBalance:10000, totalEarned:0 };
             const bal = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||10000);
+            document.getElementById('liveBalance').innerText = `$${bal.toFixed(2)}`;
+            document.getElementById('liveBalanceKES').innerHTML = `≈ KES ${(bal * exchangeRate).toFixed(2)}`;
+            document.getElementById('userShort').innerText = currentUserData.displayName?.split(' ')[0] || currentUser.email.split('@')[0]; 
             document.getElementById('balanceDetails').innerHTML = `<div class="flex justify-between"><span>💰 Real Balance:</span><span class="font-bold">$${(currentUserData.realBalance||0).toFixed(2)}</span></div><div class="flex justify-between"><span>🎮 Demo Balance:</span><span class="font-bold">$${(currentUserData.demoBalance||10000).toFixed(2)}</span></div><div class="flex justify-between"><span>🏆 Total Earned:</span><span class="font-bold">$${(currentUserData.totalEarned||0).toFixed(2)}</span></div>`;
-            document.getElementById('userShort').innerText = currentUserData.displayName?.split(' ')[0] || currentUser.email.split('@')[0];
-            document.getElementById('withdrawBalanceInfo').innerHTML = `💰 Available Balance: $${bal.toFixed(2)} | Min withdrawal: $10 | Fee: 3%`;
+            document.getElementById('withdrawBalanceInfo').innerHTML = `💰 Available: $${bal.toFixed(2)} | Min withdrawal: $${withdrawalConfig.minAmount} | Fee: ${withdrawalConfig.feePercent}%`;
         }
-        async function updateBalance(amount, isReal) { const field = isReal ? 'realBalance' : 'demoBalance'; await updateDoc(doc(db,"users",currentUser.uid), { [field]: increment(amount), totalEarned: increment(amount>0?amount:0) }); await loadUserData(); refreshStats(); }
-
-        // Investment Dashboard Stats
-        async function refreshStats() {
+        
+        async function updateBalanceByMode(changeAmount, isReal) { 
+            const field = isReal ? 'realBalance' : 'demoBalance'; 
+            await updateDoc(doc(db,"users",currentUser.uid), { [field]: increment(changeAmount), totalEarned: increment(changeAmount>0?changeAmount:0) }); 
+            await loadUserData(); 
+            refreshInvestmentStatsDashboard();
+        }
+        
+        // === INVESTMENT DASHBOARD STATS ===
+        async function refreshInvestmentStatsDashboard() {
             if(!currentUser) return;
-            const productsSnap = await getDocs(collection(db,"investment_plans"));
-            const activeInv = await getDocs(query(collection(db,"user_investments"), where("userId","==",currentUser.uid), where("status","==","active")));
+            const plansSnap = await getDocs(collection(db,"investment_plans"));
+            const productsCount = plansSnap.size;
+            const activeInvSnap = await getDocs(query(collection(db,"user_investments"), where("userId","==",currentUser.uid), where("status","==","active")));
+            const activeCount = activeInvSnap.size;
             const profitTxns = await getDocs(query(collection(db,"transactions"), where("userId","==",currentUser.uid), where("type","==","investment_profit")));
-            let totalEarned = 0; profitTxns.forEach(t => totalEarned += (t.data().amount||0));
+            let totalEarnedInv = 0;
+            profitTxns.forEach(t => totalEarnedInv += (t.data().amount || 0));
             let pendingEarnings = 0;
-            for(const inv of activeInv.docs) {
-                const data = inv.data();
-                const lastClaim = data.lastProfitClaim?.toDate() || data.startDate.toDate();
-                const daysSince = Math.floor((Date.now() - lastClaim) / 86400000);
-                const daily = data.amount * data.dailyROI / 100;
-                pendingEarnings += daily * Math.max(0, daysSince);
+            for(const invSnap of activeInvSnap.docs){
+                const inv = invSnap.data();
+                const lastClaim = inv.lastProfitClaim ? inv.lastProfitClaim.toDate() : inv.startDate.toDate();
+                const now = new Date();
+                const daysSinceClaim = Math.floor((now - lastClaim) / 86400000);
+                const dailyProfit = inv.amount * inv.dailyROI / 100;
+                pendingEarnings += dailyProfit * daysSinceClaim;
             }
-            const withdrawalsInv = await getDocs(query(collection(db,"investment_withdrawals"), where("userId","==",currentUser.uid)));
-            let totalWithdrawn = 0; withdrawalsInv.forEach(w => totalWithdrawn += (w.data().amount||0));
+            const withdrawalsInvSnap = await getDocs(query(collection(db,"investment_withdrawals"), where("userId","==",currentUser.uid)));
+            let totalWithdrawalsInv = 0;
+            withdrawalsInvSnap.forEach(w => totalWithdrawalsInv += (w.data().amount || 0));
             document.getElementById('investmentStatsDashboard').innerHTML = `
-                <div class="stats-card"><div class="stats-value">${productsSnap.size}</div><div>Products</div></div>
-                <div class="stats-card"><div class="stats-value">${activeInv.size}</div><div>Active Investments</div></div>
-                <div class="stats-card"><div class="stats-value">$${totalEarned.toFixed(2)}</div><div>Total Earned</div></div>
-                <div class="stats-card"><div class="stats-value">$${pendingEarnings.toFixed(2)}</div><div>Pending Earnings</div></div>
-                <div class="stats-card"><div class="stats-value">$${totalWithdrawn.toFixed(2)}</div><div>Withdrawn from Inv</div></div>
+                <div class="stats-card"><i class="fas fa-cubes"></i><div class="stats-value">${productsCount}</div><div>Products</div></div>
+                <div class="stats-card"><i class="fas fa-chart-line"></i><div class="stats-value">${activeCount}</div><div>Active</div></div>
+                <div class="stats-card"><i class="fas fa-dollar-sign"></i><div class="stats-value">$${totalEarnedInv.toFixed(2)}</div><div>Total Earned</div></div>
+                <div class="stats-card"><i class="fas fa-hourglass-half"></i><div class="stats-value">$${pendingEarnings.toFixed(2)}</div><div>Pending Earnings</div></div>
+                <div class="stats-card"><i class="fas fa-donate"></i><div class="stats-value">$${totalWithdrawalsInv.toFixed(2)}</div><div>Total Withdrawals</div></div>
             `;
-            const totalInvested = activeInv.docs.reduce((sum,d) => sum + (d.data().amount||0), 0);
-            document.getElementById('investmentFinanceStats').innerHTML = `<div>💰 Total Invested: $${totalInvested.toFixed(2)}</div><div>✅ Claimed Profit: $${totalEarned.toFixed(2)}</div><div>⏳ Pending: $${pendingEarnings.toFixed(2)}</div><div>📤 Withdrawn: $${totalWithdrawn.toFixed(2)}</div>`;
+            const totalInvested = (await getDocs(query(collection(db,"user_investments"), where("userId","==",currentUser.uid)))).docs.reduce((sum, d) => sum + (d.data().amount||0), 0);
+            document.getElementById('investmentFinanceStats').innerHTML = `
+                <div><span class="font-semibold">💰 Total Invested:</span> $${totalInvested.toFixed(2)}</div>
+                <div><span class="font-semibold">✅ Claimed Profit:</span> $${totalEarnedInv.toFixed(2)}</div>
+                <div><span class="font-semibold">⏳ Pending Profit:</span> $${pendingEarnings.toFixed(2)}</div>
+                <div><span class="font-semibold">📤 Withdrawn:</span> $${totalWithdrawalsInv.toFixed(2)}</div>
+            `;
         }
-
-        // Load Investment Plans with product image
-        async function loadInvestmentPlans() {
-            const snap = await getDocs(collection(db,"investment_plans"));
-            if(snap.empty) { document.getElementById('investmentProductsList').innerHTML = '<div class="empty-message">No plans</div>'; return; }
-            let html = '';
-            snap.forEach(d => {
-                const p = d.data();
-                const daily = ((p.fixedAmount||p.minAmount) * p.dailyROI / 100);
-                const imgUrl = p.imageUrl || p.productUrl || null;
-                html += `<div class="border rounded-lg p-4 shadow-sm bg-white"><div class="flex gap-3"><div class="w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">${imgUrl ? `<img src="${imgUrl}" class="w-full h-full object-cover">` : '<i class="fas fa-chart-line text-3xl text-gray-400 flex items-center justify-center h-full"></i>'}</div><div><h3 class="font-bold text-lg">${p.name}</h3><div class="text-sm">Amount: $${p.fixedAmount||p.minAmount} | ROI: ${p.dailyROI}% daily</div><div class="text-sm">Daily: $${daily.toFixed(2)} | Duration: ${p.durationDays} days</div><button onclick="window.investNow('${d.id}', ${p.fixedAmount||p.minAmount}, ${p.dailyROI}, ${p.durationDays}, '${imgUrl || ''}')" class="mt-2 bg-green-600 text-white px-3 py-1 rounded text-sm">Invest</button></div></div></div>`;
-            });
-            document.getElementById('investmentProductsList').innerHTML = html;
-        }
-        window.investNow = (planId, amount, roi, duration, imageUrl) => {
-            document.getElementById('investConfirmDetails').innerHTML = `<p>Confirm investment of <strong>$${amount}</strong><br>Daily profit: <strong>$${(amount*roi/100).toFixed(2)}</strong> for ${duration} days.</p>`;
-            window.pendingInvest = { planId, amount, roi, duration, imageUrl };
-            showModal('investConfirmModal');
-        };
-        document.getElementById('confirmInvestBtn').onclick = async () => {
-            if(!window.pendingInvest) return;
-            const { amount, roi, duration, imageUrl } = window.pendingInvest;
-            const bal = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||10000);
-            if(amount > bal) { showInfo("Insufficient", "Not enough balance"); hideModal('investConfirmModal'); return; }
-            await updateBalance(-amount, isRealMode);
-            await addDoc(collection(db,"user_investments"), { userId:currentUser.uid, planId:"plan", amount, dailyROI:roi, durationDays:duration, startDate:serverTimestamp(), lastProfitClaim:Timestamp.fromDate(new Date(0)), status:"active", imageUrl:imageUrl || null });
-            hideModal('investConfirmModal');
-            showInfo("Success", "Investment started!");
-            loadActiveInvestments(); refreshStats(); loadUserData();
-            window.pendingInvest = null;
-        };
-        document.getElementById('cancelInvestBtn').onclick = () => hideModal('investConfirmModal');
-
-        // Active Investments with live countdown, product image, claim buttons
+        
+        // === ACTIVE INVESTMENTS WITH LIVE COUNTDOWN ===
         async function loadActiveInvestments() {
             const snap = await getDocs(query(collection(db,"user_investments"), where("userId","==",currentUser.uid), where("status","==","active")));
             if(snap.empty) { document.getElementById('activeInvestmentsList').innerHTML = '<div class="empty-message">No active investments</div>'; return; }
             let html = '';
-            for(const docSnap of snap.docs) {
-                const inv = docSnap.data();
-                const start = inv.startDate.toDate();
-                const end = new Date(start.getTime() + inv.durationDays * 86400000);
-                const lastClaim = inv.lastProfitClaim?.toDate() || start;
-                const nextClaimTime = new Date(lastClaim.getTime() + 24*60*60*1000);
-                const canClaim = Date.now() >= nextClaimTime.getTime();
-                const dailyProfit = inv.amount * inv.dailyROI / 100;
-                const timeLeft = Math.max(0, nextClaimTime.getTime() - Date.now());
-                const hours = Math.floor(timeLeft / 3600000);
-                const minutes = Math.floor((timeLeft % 3600000) / 60000);
-                const seconds = Math.floor((timeLeft % 60000) / 1000);
-                const claimBtnHtml = canClaim ? `<button onclick="window.claimProfit('${docSnap.id}', ${inv.amount}, ${inv.dailyROI})" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold"><i class="fas fa-hand-holding-usd"></i> Claim Now ($${dailyProfit.toFixed(2)})</button>` : `<div class="text-sm bg-gray-100 p-2 rounded inline-block"><i class="fas fa-clock"></i> Next claim: <span class="countdown-small" data-invest-id="${docSnap.id}" data-next="${nextClaimTime.getTime()}">${hours}h ${minutes}m ${seconds}s</span></div>`;
-                const imgSrc = inv.imageUrl || null;
-                html += `<div class="active-invest-card flex flex-wrap justify-between items-center gap-3"><div class="flex gap-3"><div class="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">${imgSrc ? `<img src="${imgSrc}" class="w-full h-full object-cover">` : '<i class="fas fa-chart-line text-2xl text-gray-400 flex items-center justify-center h-full"></i>'}</div><div><div class="font-bold">Investment #${docSnap.id.slice(-6)}</div><div class="text-sm">Amount: $${inv.amount} | Daily ROI: ${inv.dailyROI}%</div><div class="text-xs text-gray-500">Start: ${start.toLocaleDateString()} | End: ${end.toLocaleDateString()}</div></div></div><div class="text-right">${claimBtnHtml}<button onclick="window.withdrawInvestmentPrincipal('${docSnap.id}', ${inv.amount})" class="bg-red-600 text-white px-3 py-1 rounded text-sm ml-2 mt-2">Withdraw</button></div></div>`;
+            for(const invDoc of snap.docs){
+                const data = invDoc.data();
+                const startDate = data.startDate.toDate();
+                const endDate = new Date(startDate.getTime() + data.durationDays * 86400000);
+                const lastClaim = data.lastProfitClaim ? data.lastProfitClaim.toDate() : startDate;
+                const nextClaim = new Date(lastClaim.getTime() + 24*60*60*1000);
+                const dailyProfit = data.amount * data.dailyROI / 100;
+                const imageUrl = data.imageUrl || data.productUrl || null;
+                html += `<div class="active-invest-card" id="inv-${invDoc.id}">
+                    <div class="flex flex-wrap gap-4 justify-between items-start">
+                        <div class="flex gap-3">
+                            ${imageUrl ? `<img src="${imageUrl}" class="w-20 h-20 object-cover rounded-lg" onerror="this.src='https://via.placeholder.com/80'">` : `<div class="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center"><i class="fas fa-chart-line text-2xl text-gray-400"></i></div>`}
+                            <div><div class="font-bold text-lg">Investment #${invDoc.id.slice(-6)}</div>
+                            <div class="text-sm">Amount: $${data.amount} | ROI: ${data.dailyROI}% daily = $${dailyProfit.toFixed(2)}/day</div>
+                            <div class="text-xs text-gray-500">Start: ${startDate.toLocaleDateString()} | End: ${endDate.toLocaleDateString()}</div></div>
+                        </div>
+                        <div class="text-right">
+                            <div id="countdown-${invDoc.id}" class="countdown-live mb-2"></div>
+                            <button id="claimBtn-${invDoc.id}" class="claim-btn bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold" data-inv-id="${invDoc.id}" data-amount="${data.amount}" data-roi="${data.dailyROI}" data-lastclaim="${lastClaim.getTime()}">⏳ Claim $${dailyProfit.toFixed(2)}</button>
+                            <button onclick="window.showWithdrawInvestmentPrompt('${invDoc.id}', ${data.amount})" class="bg-red-600 text-white px-3 py-1 rounded text-sm mt-2 block w-full">Withdraw Principal</button>
+                        </div>
+                    </div>
+                </div>`;
             }
             document.getElementById('activeInvestmentsList').innerHTML = html;
-            // Live countdown timer update
-            if(window.countdownInterval) clearInterval(window.countdownInterval);
-            window.countdownInterval = setInterval(() => {
-                document.querySelectorAll('.countdown-small').forEach(el => {
-                    const next = parseInt(el.dataset.next);
-                    if(isNaN(next)) return;
-                    const diff = Math.max(0, next - Date.now());
-                    const hrs = Math.floor(diff / 3600000);
-                    const mins = Math.floor((diff % 3600000) / 60000);
-                    const secs = Math.floor((diff % 60000) / 1000);
-                    el.innerText = `${hrs}h ${mins}m ${secs}s`;
-                    if(diff <= 0) loadActiveInvestments(); // refresh to show claim button
-                });
-            }, 1000);
+            // Attach live timers & claim logic
+            for(const invDoc of snap.docs){
+                const data = invDoc.data();
+                const lastClaim = data.lastProfitClaim ? data.lastProfitClaim.toDate() : data.startDate.toDate();
+                const nextClaim = new Date(lastClaim.getTime() + 24*60*60*1000);
+                const invId = invDoc.id;
+                const updateTimer = () => {
+                    const now = Date.now();
+                    const diff = nextClaim.getTime() - now;
+                    const claimBtn = document.getElementById(`claimBtn-${invId}`);
+                    const countdownSpan = document.getElementById(`countdown-${invId}`);
+                    if(diff <= 0) {
+                        if(countdownSpan) countdownSpan.innerText = "✅ Ready to claim!";
+                        if(claimBtn) { claimBtn.disabled = false; claimBtn.classList.remove('opacity-50'); claimBtn.innerHTML = `🎯 Claim $${(data.amount * data.dailyROI / 100).toFixed(2)}`; }
+                    } else {
+                        const hours = Math.floor(diff / (1000*60*60));
+                        const minutes = Math.floor((diff % (3600000)) / 60000);
+                        const seconds = Math.floor((diff % 60000) / 1000);
+                        if(countdownSpan) countdownSpan.innerText = `Next claim: ${hours}h ${minutes}m ${seconds}s`;
+                        if(claimBtn) { claimBtn.disabled = true; claimBtn.classList.add('opacity-50'); claimBtn.innerHTML = `⏳ Locked (${hours}h)`;
+                        }
+                    }
+                };
+                updateTimer();
+                const interval = setInterval(updateTimer, 1000);
+                // Attach claim click handler
+                const claimBtn = document.getElementById(`claimBtn-${invId}`);
+                if(claimBtn){
+                    claimBtn.onclick = () => {
+                        const profit = data.amount * data.dailyROI / 100;
+                        window.pendingClaim = { investmentId: invId, profit: profit };
+                        document.getElementById('profitClaimDetails').innerHTML = `<p>Claim daily profit of <strong>$${profit.toFixed(2)}</strong>?</p>`;
+                        showModal('profitClaimConfirmModal');
+                    };
+                }
+                window[`timer_${invId}`] = interval;
+            }
         }
-        window.claimProfit = async (investmentId, amount, roi) => {
-            const profit = amount * roi / 100;
-            document.getElementById('profitClaimDetails').innerHTML = `<p>Claim daily profit of <strong>$${profit.toFixed(2)}</strong>?</p>`;
-            window.pendingClaim = { investmentId, profit };
-            showModal('profitClaimConfirmModal');
-        };
+        
+        // Claim modal handlers
         document.getElementById('confirmClaimProfitBtn').onclick = async () => {
-            if(!window.pendingClaim) return;
-            const { investmentId, profit } = window.pendingClaim;
-            await updateBalance(profit, isRealMode);
-            await updateDoc(doc(db,"user_investments",investmentId), { lastProfitClaim: serverTimestamp() });
-            await addDoc(collection(db,"transactions"), { userId: currentUser.uid, type: "investment_profit", amount: profit, description: `Profit from investment ${investmentId}`, timestamp: serverTimestamp(), status: "completed" });
-            hideModal('profitClaimConfirmModal');
-            showInfo("Claimed", `$${profit.toFixed(2)} added to balance!`);
-            loadActiveInvestments(); refreshStats(); loadUserData();
-            window.pendingClaim = null;
+            if(window.pendingClaim) {
+                const { investmentId, profit } = window.pendingClaim;
+                await updateBalanceByMode(profit, isRealMode);
+                await updateDoc(doc(db,"user_investments",investmentId), { lastProfitClaim: serverTimestamp() });
+                await addDoc(collection(db,"transactions"), { userId: currentUser.uid, type: "investment_profit", amount: profit, description: `Profit from ${investmentId}`, timestamp: serverTimestamp(), status: "completed" });
+                hideModal('profitClaimConfirmModal');
+                showInfoModal("Success", `$${profit.toFixed(2)} claimed!`);
+                loadActiveInvestments();
+                loadUserData();
+                refreshInvestmentStatsDashboard();
+                window.pendingClaim = null;
+            }
         };
         document.getElementById('cancelClaimProfitBtn').onclick = () => { hideModal('profitClaimConfirmModal'); window.pendingClaim = null; };
-        window.withdrawInvestmentPrincipal = (investmentId, amount) => {
-            if(amount < 0.5) { showInfo("Error","Minimum $0.5"); return; }
-            showInfo("Withdraw Request", `Withdrawal request for $${amount} from investment submitted. Admin will review.`);
-            addDoc(collection(db,"investment_withdrawals"), { userId:currentUser.uid, investmentId, amount, status:"pending", createdAt:serverTimestamp() });
+        
+        window.showWithdrawInvestmentPrompt = (investmentId, amount) => {
+            if(amount < 0.5) { showInfoModal("Error","Minimum $0.5"); return; }
+            document.getElementById('withdrawInvestmentDetails').innerHTML = `<p>Withdraw <strong>$${amount.toFixed(2)}</strong> from investment? Admin will review.</p>`;
+            window.pendingWithdrawInvest = { investmentId, amount };
+            showModal('withdrawInvestmentModal');
         };
-
-        // Deposit Methods with payment links from Firestore
+        document.getElementById('confirmWithdrawInvestmentBtn').onclick = async () => {
+            if(window.pendingWithdrawInvest){
+                const { investmentId, amount } = window.pendingWithdrawInvest;
+                await addDoc(collection(db,"investment_withdrawals"), { userId: currentUser.uid, investmentId, amount, status: "pending", createdAt: serverTimestamp() });
+                await addDoc(collection(db,"transactions"), { userId: currentUser.uid, type: "investment_withdrawal_request", amount: -amount, description: `Principal withdrawal request $${amount}`, timestamp: serverTimestamp(), status: "pending" });
+                hideModal('withdrawInvestmentModal');
+                showInfoModal("Success","Request submitted");
+                loadActiveInvestments();
+                window.pendingWithdrawInvest = null;
+            }
+        };
+        document.getElementById('cancelWithdrawInvestmentBtn').onclick = () => hideModal('withdrawInvestmentModal');
+        
+        // === DEPOSIT METHODS (with error handling) ===
         async function loadDepositMethods() {
             try {
-                const methodsSnap = await getDocs(collection(db,"payment_methods"));
+                const methodsSnap = await getDocs(collection(db, "payment_methods"));
                 const container = document.getElementById('depositMethodsContainer');
-                if(methodsSnap.empty) { container.innerHTML = '<div class="col-span-3 text-center text-red-600 bg-red-50 p-3 rounded">❌ No payment methods configured. Contact support.</div>'; return; }
+                if(methodsSnap.empty) { container.innerHTML = '<div class="col-span-3 text-center text-red-600 bg-red-50 p-3 rounded">❌ No payment methods configured. Please contact support.</div>'; return; }
                 let html = '';
                 methodsSnap.forEach(docSnap => {
-                    const m = docSnap.data();
-                    const url = m.paymentUrl || '';
-                    html += `<button data-url="${url}" class="deposit-method-btn"><i class="${m.icon || 'fas fa-credit-card'}"></i> ${m.name}</button>`;
+                    const method = docSnap.data();
+                    html += `<button data-url="${method.paymentUrl || ''}" class="deposit-method-btn bg-gray-800 text-white py-3 rounded-xl"><i class="${method.icon || 'fas fa-credit-card'}"></i> ${method.name}</button>`;
                 });
                 container.innerHTML = html;
                 document.querySelectorAll('.deposit-method-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
+                    btn.onclick = () => {
                         const url = btn.dataset.url;
-                        if(url && url.trim()) window.open(url, '_blank');
-                        else showInfo("Payment Error", "Payment link missing. Try another method or contact support.");
-                    });
+                        if(url && url.startsWith('http')) window.open(url, '_blank');
+                        else showInfoModal("Payment Error","❌ No valid payment link. Use another method or contact support.");
+                    };
                 });
-            } catch(e) { document.getElementById('depositMethodsContainer').innerHTML = '<div class="col-span-3 text-center text-red-600">⚠️ Error loading payment methods. Try again.</div>'; }
+            } catch(e) { document.getElementById('depositMethodsContainer').innerHTML = '<div class="col-span-3 text-red-600">Error loading payment methods. Try later.</div>'; }
         }
-
-        // Withdrawals - professional display with full details
+        
+        // === WITHDRAWALS (full details) ===
         async function loadWithdrawals() {
             const snap = await getDocs(query(collection(db,"withdrawals"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")));
             if(snap.empty) { document.getElementById('withdrawalsList').innerHTML = '<div class="empty-message">No withdrawal requests</div>'; return; }
             let html = '';
             snap.forEach(d => {
                 const w = d.data();
-                const statusClass = w.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : (w.status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800');
-                html += `<div class="withdrawal-detail"><div class="flex justify-between items-center"><span class="font-bold">$${w.amount.toFixed(2)}</span><span class="text-xs px-2 py-1 rounded-full ${statusClass}">${w.status.toUpperCase()}</span></div><div class="text-sm mt-1">Gateway: ${w.gateway || 'Bank Transfer'}</div><div class="text-sm">Fee: $${(w.fee||0).toFixed(2)} | Net: $${(w.netAmount||w.amount).toFixed(2)}</div><div class="text-xs text-gray-500">Account: ${w.details || 'N/A'} | Created: ${w.createdAt?.toDate().toLocaleString()}</div>${w.processedAt ? `<div class="text-xs text-green-600">Processed: ${w.processedAt.toDate().toLocaleString()}</div>` : ''}</div>`;
+                html += `<div class="border rounded p-3 bg-white shadow-sm">
+                    <div class="flex justify-between"><span class="font-bold">$${w.amount}</span><span class="text-sm ${w.status==='pending'?'text-yellow-600':w.status==='paid'?'text-green-600':'text-red-600'}">${w.status.toUpperCase()}</span></div>
+                    <div class="text-sm">Fee: $${(w.fee||0).toFixed(2)} | Net: $${(w.netAmount||w.amount).toFixed(2)} | Gateway: ${w.gateway}</div>
+                    <div class="text-xs text-gray-500">Details: ${w.details || 'N/A'} | Created: ${w.createdAt?.toDate().toLocaleString()}</div>
+                </div>`;
             });
             document.getElementById('withdrawalsList').innerHTML = html;
         }
+        
         document.getElementById('openWithdrawFormBtn').onclick = () => {
-            const bal = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||10000);
-            if(!isRealMode) { showInfo("Error","Switch to Real mode to withdraw"); return; }
-            document.getElementById('withdrawConfirmDetails').innerHTML = `<div class="space-y-3"><input type="number" id="withdrawAmount" placeholder="Amount ($)" class="w-full border p-2 rounded"><select id="withdrawGateway" class="w-full border p-2 rounded"><option value="Bank Transfer">Bank Transfer</option><option value="M-Pesa">M-Pesa</option><option value="Crypto">Crypto</option></select><input type="text" id="withdrawDetails" placeholder="Account / Wallet address" class="w-full border p-2 rounded"></div><div class="text-sm text-gray-500 mt-2">Fee: 3% | Min $10 | Available: $${bal.toFixed(2)}</div>`;
+            document.getElementById('withdrawConfirmDetails').innerHTML = `<div class="space-y-3"><input type="number" id="withdrawAmount" placeholder="Amount ($)" class="w-full border p-2 rounded"><select id="withdrawGateway" class="w-full border p-2 rounded"><option>M-Pesa</option><option>Bank Transfer</option><option>Crypto</option></select><input type="text" id="withdrawDetails" placeholder="Account/Wallet details" class="w-full border p-2 rounded"></div>`;
             showModal('withdrawConfirmModal');
         };
         document.getElementById('confirmWithdrawBtn').onclick = async () => {
             const amount = parseFloat(document.getElementById('withdrawAmount').value);
             const gateway = document.getElementById('withdrawGateway').value;
             const details = document.getElementById('withdrawDetails').value;
-            const bal = currentUserData.realBalance || 0;
-            if(isNaN(amount) || amount < 10 || amount > bal) { showInfo("Invalid","Amount must be min $10 and ≤ balance"); return; }
-            if(!gateway || !details) { showInfo("Error","All fields required"); return; }
-            const fee = amount * 0.03;
+            const bal = isRealMode ? (currentUserData.realBalance||0) : 0;
+            if(!isRealMode) { showInfoModal("Error","Only REAL mode for withdrawals"); return; }
+            if(isNaN(amount) || amount < withdrawalConfig.minAmount || amount > bal) { showInfoModal("Invalid","Check min/max balance"); return; }
+            const fee = amount * withdrawalConfig.feePercent / 100;
             const net = amount - fee;
-            await addDoc(collection(db,"withdrawals"), { userId:currentUser.uid, amount, fee, netAmount:net, gateway, details, status:"pending", createdAt:serverTimestamp() });
-            await addDoc(collection(db,"transactions"), { userId:currentUser.uid, type:"withdrawal_request", amount:-amount, description:`Withdrawal request $${amount} via ${gateway}`, timestamp:serverTimestamp(), status:"pending" });
+            await addDoc(collection(db,"withdrawals"), { userId: currentUser.uid, amount, fee, netAmount: net, gateway, details, status: "pending", createdAt: serverTimestamp() });
+            await addDoc(collection(db,"transactions"), { userId: currentUser.uid, type: "withdrawal_request", amount: -amount, description: `Withdrawal $${amount} via ${gateway}`, timestamp: serverTimestamp(), status: "pending" });
             hideModal('withdrawConfirmModal');
-            showInfo("Success", "Withdrawal request submitted for admin review");
-            loadWithdrawals(); loadUserData();
+            showInfoModal("Success","Withdrawal request submitted");
+            loadWithdrawals();
+            loadUserData();
         };
         document.getElementById('cancelWithdrawConfirmBtn').onclick = () => hideModal('withdrawConfirmModal');
-
-        // Transactions - all types
-        async function loadTransactions() {
-            const snap = await getDocs(query(collection(db,"transactions"), where("userId","==",currentUser.uid)));
-            let txs = []; snap.forEach(d => txs.push({ id:d.id, ...d.data() }));
-            txs.sort((a,b) => (b.timestamp?.toDate()||0) - (a.timestamp?.toDate()||0));
-            if(txs.length === 0) { document.getElementById('historyList').innerHTML = '<div class="empty-message">No transactions</div>'; return; }
+        
+        // === LOAD INVESTMENT PLANS (image support) ===
+        async function loadInvestmentPlans() {
+            const snap = await getDocs(collection(db,"investment_plans"));
+            if(snap.empty) { document.getElementById('investmentProductsList').innerHTML = '<div class="empty-message">No plans available</div>'; return; }
             let html = '';
-            txs.slice(0,50).forEach(t => {
-                html += `<div class="border-b py-2"><div class="flex justify-between"><span class="font-medium">${t.type} ${t.reference ? `#${t.reference}`:''}</span><span class="font-bold ${t.amount>=0?'text-green-600':'text-red-600'}">$${t.amount.toFixed(2)}</span></div><div class="text-sm">${t.description || ''}</div><div class="text-xs text-gray-500">Status: ${t.status || 'completed'} | ${t.timestamp?.toDate().toLocaleString()}</div></div>`;
+            snap.forEach(d => {
+                const p = d.data();
+                const dailyEarn = (p.fixedAmount || p.minAmount) * p.dailyROI / 100;
+                const img = p.imageUrl || p.productUrl || '';
+                html += `<div class="border rounded-xl p-4 shadow-sm bg-white"><div class="flex gap-3 items-start">${img ? `<img src="${img}" class="w-20 h-20 object-cover rounded-lg">` : '<div class="w-20 h-20 bg-gray-200 rounded flex items-center justify-center"><i class="fas fa-chart-line text-2xl"></i></div>'}<div><h3 class="font-bold text-lg">${p.name}</h3><div>Amount: $${p.fixedAmount || p.minAmount}</div><div>Daily ROI: ${p.dailyROI}% = $${dailyEarn.toFixed(2)}</div><div>Duration: ${p.durationDays} days</div><button class="invest-plan-btn mt-2 bg-green-600 text-white px-4 py-1 rounded" data-amount="${p.fixedAmount || p.minAmount}" data-roi="${p.dailyROI}" data-duration="${p.durationDays}" data-img="${img}">Invest Now</button></div></div></div>`;
+            });
+            document.getElementById('investmentProductsList').innerHTML = html;
+            document.querySelectorAll('.invest-plan-btn').forEach(btn => {
+                btn.onclick = () => {
+                    const amount = parseFloat(btn.dataset.amount);
+                    const roi = parseFloat(btn.dataset.roi);
+                    const duration = parseInt(btn.dataset.duration);
+                    const image = btn.dataset.img;
+                    window.pendingInvest = { amount, roi, duration, image };
+                    document.getElementById('investConfirmDetails').innerHTML = `<p>Invest $${amount}? Daily profit $${(amount*roi/100).toFixed(2)} for ${duration} days.</p>`;
+                    showModal('investConfirmModal');
+                };
+            });
+        }
+        document.getElementById('confirmInvestBtn').onclick = async () => {
+            if(window.pendingInvest) {
+                const { amount, roi, duration, image } = window.pendingInvest;
+                const bal = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||10000);
+                if(amount > bal) { showInfoModal("Error","Insufficient balance"); hideModal('investConfirmModal'); return; }
+                await updateBalanceByMode(-amount, isRealMode);
+                await addDoc(collection(db,"user_investments"), { userId:currentUser.uid, amount, dailyROI:roi, durationDays:duration, startDate:serverTimestamp(), lastProfitClaim:Timestamp.fromDate(new Date(0)), status:"active", imageUrl:image });
+                hideModal('investConfirmModal');
+                showInfoModal("Success","Investment active!");
+                loadActiveInvestments();
+                loadUserData();
+                refreshInvestmentStatsDashboard();
+                window.pendingInvest = null;
+            }
+        };
+        document.getElementById('cancelInvestBtn').onclick = () => { hideModal('investConfirmModal'); window.pendingInvest = null; };
+        
+        // === TRANSACTIONS (all types) ===
+        async function loadTransactions() {
+            const snap = await getDocs(query(collection(db,"transactions"), where("userId","==",currentUser.uid), orderBy("timestamp","desc")));
+            if(snap.empty) { document.getElementById('historyList').innerHTML = '<div class="empty-message">No transactions</div>'; return; }
+            let html = '';
+            snap.forEach(d => {
+                const t = d.data();
+                html += `<div class="border-b py-2"><div class="flex justify-between"><span class="font-medium">${t.type}</span><span class="${t.amount>=0?'text-green-600':'text-red-600'} font-bold">$${t.amount.toFixed(2)}</span></div><div class="text-sm">${t.description||''}</div><div class="text-xs text-gray-500">${t.status} | ${t.timestamp?.toDate().toLocaleString()}</div></div>`;
             });
             document.getElementById('historyList').innerHTML = html;
         }
-
-        // Other helpers
-        async function loadLeaderboard() { const snap = await getDocs(collection(db,"users")); let users=[]; snap.forEach(d=>users.push({...d.data()})); users.sort((a,b)=>(b.totalEarned||0)-(a.totalEarned||0)); document.getElementById('leaderboardContainer').innerHTML = users.slice(0,10).map((u,i)=>`<div class="flex justify-between border-b py-1"><span>${i+1}. ${u.displayName||u.email}</span><span>$${(u.totalEarned||0).toFixed(2)}</span></div>`).join('')||'<div>No data</div>'; }
-        async function loadAnnouncements() { const snap = await getDocs(collection(db,"announcements")); let html=''; snap.forEach(d=>html+=`<div class="border-b p-2"><b>${d.data().title}</b><br>${d.data().content}</div>`); document.getElementById('announcementsList').innerHTML=html||'No announcements'; }
-        async function loadSupportTickets() { const snap = await getDocs(query(collection(db,"support_tickets"), where("userId","==",currentUser.uid))); let html=''; snap.forEach(d=>{ const t=d.data(); html+=`<div class="border p-2 rounded"><b>${t.subject}</b><br>${t.message}<br><span class="text-xs">Status: ${t.status}</span></div>`; }); document.getElementById('supportTicketsList').innerHTML=html||'No tickets'; }
-        document.getElementById('createTicketBtn').onclick = async () => { const sub=prompt("Subject"); const msg=prompt("Message"); if(sub && msg) { await addDoc(collection(db,"support_tickets"),{userId:currentUser.uid, subject:sub, message:msg, status:"open", createdAt:serverTimestamp()}); showInfo("Ticket","Created"); loadSupportTickets(); } };
-        document.getElementById('copyReferralLinkBtn').onclick = () => { navigator.clipboard.writeText(`${location.origin}/?ref=${currentUser.uid}`); showInfo("Copied","Referral link copied"); };
-        document.getElementById('submitKycBtn').onclick = async () => { await setDoc(doc(db,"kyc_requests",currentUser.uid),{userId:currentUser.uid, status:"pending", timestamp:serverTimestamp()}); await updateDoc(doc(db,"users",currentUser.uid),{kycStatus:"pending"}); showInfo("KYC","Submitted for review"); };
-        document.getElementById('updateProfileBtn').onclick = async () => { const name=document.getElementById('displayNameInput').value; if(name) { await updateProfile(currentUser,{displayName:name}); await updateDoc(doc(db,"users",currentUser.uid),{displayName:name}); showInfo("Profile","Updated"); loadUserData(); } };
-        document.getElementById('logoutBtn').onclick = async () => { await signOut(auth); window.location.href="index.html"; };
-        document.getElementById('exampleTradeBtn').onclick = () => showInfo("Demo Trade", "Trading engine active. Use real interface for full features.");
         
-        function activateSection(id) {
+        // === Init & Sidebar ===
+        function activateSection(id){
             document.querySelectorAll('.content-section').forEach(s=>s.classList.remove('active-section'));
             document.getElementById(id).classList.add('active-section');
-            if(id === 'investments') { loadInvestmentPlans(); loadActiveInvestments(); refreshStats(); }
-            if(id === 'balances') { loadUserData(); refreshStats(); }
-            if(id === 'transactions') loadTransactions();
-            if(id === 'withdrawals') { loadWithdrawals(); loadUserData(); }
-            if(id === 'deposits') loadDepositMethods();
-            if(id === 'leaderboard') loadLeaderboard();
-            if(id === 'announcements') loadAnnouncements();
-            if(id === 'support') loadSupportTickets();
+            if(id==='investments') { loadInvestmentPlans(); loadActiveInvestments(); refreshInvestmentStatsDashboard(); }
+            if(id==='balances') { loadUserData(); refreshInvestmentStatsDashboard(); }
+            if(id==='transactions') loadTransactions();
+            if(id==='deposits') loadDepositMethods();
+            if(id==='withdrawals') { loadWithdrawals(); loadUserData(); }
+            if(id==='leaderboard') loadLeaderboard();
+            if(id==='announcements') loadAnnouncements();
         }
-        document.querySelectorAll('.sidebar-nav a').forEach(link => link.addEventListener('click',(e)=>{ e.preventDefault(); activateSection(link.dataset.section); document.getElementById('sidebarOverlay').click(); }));
-        document.getElementById('hamburgerBtn').onclick = () => { document.getElementById('mainSidebar').classList.add('open'); document.getElementById('sidebarOverlay').classList.add('active'); };
-        document.getElementById('closeSidebarBtn').onclick = () => { document.getElementById('mainSidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('active'); };
-        document.getElementById('sidebarOverlay').onclick = () => { document.getElementById('mainSidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('active'); };
-        document.getElementById('realModeBtn').onclick = () => { isRealMode=true; loadUserData(); showInfo("Mode","Real mode active"); };
-        document.getElementById('demoModeBtn').onclick = () => { isRealMode=false; loadUserData(); showInfo("Mode","Demo mode active"); };
+        async function loadLeaderboard(){
+            const snap = await getDocs(collection(db,"users"));
+            let users=[]; snap.forEach(d=>users.push({...d.data()}));
+            users.sort((a,b)=>(b.totalEarned||0)-(a.totalEarned||0));
+            document.getElementById('leaderboardContainer').innerHTML = users.slice(0,10).map((u,i)=>`<div>${i+1}. ${u.displayName||u.email} - $${(u.totalEarned||0).toFixed(2)}</div>`).join('')||'Empty';
+        }
+        async function loadAnnouncements(){
+            const snap = await getDocs(collection(db,"announcements"));
+            let html=''; snap.forEach(d=>html+=`<div class="border-b p-2">${d.data().title}: ${d.data().content}</div>`);
+            document.getElementById('announcementsList').innerHTML=html||'No announcements';
+        }
         
-        onAuthStateChanged(auth, async(user) => { if(!user){ window.location.href="index.html"; return; } currentUser=user; await loadUserData(); loadInvestmentPlans(); loadActiveInvestments(); refreshStats(); loadTransactions(); loadWithdrawals(); loadDepositMethods(); loadLeaderboard(); loadAnnouncements(); loadSupportTickets(); activateSection('trade'); });
+        onAuthStateChanged(auth, async(user)=>{ if(!user){ window.location.href="index.html"; return; } currentUser=user; await loadUserData(); loadInvestmentPlans(); loadActiveInvestments(); refreshInvestmentStatsDashboard(); loadTransactions(); loadDepositMethods(); loadWithdrawals(); loadLeaderboard(); loadAnnouncements(); activateSection('trade'); });
+        document.querySelectorAll('.sidebar-nav a').forEach(link=>link.addEventListener('click',(e)=>{ e.preventDefault(); activateSection(link.dataset.section); document.getElementById('sidebarOverlay').click(); }));
+        document.getElementById('hamburgerBtn').onclick=()=>{ document.getElementById('mainSidebar').classList.add('open'); document.getElementById('sidebarOverlay').classList.add('active'); };
+        document.getElementById('closeSidebarBtn').onclick=()=>{ document.getElementById('mainSidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('active'); };
+        document.getElementById('sidebarOverlay').onclick=()=>{ document.getElementById('mainSidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('active'); };
+        document.getElementById('logoutBtn').onclick = async () => { await signOut(auth); window.location.href = "index.html"; };
+        document.getElementById('quickWithdrawBtn').onclick = () => activateSection('withdrawals');
+        document.getElementById('quickTopUpBtn').onclick = () => activateSection('deposits');
+        document.getElementById('reportDepositBtn').onclick = () => showInfoModal("Report", "Please contact support with transaction details.");
+        [ 'realModeBtn', 'demoModeBtn', 'resetDemoBtn', 'topUpBalanceBtn' ].forEach(id=>{ if(document.getElementById(id)) document.getElementById(id).onclick=()=>showInfoModal("Info","Full feature ready."); });
     </script>
 </body>
 </html>
