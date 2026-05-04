@@ -2,64 +2,60 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>BestPay | Pro Trading & Investment Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * { box-sizing: border-box; }
-        body { background: #fef9e8; font-size: 14px; }
-        .card-glass { background: rgba(255, 255, 245, 0.96); backdrop-filter: blur(2px); border-radius: 1.2rem; box-shadow: 0 8px 20px rgba(0,0,0,0.05); border: 1px solid #f0e6d2; }
+        body { background: #fef9e8; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        .card-glass { background: rgba(255, 255, 245, 0.96); backdrop-filter: blur(2px); border-radius: 1.5rem; box-shadow: 0 12px 28px rgba(0,0,0,0.05); border: 1px solid #f0e6d2; transition: all 0.2s; }
+        .card-glass:hover { box-shadow: 0 16px 32px rgba(0,0,0,0.08); }
         .sidebar { position: fixed; top:0; left:0; width:280px; height:100%; background:#1e293b; color:#e2e8f0; z-index: 10000; transform: translateX(-100%); transition: transform 0.3s; overflow-y: auto; }
         .sidebar.open { transform: translateX(0); }
-        .sidebar a { display: flex; align-items: center; gap:0.75rem; padding:0.6rem 1rem; border-radius:0.75rem; color:#cbd5e1; text-decoration: none; cursor: pointer; font-size: 0.9rem; }
+        .sidebar a { display: flex; align-items: center; gap:0.75rem; padding:0.7rem 1rem; border-radius:0.75rem; color:#cbd5e1; text-decoration: none; cursor: pointer; }
         .sidebar a:hover, .sidebar a.active { background:#4f46e5; color:white; }
         .overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; display:none; backdrop-filter: blur(2px); }
         .overlay.active { display:block; }
         .content-section { display: none; animation: fadeIn 0.2s ease; }
         .content-section.active-section { display: block; }
         @keyframes fadeIn { from { opacity:0; transform:translateY(8px);} to { opacity:1; transform:translateY(0);} }
-        .tradingview-widget-container { width:100%; height:60vh; min-height:450px; border-radius:1rem; overflow:hidden; background:#fff; }
-        @media (max-width:768px) { .tradingview-widget-container { height:45vh; min-height:350px; } }
-        .number-btn { width:42px; height:42px; font-weight:bold; background:#eef2ff; border-radius:0.8rem; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; transition:0.1s; }
+        .tradingview-widget-container { width:100%; height:55vh; min-height:380px; border-radius:1.25rem; overflow:hidden; background:#fff; margin-bottom: 0.5rem; }
+        @media (min-width:768px) {
+            .tradingview-widget-container { height:70vh; min-height:520px; }
+        }
+        .number-btn { width:44px; height:44px; font-weight:bold; background:#eef2ff; border-radius:1rem; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; transition:0.1s; }
         .number-btn:hover { background:#c7d2fe; transform:scale(0.96); }
-        .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:20000; justify-content:center; align-items:center; }
+        .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:20000; justify-content:center; align-items:center; backdrop-filter: blur(4px); }
         .modal.active { display:flex; }
-        .modal-content { background:white; max-width:500px; width:90%; border-radius:1.2rem; padding:1.2rem; max-height:85vh; overflow-y:auto; }
-        .stats-card { background: white; border-radius: 0.8rem; padding: 0.8rem; box-shadow: 0 2px 6px rgba(0,0,0,0.05); text-align: center; border: 1px solid #eef2ff; }
-        .stats-value { font-size: 1.5rem; font-weight: bold; color: #1e293b; }
-        .investment-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.8rem; margin-bottom: 1.2rem; }
-        .deposit-method-btn { transition:all 0.2s; cursor: pointer; background: #1e293b; padding: 0.6rem; border-radius: 0.8rem; display: inline-block; width: 100%; text-align: center; }
-        .deposit-method-btn:hover { transform:translateY(-2px); opacity:0.9; }
-        .active-invest-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.8rem; padding: 0.8rem; margin-bottom: 0.8rem; }
-        .countdown-live { font-family: monospace; font-weight: bold; font-size: 0.75rem; background: #f1f5f9; padding: 0.2rem 0.5rem; border-radius: 1rem; display: inline-block; }
-        .claim-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-        .profit-badge { background:#22c55e20; color:#15803d; border-radius:1rem; padding:0.1rem 0.6rem; font-weight:bold; font-size:0.8rem; }
-        /* desktop fine-tuning */
-        @media (min-width: 1024px) {
-            body { font-size: 13px; }
-            .card-glass { padding: 1rem; }
+        .modal-content { background:white; max-width:500px; width:90%; border-radius:1.5rem; padding:1.5rem; max-height:90vh; overflow-y:auto; }
+        .stats-card { background: white; border-radius: 1rem; padding: 0.8rem; box-shadow: 0 2px 6px rgba(0,0,0,0.05); text-align: center; border: 1px solid #eef2ff; }
+        .stats-value { font-size: 1.6rem; font-weight: bold; color: #1e293b; }
+        @media (max-width:640px) {
+            .stats-value { font-size: 1.2rem; }
+            .card-glass { padding: 0.8rem; }
+            .number-btn { width: 38px; height: 38px; font-size: 0.9rem; }
+            .text-lg { font-size: 1rem; }
             .text-3xl { font-size: 1.6rem; }
-            .stats-value { font-size: 1.3rem; }
         }
-        @media (max-width:768px) {
-            .stake-buttons-grid { grid-template-columns: repeat(5, 1fr); gap: 0.4rem; }
-            .mode-toggle button { padding: 0.2rem 0.6rem; font-size: 0.7rem; }
-            .grid-cols-3 { grid-template-columns: 1fr !important; }
-        }
-        .risk-reward-bar { background:#e2e8f0; border-radius: 0.5rem; height: 6px; width: 100%; overflow: hidden; margin: 6px 0; }
-        .risk-reward-fill { height: 100%; width: 0%; background: #22c55e; transition: width 0.2s; }
-        .status-bar { background: #1e293b; color: white; border-radius: 2rem; padding: 4px 12px; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 8px; }
+        .deposit-method-btn { transition:all 0.2s; cursor: pointer; background: #1e293b; }
+        .deposit-method-btn:hover { transform:translateY(-2px); opacity:0.9; }
+        .active-invest-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; }
+        .countdown-live { font-family: monospace; font-weight: bold; font-size: 0.85rem; background: #f1f5f9; padding: 0.2rem 0.6rem; border-radius: 2rem; display: inline-block; }
+        .profit-badge { background:#22c55e20; color:#15803d; border-radius:2rem; padding:0.2rem 0.8rem; font-weight:bold; }
+        .trade-card { background: #f8fafc; border-radius: 0.75rem; padding: 0.75rem; margin-bottom: 0.75rem; border-left: 4px solid #4f46e5; transition: 0.1s; }
+        .status-bar { background: #1e293b; color: white; border-radius: 2rem; padding: 4px 12px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 8px; }
+        .auto-trade-panel { background: #f1f5f9; border-radius: 1rem; padding: 8px; margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
     </style>
 </head>
 <body class="bg-amber-50">
     <div id="sidebarOverlay" class="overlay"></div>
     <aside id="mainSidebar" class="sidebar">
-        <div class="flex justify-between items-center p-3 border-b border-gray-700 bg-gray-800 sticky top-0">
-            <div class="flex items-center gap-2"><i class="fas fa-chart-line text-indigo-400 text-xl"></i><span class="font-bold text-base">BestPay Trader</span></div>
+        <div class="flex justify-between items-center p-4 border-b border-gray-700 bg-gray-800 sticky top-0">
+            <div class="flex items-center gap-2"><i class="fas fa-chart-line text-indigo-400 text-xl"></i><span class="font-bold text-lg">BestPay Trader</span></div>
             <button id="closeSidebarBtn" class="text-white text-xl hover:bg-gray-700 p-1 rounded"><i class="fas fa-times"></i></button>
         </div>
-        <nav class="sidebar-nav px-3 py-3 space-y-1" id="sidebarNav">
+        <nav class="sidebar-nav px-3 py-4 space-y-1" id="sidebarNav">
             <a data-section="trade"><i class="fas fa-chart-line"></i> Trading</a>
             <a data-section="investments"><i class="fas fa-chart-pie"></i> Investments</a>
             <a data-section="balances"><i class="fas fa-wallet"></i> Balances</a>
@@ -76,85 +72,134 @@
             <a data-section="contact"><i class="fas fa-address-card"></i> Contact</a>
             <a data-section="settings"><i class="fas fa-sliders-h"></i> Settings</a>
         </nav>
-        <div class="border-t border-gray-700 p-3"><button id="logoutBtn" class="flex items-center gap-3 w-full text-left text-red-400 hover:bg-red-900/30 rounded-xl p-2 text-sm"><i class="fas fa-sign-out-alt"></i> Logout</button></div>
+        <div class="border-t border-gray-700 p-4"><button id="logoutBtn" class="flex items-center gap-3 w-full text-left text-red-400 hover:bg-red-900/30 rounded-xl p-2"><i class="fas fa-sign-out-alt"></i> Logout</button></div>
     </aside>
 
     <div class="ml-0">
-        <header class="bg-white/80 backdrop-blur-sm sticky top-0 z-20 shadow-sm px-4 py-2 flex items-center gap-3 flex-wrap">
-            <button id="hamburgerBtn" class="text-xl p-1 rounded-md hover:bg-gray-100"><i class="fas fa-bars"></i></button>
+        <header class="bg-white/80 backdrop-blur-sm sticky top-0 z-20 shadow-sm px-4 py-2 flex items-center gap-4 flex-wrap">
+            <button id="hamburgerBtn" class="text-2xl p-1 rounded-md hover:bg-gray-100"><i class="fas fa-bars"></i></button>
             <h1 class="text-lg font-semibold text-gray-800"><i class="fas fa-chart-line text-indigo-500 mr-2"></i><span id="headerTitle">Pro Trading</span></h1>
             <div class="flex-1"></div>
             <div class="flex items-center gap-2">
                 <div class="mode-toggle bg-gray-200 p-0.5 rounded-full flex">
-                    <button id="demoModeBtn" class="px-2 py-0.5 rounded-full text-xs font-semibold">Demo</button>
-                    <button id="realModeBtn" class="px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-600 text-white shadow">Real</button>
+                    <button id="demoModeBtn" class="px-2 py-1 rounded-full text-xs font-semibold">Demo</button>
+                    <button id="realModeBtn" class="px-2 py-1 rounded-full text-xs font-semibold bg-indigo-600 text-white shadow">Real</button>
                 </div>
                 <span id="userShort" class="text-xs font-medium bg-gray-100 px-2 py-1 rounded-full"></span>
                 <i class="fas fa-user-circle text-xl text-gray-600"></i>
             </div>
         </header>
 
-        <div class="container mx-auto px-3 pt-2">
-            <div class="video-container"><div class="video-rectangle max-w-[220px] mx-auto"><video src="video.mp4" autoplay muted loop playsinline controls class="w-full rounded-lg"></video></div></div>
-        </div>
-
-        <main class="container mx-auto px-3 py-4 space-y-5" id="mainContent">
-            <!-- TRADING SECTION -->
+        <div class="container mx-auto px-3 py-4" id="mainContent">
+            <!-- TRADING SECTION - fully responsive -->
             <div id="trade" class="content-section active-section">
                 <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
-                    <div class="status-bar"><i class="fas fa-chart-simple"></i> <span id="statusText">✅ No active trades</span> <span id="statusTimer" class="font-mono"></span></div>
-                    <button id="resetDemoBtn" class="bg-orange-500 text-white px-2 py-1 rounded-full text-xs"><i class="fas fa-sync-alt mr-1"></i> Reset Demo</button>
+                    <div id="globalTradeStatus" class="status-bar text-xs"><i class="fas fa-chart-simple"></i> <span id="statusText">✅ No active trades</span> <span id="statusTimer" class="font-mono"></span></div>
+                    <button id="resetDemoBtn" class="bg-orange-500 text-white px-3 py-1 rounded-full text-xs"><i class="fas fa-sync-alt mr-1"></i> Reset Demo</button>
                 </div>
-                <div class="grid lg:grid-cols-3 gap-5">
+                <div class="grid lg:grid-cols-3 gap-4">
+                    <!-- left column: chart + trade info -->
                     <div class="lg:col-span-2 space-y-3">
-                        <div class="guide-card flex items-center justify-between bg-indigo-50 p-2 rounded-lg cursor-pointer text-sm" id="tradeGuideBtn"><div><i class="fas fa-book-open text-indigo-600 mr-2"></i> <strong>60s Trading Guide</strong></div><i class="fas fa-chevron-right text-sm"></i></div>
-                        <div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>{"allow_symbol_change":true,"interval":"1","symbol":"OANDA:EURUSD","theme":"light","autosize":true}</script></div>
-                        <div class="bg-indigo-50 p-1 rounded-lg text-center font-mono text-sm" id="chartCountdown">⏱️ No active trade</div>
-                        <div class="card-glass p-3"><div class="flex justify-between items-center mb-2 flex-wrap gap-2"><button id="exampleTradeBtn" class="bg-purple-600 text-white px-2 py-1 rounded-full text-xs"><i class="fas fa-magic"></i> Try Example</button><span id="modeLabel" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">🔴 REAL ACCOUNT</span></div><div id="lastTradeSummary" class="text-xs mb-2">📋 Last trade: —</div><div class="streak-dots flex gap-1 mb-2" id="streakDots"></div><div class="auto-trade-panel flex flex-wrap gap-2 items-center justify-between bg-gray-100 p-2 rounded-lg mb-2"><div class="text-xs"><i class="fas fa-robot"></i> Auto Trade</div><div class="flex gap-2"><select id="autoDirection" class="border rounded p-0.5 text-xs"><option value="call">CALL ▲</option><option value="put">PUT ▼</option></select><button id="startAutoTradeBtn" class="bg-green-600 text-white px-2 py-0.5 rounded text-xs">Start</button><button id="stopAutoTradeBtn" class="bg-red-600 text-white px-2 py-0.5 rounded text-xs" disabled>Stop</button></div></div><div class="flex gap-4 border-b mb-2"><button id="positionsTabBtn" class="px-2 py-1 font-bold text-indigo-600 border-b-2 border-indigo-500 text-xs">Active</button><button id="historyTabBtn" class="px-2 py-1 font-bold text-gray-500 text-xs">History</button></div><div id="positionsPanel"><div class="text-xs mb-1 flex justify-between"><span>Live positions:</span><span id="activeCountBadge" class="bg-indigo-100 text-indigo-800 px-1 py-0.5 rounded-full text-[10px] font-bold">0</span></div><div id="openPositionsList" class="space-y-1 max-h-56 overflow-y-auto text-xs"></div></div><div id="historyPanel" class="hidden"><div id="lastTradesList" class="space-y-1 max-h-56 overflow-y-auto text-xs"></div><div class="mt-2 flex justify-between text-xs"><span>Last 10 P/L:</span><span id="last10Profit" class="profit-badge">$0.00</span><span>Win Rate:</span><span id="winRatePercent" class="font-bold">0%</span></div></div></div>
+                        <div class="tradingview-widget-container">
+                            <div class="tradingview-widget-container__widget"></div>
+                            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>{"allow_symbol_change":true,"interval":"1","symbol":"OANDA:EURUSD","theme":"light","autosize":true}</script>
+                        </div>
+                        <div class="bg-indigo-50 p-2 rounded-xl text-center font-mono text-sm md:text-base" id="chartCountdown">⏱️ No active trade</div>
+                        <div class="card-glass p-3">
+                            <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
+                                <button id="exampleTradeBtn" class="bg-purple-600 text-white px-3 py-1 rounded-full text-xs"><i class="fas fa-magic"></i> Try Example</button>
+                                <span id="modeLabel" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">🔴 REAL ACCOUNT</span>
+                            </div>
+                            <div id="lastTradeSummary" class="text-xs mb-2 bg-gray-100 p-1 rounded">📋 Last trade: —</div>
+                            <div class="streak-dots flex gap-1 mb-2" id="streakDots"></div>
+                            <div class="auto-trade-panel mb-2">
+                                <div class="text-xs"><i class="fas fa-robot"></i> Auto Trade</div>
+                                <div class="flex gap-2">
+                                    <select id="autoDirection" class="border rounded p-1 text-xs"><option value="call">CALL ▲</option><option value="put">PUT ▼</option></select>
+                                    <button id="startAutoTradeBtn" class="bg-green-600 text-white px-2 py-1 rounded text-xs">Start</button>
+                                    <button id="stopAutoTradeBtn" class="bg-red-600 text-white px-2 py-1 rounded text-xs" disabled>Stop</button>
+                                </div>
+                            </div>
+                            <div class="flex gap-4 border-b mb-2">
+                                <button id="positionsTabBtn" class="px-2 py-1 font-bold text-indigo-600 border-b-2 border-indigo-500 text-xs">Active (60s)</button>
+                                <button id="historyTabBtn" class="px-2 py-1 font-bold text-gray-500 text-xs">Trade History</button>
+                            </div>
+                            <div id="positionsPanel">
+                                <div class="text-xs mb-1 flex justify-between"><span>Live positions:</span><span id="activeCountBadge" class="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full text-xs font-bold">0</span></div>
+                                <div id="openPositionsList" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                            </div>
+                            <div id="historyPanel" class="hidden">
+                                <div id="lastTradesList" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                                <div class="mt-2 flex justify-between text-xs"><span>Last 10 P/L:</span><span id="last10Profit" class="profit-badge">$0.00</span><span>Win Rate:</span><span id="winRatePercent" class="font-bold">0%</span></div>
+                            </div>
+                        </div>
                     </div>
+                    <!-- right column: balance, stake, multiplier -->
                     <div class="space-y-3">
-                        <div class="card-glass p-3"><div class="flex justify-between items-center"><span class="font-bold text-md">💰 Trading Balance</span><button id="topUpBalanceBtn" class="bg-indigo-600 text-white px-2 py-0.5 rounded-full text-xs"><i class="fas fa-plus-circle"></i> Top Up</button></div><div id="liveBalance" class="text-2xl font-bold text-green-600 mt-1">$0.00</div><div id="liveBalanceKES" class="text-xs text-gray-600"></div></div>
-                        <div class="card-glass p-3 text-center"><div class="text-xs text-gray-500">EUR/USD Live</div><div class="text-xl font-bold text-indigo-700" id="livePrice">1.17304</div></div>
-                        <div class="card-glass p-3"><div class="font-medium text-sm mb-1">Stake Amount <span id="stakeMinLabel">(Min $9)</span></div><div class="grid grid-cols-5 gap-1 stake-buttons-grid mb-2" id="stakeButtonsContainer"></div><input type="number" id="stakeAmount" class="w-full border rounded-lg p-1 text-center text-sm" value="10" step="1"><div class="mt-2"><div class="flex justify-between text-xs"><span>Potential Profit:</span><span id="potentialProfit" class="text-green-600 font-bold">$0.00</span></div><div class="flex justify-between text-xs"><span>Potential Loss:</span><span id="potentialLoss" class="text-red-600 font-bold">$0.00</span></div><div class="risk-reward-bar mt-1"><div class="risk-reward-fill" id="riskRewardFill"></div></div></div></div>
-                        <div class="card-glass p-3"><div class="font-medium text-sm mb-1">Multiplier (1x - <span id="maxMultiplierLabel">10x</span>)</div><input type="range" id="multiplierSlider" min="1" max="10" step="0.5" value="2" class="w-full"><div class="flex justify-between mt-1 text-xs"><span>1x</span><span>5x</span><span id="maxMultiplierShow">10x</span></div><div class="mt-1 text-center"><span class="font-bold text-sm" id="multiplierValue">2.0x</span></div><div class="mt-2 text-xs"><span>Payout if Win: </span><span id="totalPayout" class="font-bold text-indigo-700">$20.00</span></div></div>
-                        <div class="grid grid-cols-2 gap-2"><button id="callTradeBtn" class="bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-bold text-sm">CALL ▲</button><button id="putTradeBtn" class="bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg font-bold text-sm">PUT ▼</button></div>
+                        <div class="card-glass p-3">
+                            <div class="flex justify-between items-center"><span class="font-bold text-base">💰 Trading Balance</span><button id="topUpBalanceBtn" class="bg-indigo-600 text-white px-2 py-1 rounded-full text-xs"><i class="fas fa-plus-circle"></i> Top Up</button></div>
+                            <div id="liveBalance" class="text-2xl font-bold text-green-600 mt-1">$0.00</div>
+                            <div id="liveBalanceKES" class="text-xs text-gray-600"></div>
+                        </div>
+                        <div class="card-glass p-3 text-center">
+                            <div class="text-xs text-gray-500">EUR/USD Live</div>
+                            <div class="text-xl md:text-2xl font-bold text-indigo-700" id="livePrice">1.17304</div>
+                        </div>
+                        <div class="card-glass p-3">
+                            <div class="font-medium text-sm mb-1">Stake Amount <span id="stakeMinLabel" class="text-xs">(Min $5)</span></div>
+                            <div class="grid grid-cols-5 gap-1 stake-buttons-grid mb-2" id="stakeButtonsContainer"></div>
+                            <input type="number" id="stakeAmount" class="w-full border rounded-lg p-1 text-center text-sm" value="10" step="1">
+                            <div class="mt-2">
+                                <div class="flex justify-between text-xs"><span>💰 Potential Profit:</span><span id="potentialProfit" class="text-green-600 font-bold">$0.00</span></div>
+                                <div class="flex justify-between text-xs"><span>💸 Potential Loss:</span><span id="potentialLoss" class="text-red-600 font-bold">$0.00</span></div>
+                                <div class="risk-reward-bar mt-1 h-1 bg-gray-200 rounded"><div class="risk-reward-fill h-full bg-green-500 rounded" id="riskRewardFill" style="width:0%"></div></div>
+                            </div>
+                        </div>
+                        <div class="card-glass p-3">
+                            <div class="font-medium text-sm mb-1">Multiplier (1x - <span id="maxMultiplierLabel">10x</span>)</div>
+                            <input type="range" id="multiplierSlider" min="1" max="10" step="0.5" value="2" class="w-full">
+                            <div class="flex justify-between mt-1 text-xs"><span>1x</span><span>5x</span><span id="maxMultiplierShow">10x</span></div>
+                            <div class="mt-1 text-center"><span class="font-bold text-sm" id="multiplierValue">2.0x</span></div>
+                            <div class="mt-1 text-xs"><span>Payout if Win: </span><span id="totalPayout" class="font-bold text-indigo-700">$20.00</span></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="callTradeBtn" class="bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-bold text-sm">CALL ▲</button>
+                            <button id="putTradeBtn" class="bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg font-bold text-sm">PUT ▼</button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- INVESTMENTS -->
-            <div id="investments" class="content-section"><div class="card-glass p-4"><h2 class="text-xl font-bold mb-3">📊 Investment Dashboard</h2><div id="investmentStatsDashboard" class="investment-stat-grid"></div><h3 class="text-lg font-bold mt-3 mb-2">📦 Investment Products</h3><div id="investmentProductsList" class="grid md:grid-cols-2 gap-3 mb-6"></div><h3 class="text-lg font-bold mb-2">📌 Your Active Investments</h3><div id="activeInvestmentsList" class="space-y-3"></div></div></div>
-            <div id="balances" class="content-section"><div class="card-glass p-4"><div class="flex justify-between items-center mb-3"><h3 class="text-lg font-bold">💰 Balance Overview</h3><div class="flex gap-2"><button id="quickWithdrawBtn" class="bg-red-600 text-white px-2 py-0.5 rounded text-xs">Withdraw</button><button id="quickTopUpBtn" class="bg-green-600 text-white px-2 py-0.5 rounded text-xs">Top Up</button></div></div><div id="balanceDetails" class="space-y-1 text-sm"></div><div class="mt-4 p-3 bg-indigo-50 rounded-lg"><h4 class="font-bold text-indigo-800 text-sm">Investment Finance Stats</h4><div id="investmentFinanceStats" class="grid grid-cols-2 gap-2 mt-1 text-xs"></div></div><div class="mt-3 p-2 bg-gray-100 rounded text-xs"><span>Exchange Rate: </span><span id="exchangeRate">1 USD = 0 KES</span></div></div></div>
-            <div id="transactions" class="content-section"><div class="card-glass p-4"><h3 class="text-lg font-bold mb-3">📜 Full Transaction History</h3><div id="historyList" class="space-y-2 max-h-96 overflow-y-auto text-sm"></div></div></div>
-            <div id="withdrawals" class="content-section"><div class="card-glass p-4"><h3 class="text-lg font-bold mb-3">🏦 Withdrawals</h3><div id="withdrawBalanceInfo" class="mb-2 text-xs bg-gray-100 p-2 rounded"></div><button id="openWithdrawFormBtn" class="mb-3 bg-blue-600 text-white px-3 py-1 rounded text-sm">Request Withdrawal</button><div id="withdrawalsList" class="space-y-2 max-h-96 overflow-y-auto text-sm"></div></div></div>
-            <div id="deposits" class="content-section"><div class="card-glass p-4"><h3 class="text-lg font-bold mb-3">💎 Deposit Funds</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5" id="depositMethodsContainer"></div><div class="mt-3 p-2 bg-yellow-50 rounded text-xs"><i class="fas fa-exclamation-triangle"></i> Already deposited? <a href="#" id="reportDepositBtn" class="font-bold underline">Report pending deposit</a></div><div id="depositsList" class="mt-3 text-sm"></div></div></div>
-            <!-- other sections (simplified but functional) -->
-            <div id="referrals" class="content-section"><div class="card-glass p-4">Referral Program</div></div>
-            <div id="leaderboard" class="content-section"><div class="card-glass p-4">Leaderboard</div></div>
-            <div id="support" class="content-section"><div class="card-glass p-4">Support</div></div>
-            <div id="streak" class="content-section"><div class="card-glass p-4">Daily Streak</div></div>
-            <div id="chat" class="content-section"><div class="card-glass p-4 text-center"><i class="fas fa-comments text-3xl text-gray-400 mb-2 block"></i><p>Live Chat Coming Soon</p></div></div>
-            <div id="kyc" class="content-section"><div class="card-glass p-4">KYC Verification</div></div>
-            <div id="announcements" class="content-section"><div class="card-glass p-4">Announcements</div></div>
-            <div id="contact" class="content-section"><div class="card-glass p-4 text-center">Contact</div></div>
-            <div id="settings" class="content-section"><div class="card-glass p-4">Settings</div></div>
-        </main>
+            <!-- INVESTMENTS (simplified but functional) -->
+            <div id="investments" class="content-section"><div class="card-glass p-4"><h2 class="text-xl font-bold mb-3">📊 Investment Dashboard</h2><div id="investmentStatsDashboard" class="grid grid-cols-2 gap-2 mb-4"></div><h3 class="text-lg font-bold">Investment Products</h3><div id="investmentProductsList" class="grid md:grid-cols-2 gap-3 mb-5"></div><h3 class="text-lg font-bold">Active Investments</h3><div id="activeInvestmentsList" class="space-y-3"></div></div></div>
+            <div id="balances" class="content-section"><div class="card-glass p-4"><h3 class="text-lg font-bold mb-2">💰 Balance Overview</h3><div id="balanceDetails" class="space-y-1 text-sm"></div><div class="mt-3 p-2 bg-indigo-50 rounded-lg"><h4 class="font-bold text-indigo-800 text-sm">Investment Finance Stats</h4><div id="investmentFinanceStats" class="grid grid-cols-2 gap-1 mt-1 text-xs"></div></div><div class="mt-3 p-2 bg-gray-100 rounded text-xs">Exchange Rate: <span id="exchangeRate">1 USD = 0 KES</span></div></div></div>
+            <div id="transactions" class="content-section"><div class="card-glass p-4"><h3 class="text-lg font-bold mb-2">📜 All Transactions</h3><div id="historyList" class="space-y-2 max-h-96 overflow-y-auto text-sm"></div></div></div>
+            <div id="withdrawals" class="content-section"><div class="card-glass p-4"><h3 class="text-lg font-bold mb-2">🏦 Withdrawals</h3><div id="withdrawBalanceInfo" class="mb-2 text-xs bg-gray-100 p-2 rounded"></div><button id="openWithdrawFormBtn" class="bg-blue-600 text-white px-3 py-1 rounded text-sm mb-3">Request Withdrawal</button><div id="withdrawalsList" class="space-y-2 max-h-96 overflow-y-auto text-sm"></div></div></div>
+            <div id="deposits" class="content-section"><div class="card-glass p-4"><h3 class="text-lg font-bold mb-2">💎 Deposit Funds</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4" id="depositMethodsContainer"></div><div class="mt-2 p-2 bg-yellow-50 rounded text-xs"><i class="fas fa-exclamation-triangle"></i> Already deposited? <a href="#" id="reportDepositBtn" class="font-bold underline">Report</a></div></div></div>
+            <div id="referrals" class="content-section"><div class="card-glass p-4"><h3 class="text-lg font-bold">👥 Referrals</h3><div id="referralStats" class="text-sm"></div><div id="referralLinkDisplay" class="bg-gray-100 p-1 rounded text-xs break-all"></div><button id="copyReferralLinkBtn" class="mt-2 bg-indigo-600 text-white px-3 py-1 rounded text-xs">Copy Link</button></div></div>
+            <div id="leaderboard" class="content-section"><div class="card-glass p-4"><h3 class="text-lg font-bold">🏆 Top Earners</h3><div id="leaderboardContainer" class="space-y-1 text-sm"></div></div></div>
+            <div id="support" class="content-section"><div class="card-glass p-4"><h3 class="text-lg font-bold">🎫 Support</h3><button id="createTicketBtn" class="bg-green-600 text-white px-3 py-1 rounded text-sm">New Ticket</button><div id="supportTicketsList" class="mt-2 space-y-2"></div></div></div>
+            <div id="streak" class="content-section"><div class="card-glass p-4"><h3 class="text-lg font-bold">🔥 Daily Streak</h3><div id="streakGrid" class="grid grid-cols-7 gap-1"></div></div></div>
+            <div id="chat" class="content-section"><div class="card-glass p-4 text-center"><i class="fas fa-comments text-3xl text-gray-400"></i><p>Live Chat Coming Soon</p></div></div>
+            <div id="kyc" class="content-section"><div class="card-glass p-4"><h3 class="text-lg font-bold">KYC</h3><div id="kycStatusDisplay"></div><input type="url" id="faceUrl" placeholder="Face URL" class="border p-1 rounded w-full text-sm my-1"><input type="url" id="idUrl" placeholder="ID URL" class="border p-1 rounded w-full text-sm my-1"><button id="submitKycBtn" class="bg-indigo-600 text-white w-full py-1 rounded text-sm">Submit</button></div></div>
+            <div id="announcements" class="content-section"><div class="card-glass p-4"><h3 class="text-lg font-bold">📢 Announcements</h3><div id="announcementsList" class="text-sm"></div></div></div>
+            <div id="contact" class="content-section"><div class="card-glass p-4 text-center"><a id="whatsappLink" href="#" class="text-green-600 text-2xl mx-2"><i class="fab fa-whatsapp"></i></a><a id="telegramLink" href="#" class="text-blue-500 text-2xl mx-2"><i class="fab fa-telegram"></i></a></div></div>
+            <div id="settings" class="content-section"><div class="card-glass p-4"><h3 class="text-lg font-bold">⚙️ Settings</h3><input id="displayNameInput" class="border p-1 rounded w-full my-1 text-sm" placeholder="Full Name"><button id="updateProfileBtn" class="bg-gray-700 text-white w-full py-1 rounded text-sm">Update Name</button></div></div>
+        </div>
     </div>
 
     <!-- MODALS -->
-    <div id="confirmTradeModal" class="modal"><div class="modal-content"><h3 class="text-lg font-bold mb-2">Confirm Trade</h3><div id="confirmTradeDetails"></div><div class="flex gap-2 mt-3"><button id="confirmTradeYes" class="bg-green-600 text-white px-3 py-1 rounded">Confirm</button><button id="confirmTradeNo" class="bg-gray-500 text-white px-3 py-1 rounded">Cancel</button></div></div></div>
-    <div id="tradeResultModal" class="modal"><div class="modal-content"><h3 class="text-lg font-bold mb-2">📊 Trade Result</h3><div id="tradeResultBody"></div><div id="tradeFeedbackMessage" class="mt-2"></div><button id="closeResultModalBtn" class="mt-3 bg-indigo-600 text-white px-4 py-1 rounded mx-auto block">OK</button></div></div>
-    <div id="withdrawConfirmModal" class="modal"><div class="modal-content"><h3 class="text-lg font-bold mb-2">Request Withdrawal</h3><div id="withdrawConfirmDetails"></div><div class="flex gap-2 mt-3"><button id="confirmWithdrawBtn" class="bg-green-600 text-white px-3 py-1 rounded">Confirm</button><button id="cancelWithdrawConfirmBtn" class="bg-gray-500 text-white px-3 py-1 rounded">Cancel</button></div></div></div>
-    <div id="profitClaimConfirmModal" class="modal"><div class="modal-content"><h3 class="text-lg font-bold mb-2">Claim Daily Profit</h3><div id="profitClaimDetails"></div><div class="flex gap-2 mt-3"><button id="confirmClaimProfitBtn" class="bg-green-600 text-white px-3 py-1 rounded">Claim Now</button><button id="cancelClaimProfitBtn" class="bg-gray-500 text-white px-3 py-1 rounded">Cancel</button></div></div></div>
-    <div id="withdrawInvestmentModal" class="modal"><div class="modal-content"><h3 class="text-lg font-bold mb-2">Withdraw Investment</h3><div id="withdrawInvestmentDetails"></div><div class="flex gap-2 mt-3"><button id="confirmWithdrawInvestmentBtn" class="bg-green-600 text-white px-3 py-1 rounded">Confirm</button><button id="cancelWithdrawInvestmentBtn" class="bg-gray-500 text-white px-3 py-1 rounded">Cancel</button></div></div></div>
-    <div id="investConfirmModal" class="modal"><div class="modal-content"><h3 class="text-lg font-bold mb-2">Confirm Investment</h3><div id="investConfirmDetails"></div><div class="flex gap-2 mt-3"><button id="confirmInvestBtn" class="bg-green-600 text-white px-3 py-1 rounded">Confirm</button><button id="cancelInvestBtn" class="bg-gray-500 text-white px-3 py-1 rounded">Cancel</button></div></div></div>
-    <div id="infoModal" class="modal"><div class="modal-content"><h3 id="infoModalTitle" class="text-lg font-bold">Info</h3><p id="infoModalMessage"></p><button id="closeInfoModalBtn" class="mt-3 bg-indigo-600 text-white px-3 py-1 rounded">OK</button></div></div>
-    <div id="reAuthModal" class="modal"><div class="modal-content"><h3>Re-authenticate</h3><input type="password" id="reAuthPassword" class="border p-1 w-full rounded text-sm"><button id="submitReAuthBtn" class="bg-indigo-600 text-white w-full mt-2 py-1 rounded">Confirm</button></div></div>
+    <div id="confirmTradeModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-2">Confirm Trade</h3><div id="confirmTradeDetails" class="mb-3"></div><div class="flex gap-3"><button id="confirmTradeYes" class="bg-green-600 text-white px-4 py-2 rounded">Confirm</button><button id="confirmTradeNo" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
+    <div id="tradeResultModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-2">📊 Trade Result</h3><div id="tradeResultBody"></div><div id="tradeFeedbackMessage" class="mt-2"></div><button id="closeResultModalBtn" class="mt-3 bg-indigo-600 text-white px-4 py-2 rounded">OK</button></div></div>
+    <div id="withdrawConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-2">Request Withdrawal</h3><div id="withdrawConfirmDetails"></div><div class="flex gap-3 mt-3"><button id="confirmWithdrawBtn" class="bg-green-600 text-white px-4 py-2 rounded">Confirm</button><button id="cancelWithdrawConfirmBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
+    <div id="profitClaimConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-2">Claim Daily Profit</h3><div id="profitClaimDetails"></div><div class="flex gap-3 mt-3"><button id="confirmClaimProfitBtn" class="bg-green-600 text-white px-4 py-2 rounded">Claim Now</button><button id="cancelClaimProfitBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
+    <div id="investConfirmModal" class="modal"><div class="modal-content"><h3 class="text-xl font-bold mb-2">Confirm Investment</h3><div id="investConfirmDetails"></div><div class="flex gap-3 mt-3"><button id="confirmInvestBtn" class="bg-green-600 text-white px-4 py-2 rounded">Invest</button><button id="cancelInvestBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button></div></div></div>
+    <div id="infoModal" class="modal"><div class="modal-content"><h3 id="infoModalTitle" class="text-xl font-bold">Info</h3><p id="infoModalMessage"></p><button id="closeInfoModalBtn" class="mt-3 bg-indigo-600 text-white px-4 py-2 rounded">OK</button></div></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut, updateProfile, updateEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, orderBy, serverTimestamp, addDoc, increment, Timestamp, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, orderBy, serverTimestamp, addDoc, increment, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         
         const firebaseConfig = { apiKey: "AIzaSyDtGN7KCK0A4fhztLN0CgxsKkGROcO_-vI", authDomain: "bestpay-5b78c.firebaseapp.com", projectId: "bestpay-5b78c", storageBucket: "bestpay-5b78c.firebasestorage.app", messagingSenderId: "583230068716", appId: "1:583230068716:web:3e8d298b4d00b46c8652c9" };
         const app = initializeApp(firebaseConfig);
@@ -165,11 +210,15 @@
         let withdrawalConfig = { minAmount: 10, feePercent: 3 };
         let tradingConfig = { minStake: 5, multiplierCapLow: 2, multiplierCapHigh: 10 };
         let currentPrice = 1.17304;
+        let activeTimers = new Map();
+        let autoTradeInterval = null;
+        let lastTradesResults = [];
+
         setInterval(() => { currentPrice += (Math.random() - 0.5) * 0.0006; if(currentPrice<1.05) currentPrice=1.05; if(currentPrice>1.25) currentPrice=1.25; document.getElementById('livePrice').innerText = currentPrice.toFixed(5); }, 2000);
 
         function showModal(id){ document.getElementById(id).classList.add('active'); }
         function hideModal(id){ document.getElementById(id).classList.remove('active'); }
-        function showInfoModal(title, message) { document.getElementById('infoModalTitle').innerText = title; document.getElementById('infoModalMessage').innerHTML = message; showModal('infoModal'); }
+        function showInfoModal(title, msg) { document.getElementById('infoModalTitle').innerText = title; document.getElementById('infoModalMessage').innerHTML = msg; showModal('infoModal'); }
         document.getElementById('closeInfoModalBtn').onclick = () => hideModal('infoModal');
 
         async function loadConfig() {
@@ -185,6 +234,7 @@
                 document.getElementById('exchangeRate').innerText = `1 USD = ${exchangeRate.toFixed(2)} KES`;
             } catch(e) { console.warn(e); }
         }
+
         async function loadUserData() { 
             const snap = await getDoc(doc(db,"users",currentUser.uid)); 
             currentUserData = snap.data() || { realBalance:0, demoBalance:10000, totalEarned:0 };
@@ -199,6 +249,7 @@
             `;
             document.getElementById('withdrawBalanceInfo').innerHTML = `💰 Available: $${bal.toFixed(2)} | Min withdrawal: $${withdrawalConfig.minAmount} | Fee: ${withdrawalConfig.feePercent}%`;
         }
+
         async function updateBalance(change, isReal) { 
             const field = isReal ? 'realBalance' : 'demoBalance'; 
             await updateDoc(doc(db,"users",currentUser.uid), { [field]: increment(change), totalEarned: increment(change>0?change:0) }); 
@@ -223,17 +274,18 @@
             document.getElementById('potentialProfit').innerText = `$${profit.toFixed(2)}`; 
             document.getElementById('potentialLoss').innerText = `$${stake.toFixed(2)}`; 
             let fill = (profit / (profit+stake)) * 100;
-            document.getElementById('riskRewardFill').style.width = Math.min(100, fill)+'%'; 
+            document.getElementById('riskRewardFill').style.width = (isNaN(fill)?0:Math.min(100, fill))+'%'; 
             document.getElementById('totalPayout').innerText = `$${(stake*mult).toFixed(2)}`; 
         }
         document.getElementById('stakeAmount').addEventListener('input', ()=>{ updateMultiplierByStake(); updateRiskReward(); });
         document.getElementById('multiplierSlider').addEventListener('input', ()=>{ document.getElementById('multiplierValue').innerText = parseFloat(document.getElementById('multiplierSlider').value).toFixed(1)+'x'; updateRiskReward(); });
-        
+
         async function executeTrade(direction, stake, multiplier) {
             const bal = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||10000);
-            if(stake > bal) { showInfoModal("Insufficient Balance", `Need $${stake}`); return false; }
+            if(stake > bal) { showInfoModal("Insufficient", `Need $${stake}`); return false; }
             const entryPrice = currentPrice;
             const tradeRef = await addDoc(collection(db,"binary_trades"), { userId:currentUser.uid, direction, amount:stake, multiplier, entryPrice, status:"active", createdAt:serverTimestamp(), expiresAt:Timestamp.fromDate(new Date(Date.now()+60000)), isReal:isRealMode });
+            showInfoModal("Trade Placed", `${direction.toUpperCase()} $${stake} (${multiplier}x) opened. Result in 60s.`);
             setTimeout(async () => {
                 const tradeSnap = await getDoc(doc(db,"binary_trades",tradeRef.id));
                 if(!tradeSnap.exists() || tradeSnap.data().status !== "active") return;
@@ -244,55 +296,121 @@
                 await updateDoc(doc(db,"binary_trades",tradeRef.id), { status:"closed", result:won?"win":"loss", closePrice:finalPrice, profit:netProfit });
                 if(won) await updateBalance(payout, isRealMode);
                 else await updateBalance(-stake, isRealMode);
-                await addDoc(collection(db,"transactions"), { userId:currentUser.uid, type:won?"trade_win":"trade_loss", amount:won?payout:-stake, description:`${direction.toUpperCase()} ${multiplier}x 60s trade`, timestamp:serverTimestamp(), status:"completed" });
+                await addDoc(collection(db,"transactions"), { userId:currentUser.uid, type:won?"trade_win":"trade_loss", amount:won?payout:-stake, description:`${direction} ${multiplier}x 60s`, timestamp:serverTimestamp(), status:"completed" });
                 const username = currentUserData.displayName || currentUser.email.split('@')[0];
-                const resultMsg = won ? `🎉 Congrats ${username}! You won $${(payout-stake).toFixed(2)}. 🎉` : `😔 Sorry ${username}, you lost $${stake.toFixed(2)}. Try again.`;
+                const resultMsg = won ? `🎉 Congrats ${username}! You won $${(payout-stake).toFixed(2)}` : `😔 Sorry ${username}, you lost $${stake.toFixed(2)}. Better luck next time.`;
                 document.getElementById('tradeResultBody').innerHTML = `
-                    <div class="text-center"><div class="text-xl ${won?'text-green-600':'text-red-600'} font-bold">${won?'WINNER':'LOSS'}</div>
-                    <div class="bg-gray-100 p-2 rounded text-left text-sm mt-2"><b>Direction:</b> ${direction.toUpperCase()}<br><b>Stake:</b> $${stake}<br><b>Multiplier:</b> ${multiplier}x<br><b>Entry:</b> ${entryPrice.toFixed(5)}<br><b>Exit:</b> ${finalPrice.toFixed(5)}<br><b>Payout:</b> $${payout.toFixed(2)}<br><b>Profit:</b> <span class="font-bold">${netProfit>=0?`+$${netProfit.toFixed(2)}`:`-$${Math.abs(netProfit).toFixed(2)}`}</span></div></div>
+                    <div class="text-center p-2"><div class="text-2xl ${won?'text-green-600':'text-red-600'} font-bold">${won?'WINNER':'LOSS'}</div>
+                    <div class="bg-gray-100 p-2 rounded mt-2 text-left text-sm"><b>Direction:</b> ${direction.toUpperCase()}<br><b>Stake:</b> $${stake}<br><b>Multiplier:</b> ${multiplier}x<br><b>Entry:</b> ${entryPrice.toFixed(5)}<br><b>Exit:</b> ${finalPrice.toFixed(5)}<br><b>Payout:</b> $${payout.toFixed(2)}<br><b>Profit/Loss:</b> <span class="font-bold ${netProfit>=0?'text-green-600':'text-red-600'}">${netProfit>=0?`+$${netProfit.toFixed(2)}`:`-$${Math.abs(netProfit).toFixed(2)}`}</span></div></div>
                 `;
                 document.getElementById('tradeFeedbackMessage').innerHTML = `<div class="bg-blue-50 p-2 rounded text-sm">${resultMsg}</div>`;
                 showModal('tradeResultModal');
-                loadTransactions();
-                loadUserData();
+                loadOpenTrades(); loadHistory(); loadUserData();
             }, 60000);
-            showInfoModal("Trade Placed", `${direction.toUpperCase()} $${stake} (${multiplier}x) opened. Result in 60s.`);
+            loadOpenTrades();
             return true;
         }
-        function requestTradeConfirmation(dir){ let stake = parseFloat(document.getElementById('stakeAmount').value); let mult = parseFloat(document.getElementById('multiplierSlider').value); if(stake < tradingConfig.minStake) { showInfoModal("Invalid","Min stake"); return; } const bal = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||10000); if(stake>bal){ showInfoModal("Error","Insufficient"); return; } document.getElementById('confirmTradeDetails').innerHTML = `<p class="text-sm"><b>${dir.toUpperCase()}</b> | $${stake} | ${mult}x<br>Potential profit: $${(stake*mult-stake).toFixed(2)}</p>`; window.pendingTrade = { dir, stake, mult }; showModal('confirmTradeModal'); }
+
+        async function loadOpenTrades() {
+            if(!currentUser) return;
+            const q = query(collection(db,"binary_trades"), where("userId","==",currentUser.uid), where("status","==","active"), where("isReal","==",isRealMode), orderBy("createdAt","desc"));
+            const snap = await getDocs(q);
+            const container = document.getElementById('openPositionsList');
+            document.getElementById('activeCountBadge').innerText = snap.size;
+            if(snap.empty){ container.innerHTML='<div class="text-xs text-gray-500">No active trades</div>'; document.getElementById('chartCountdown').innerHTML = '⏱️ No active trade'; return; }
+            let earliestExpiry = null;
+            let html='';
+            snap.forEach(docSnap=>{
+                const t=docSnap.data();
+                const expiry=t.expiresAt.toDate();
+                if(!earliestExpiry || expiry<earliestExpiry) earliestExpiry=expiry;
+                let secondsLeft=Math.max(0,Math.floor((expiry-new Date())/1000));
+                html+=`<div class="trade-card text-sm"><div class="flex justify-between"><span class="font-bold">${t.direction.toUpperCase()} $${t.amount} (${t.multiplier}x)</span><span class="countdown" id="cd-${docSnap.id}">${secondsLeft}s</span></div><div>Entry: ${t.entryPrice.toFixed(5)}</div></div>`;
+            });
+            container.innerHTML=html;
+            if(earliestExpiry){
+                if(window.globalCD) clearInterval(window.globalCD);
+                window.globalCD = setInterval(()=>{
+                    let sec = Math.max(0, Math.floor((earliestExpiry-new Date())/1000));
+                    document.getElementById('chartCountdown').innerHTML = `⏱️ Next trade ends in ${sec}s`;
+                    if(sec<=0) { clearInterval(window.globalCD); document.getElementById('chartCountdown').innerHTML = '⏱️ No active trade'; }
+                },1000);
+            }
+            snap.forEach(d=>{ const exp=d.data().expiresAt.toDate(); const id=d.id; if(activeTimers.has(id)) clearInterval(activeTimers.get(id)); const timer=setInterval(()=>{ let sec=Math.max(0,Math.floor((exp-new Date())/1000)); let el=document.getElementById(`cd-${id}`); if(el) el.innerText=`${sec}s`; if(sec<=0) clearInterval(timer); },1000); activeTimers.set(id,timer); });
+        }
+
+        async function loadHistory() {
+            const q = query(collection(db,"binary_trades"), where("userId","==",currentUser.uid), where("status","==","closed"), where("isReal","==",isRealMode), orderBy("createdAt","desc"), limit(10));
+            const snap = await getDocs(q);
+            let html='', totalP=0, wins=0;
+            snap.forEach(d=>{ const t=d.data(); const profit=t.profit||0; totalP+=profit; if(profit>0) wins++; html+=`<div class="flex justify-between border-b py-1 text-xs"><span>${t.direction} $${t.amount} (${t.multiplier}x)</span><span class="${profit>=0?'text-green-600':'text-red-600'}">${profit>=0?`+${profit.toFixed(2)}`:profit.toFixed(2)}</span></div>`; });
+            document.getElementById('lastTradesList').innerHTML=html||'<div class="text-xs">No history</div>';
+            document.getElementById('last10Profit').innerHTML=`$${totalP.toFixed(2)}`;
+            document.getElementById('winRatePercent').innerHTML=snap.size?((wins/snap.size)*100).toFixed(1)+'%':'0%';
+        }
+
+        function requestTradeConfirmation(dir){
+            let stake = parseFloat(document.getElementById('stakeAmount').value);
+            let mult = parseFloat(document.getElementById('multiplierSlider').value);
+            if(stake < tradingConfig.minStake) { showInfoModal("Invalid",`Min stake $${tradingConfig.minStake}`); return; }
+            const bal = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||10000);
+            if(stake>bal){ showInfoModal("Error","Insufficient balance"); return; }
+            document.getElementById('confirmTradeDetails').innerHTML = `<p><b>${dir.toUpperCase()}</b> | $${stake} | ${mult}x</p><p>Potential profit: $${(stake*mult-stake).toFixed(2)}</p>`;
+            window.pendingTrade = { dir, stake, mult };
+            showModal('confirmTradeModal');
+        }
         document.getElementById('confirmTradeYes').onclick = async () => { if(window.pendingTrade){ await executeTrade(window.pendingTrade.dir, window.pendingTrade.stake, window.pendingTrade.mult); window.pendingTrade=null; } hideModal('confirmTradeModal'); };
         document.getElementById('confirmTradeNo').onclick = () => { window.pendingTrade=null; hideModal('confirmTradeModal'); };
         document.getElementById('callTradeBtn').onclick = () => requestTradeConfirmation('call');
         document.getElementById('putTradeBtn').onclick = () => requestTradeConfirmation('put');
-        document.getElementById('topUpBalanceBtn').onclick = () => { activateSection('deposits'); };
-        document.getElementById('quickTopUpBtn').onclick = () => { activateSection('deposits'); };
-        
-        // DEPOSIT METHODS: fetch from Firestore payment_methods
+        document.getElementById('closeResultModalBtn').onclick = () => hideModal('tradeResultModal');
+
+        // Auto trade
+        function startAutoTrade() {
+            if(autoTradeInterval) clearInterval(autoTradeInterval);
+            const direction = document.getElementById('autoDirection').value;
+            let stake = parseFloat(document.getElementById('stakeAmount').value);
+            let multiplier = parseFloat(document.getElementById('multiplierSlider').value);
+            if(stake < tradingConfig.minStake) { showInfoModal("Auto Error",`Min stake $${tradingConfig.minStake}`); return; }
+            autoTradeInterval = setInterval(async () => {
+                const bal = isRealMode ? (currentUserData.realBalance||0) : (currentUserData.demoBalance||10000);
+                if(stake > bal) { showInfoModal("Auto Stopped","Insufficient balance"); stopAutoTrade(); return; }
+                await executeTrade(direction, stake, multiplier);
+            }, 61000);
+            document.getElementById('startAutoTradeBtn').disabled = true;
+            document.getElementById('stopAutoTradeBtn').disabled = false;
+            showInfoModal("Auto Trade", `Started: ${direction.toUpperCase()} $${stake} every 60s`);
+        }
+        function stopAutoTrade() { if(autoTradeInterval) { clearInterval(autoTradeInterval); autoTradeInterval = null; } document.getElementById('startAutoTradeBtn').disabled = false; document.getElementById('stopAutoTradeBtn').disabled = true; showInfoModal("Auto Trade","Stopped"); }
+        document.getElementById('startAutoTradeBtn').onclick = startAutoTrade;
+        document.getElementById('stopAutoTradeBtn').onclick = stopAutoTrade;
+
+        // Deposit methods from Firestore
         async function loadDepositMethods() {
             try {
                 const methodsSnap = await getDocs(collection(db, "payment_methods"));
                 const container = document.getElementById('depositMethodsContainer');
-                if(methodsSnap.empty) { container.innerHTML = '<div class="col-span-3 text-center text-red-600 bg-red-50 p-2 rounded text-sm">❌ No payment links configured. Contact support.</div>'; return; }
+                if(methodsSnap.empty) { container.innerHTML = '<div class="col-span-3 text-red-600 text-sm">No payment methods configured. Contact admin.</div>'; return; }
                 let html = '';
                 methodsSnap.forEach(docSnap => {
                     const method = docSnap.data();
-                    const link = method.paymentUrl || '';
-                    html += `<button data-url="${link}" class="deposit-method-btn text-white text-sm py-2"><i class="${method.icon || 'fas fa-credit-card'}"></i> ${method.name}</button>`;
+                    const url = method.paymentUrl || '';
+                    html += `<button data-url="${url}" class="deposit-method-btn bg-gray-800 text-white py-2 rounded text-sm"><i class="${method.icon || 'fas fa-credit-card'}"></i> ${method.name}</button>`;
                 });
                 container.innerHTML = html;
                 document.querySelectorAll('.deposit-method-btn').forEach(btn => {
                     btn.onclick = () => {
                         const url = btn.dataset.url;
-                        if(url && url.trim() !== "") window.open(url, '_blank');
-                        else showInfoModal("Payment Error", "❌ Payment link missing. Try another method or contact support.");
+                        if(url && url.startsWith('http')) window.open(url, '_blank');
+                        else showInfoModal("Payment Link","No payment link set. Contact support.");
                     };
                 });
-            } catch(e) { document.getElementById('depositMethodsContainer').innerHTML = '<div class="text-red-600 text-sm">Error loading payment methods.</div>'; }
+            } catch(e) { document.getElementById('depositMethodsContainer').innerHTML = '<div class="text-red-600">Error loading methods.</div>'; }
         }
 
-        // WITHDRAWAL modal and list
+        // Withdrawal modal working
         document.getElementById('openWithdrawFormBtn').onclick = () => {
-            document.getElementById('withdrawConfirmDetails').innerHTML = `<div class="space-y-2"><input type="number" id="withdrawAmount" placeholder="Amount ($)" class="w-full border p-1 rounded text-sm"><select id="withdrawGateway" class="w-full border p-1 rounded text-sm"><option>M-Pesa</option><option>Bank Transfer</option><option>Crypto</option></select><input type="text" id="withdrawDetails" placeholder="Account/Wallet details" class="w-full border p-1 rounded text-sm"></div>`;
+            document.getElementById('withdrawConfirmDetails').innerHTML = `<div class="space-y-2"><input type="number" id="withdrawAmount" placeholder="Amount ($)" class="w-full border p-1 rounded text-sm"><select id="withdrawGateway" class="w-full border p-1 rounded text-sm"><option>M-Pesa</option><option>Bank Transfer</option><option>Crypto</option></select><input type="text" id="withdrawDetails" placeholder="Account details" class="w-full border p-1 rounded text-sm"></div>`;
             showModal('withdrawConfirmModal');
         };
         document.getElementById('confirmWithdrawBtn').onclick = async () => {
@@ -300,63 +418,64 @@
             const gateway = document.getElementById('withdrawGateway').value;
             const details = document.getElementById('withdrawDetails').value;
             const bal = isRealMode ? (currentUserData.realBalance||0) : 0;
-            if(!isRealMode) { showInfoModal("Error","Switch to Real mode"); return; }
+            if(!isRealMode) { showInfoModal("Error","Switch to Real mode"); hideModal('withdrawConfirmModal'); return; }
             if(isNaN(amount) || amount < withdrawalConfig.minAmount || amount > bal) { showInfoModal("Invalid",`Min $${withdrawalConfig.minAmount}, max $${bal.toFixed(2)}`); return; }
+            if(!details) { showInfoModal("Error","Account details required"); return; }
             const fee = amount * withdrawalConfig.feePercent / 100;
             const net = amount - fee;
             await addDoc(collection(db,"withdrawals"), { userId: currentUser.uid, amount, fee, netAmount: net, gateway, details, status: "pending", createdAt: serverTimestamp() });
-            await addDoc(collection(db,"transactions"), { userId: currentUser.uid, type: "withdrawal_request", amount: -amount, description: `Withdrawal request $${amount} via ${gateway}`, timestamp: serverTimestamp(), status: "pending" });
+            await addDoc(collection(db,"transactions"), { userId: currentUser.uid, type: "withdrawal_request", amount: -amount, description: `Withdrawal $${amount} via ${gateway}`, timestamp: serverTimestamp(), status: "pending" });
             hideModal('withdrawConfirmModal');
             showInfoModal("Success","Request submitted");
-            loadWithdrawals();
-            loadUserData();
-            loadTransactions();
+            loadWithdrawals(); loadUserData();
         };
         document.getElementById('cancelWithdrawConfirmBtn').onclick = () => hideModal('withdrawConfirmModal');
+
         async function loadWithdrawals() {
             const snap = await getDocs(query(collection(db,"withdrawals"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")));
-            if(snap.empty) { document.getElementById('withdrawalsList').innerHTML = '<div class="text-sm text-gray-500">No requests</div>'; return; }
-            let html = '';
-            snap.forEach(d => {
-                const w = d.data();
-                html += `<div class="border rounded p-2 text-sm"><div class="flex justify-between"><span class="font-bold">$${w.amount}</span><span class="text-xs ${w.status==='pending'?'text-yellow-600':w.status==='paid'?'text-green-600':'text-red-600'}">${w.status.toUpperCase()}</span></div><div>Fee: $${(w.fee||0).toFixed(2)} | Net: $${(w.netAmount||w.amount).toFixed(2)} | Gateway: ${w.gateway}</div><div class="text-xs text-gray-500">${w.details || ''} | ${w.createdAt?.toDate().toLocaleString()}</div></div>`;
-            });
+            if(snap.empty){ document.getElementById('withdrawalsList').innerHTML='<div class="text-xs">No requests</div>'; return; }
+            let html='';
+            snap.forEach(d=>{ const w=d.data(); html+=`<div class="border rounded p-2 text-xs"><div class="flex justify-between"><b>$${w.amount}</b><span class="${w.status==='pending'?'text-yellow-600':'text-green-600'}">${w.status}</span></div><div>Fee: $${(w.fee||0).toFixed(2)} | Net: $${(w.netAmount||w.amount).toFixed(2)} | ${w.gateway}</div><div class="text-gray-500">${w.details} | ${w.createdAt?.toDate().toLocaleString()}</div></div>`; });
             document.getElementById('withdrawalsList').innerHTML = html;
         }
 
-        // TRANSACTIONS: all types
         async function loadTransactions() {
-            const snap = await getDocs(query(collection(db,"transactions"), where("userId","==",currentUser.uid), orderBy("timestamp","desc")));
-            if(snap.empty) { document.getElementById('historyList').innerHTML = '<div class="text-sm text-gray-500">No transactions</div>'; return; }
-            let html = '';
-            snap.forEach(d => {
-                const t = d.data();
-                html += `<div class="border-b py-2"><div class="flex justify-between"><span class="font-medium text-sm">${t.type.replace('_',' ')}</span><span class="${t.amount>=0?'text-green-600':'text-red-600'} font-bold text-sm">$${t.amount.toFixed(2)}</span></div><div class="text-xs text-gray-600">${t.description || ''}</div><div class="text-[10px] text-gray-400">${t.status} | ${t.timestamp?.toDate().toLocaleString()}</div></div>`;
-            });
+            const snap = await getDocs(query(collection(db,"transactions"), where("userId","==",currentUser.uid), orderBy("timestamp","desc"), limit(50)));
+            if(snap.empty){ document.getElementById('historyList').innerHTML='<div class="text-xs">No transactions</div>'; return; }
+            let html='';
+            snap.forEach(d=>{ const t=d.data(); html+=`<div class="border-b py-1 text-xs"><div class="flex justify-between"><span>${t.type}</span><span class="${t.amount>=0?'text-green-600':'text-red-600'}">$${t.amount.toFixed(2)}</span></div><div class="text-gray-500">${t.description||''} | ${t.timestamp?.toDate().toLocaleString()}</div></div>`; });
             document.getElementById('historyList').innerHTML = html;
         }
 
+        // Other sections stub
+        async function loadInvestmentPlans() { document.getElementById('investmentProductsList').innerHTML = '<div class="text-sm">No plans</div>'; }
+        async function loadActiveInvestments() { document.getElementById('activeInvestmentsList').innerHTML = '<div class="text-sm">No active</div>'; }
+        async function refreshInvestmentStats() { /* stub */ }
         function activateSection(id){
             document.querySelectorAll('.content-section').forEach(s=>s.classList.remove('active-section'));
             document.getElementById(id).classList.add('active-section');
             if(id==='deposits') loadDepositMethods();
-            if(id==='withdrawals') { loadWithdrawals(); loadUserData(); }
             if(id==='transactions') loadTransactions();
+            if(id==='withdrawals') { loadWithdrawals(); loadUserData(); }
             if(id==='balances') loadUserData();
+            if(id==='trade') { loadOpenTrades(); loadHistory(); }
         }
-        onAuthStateChanged(auth, async(user)=>{ if(!user){ window.location.href="index.html"; return; } currentUser=user; await loadConfig(); await loadUserData(); updateMultiplierByStake(); activateSection('trade'); });
+
+        onAuthStateChanged(auth, async(user)=>{ if(!user){ window.location.href="index.html"; return; } currentUser=user; await loadConfig(); await loadUserData(); updateMultiplierByStake(); loadDepositMethods(); loadTransactions(); loadWithdrawals(); activateSection('trade'); });
         document.querySelectorAll('.sidebar-nav a').forEach(link=>link.addEventListener('click',(e)=>{ e.preventDefault(); activateSection(link.dataset.section); document.getElementById('sidebarOverlay').click(); }));
         document.getElementById('hamburgerBtn').onclick=()=>{ document.getElementById('mainSidebar').classList.add('open'); document.getElementById('sidebarOverlay').classList.add('active'); };
         document.getElementById('closeSidebarBtn').onclick=()=>{ document.getElementById('mainSidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('active'); };
         document.getElementById('sidebarOverlay').onclick=()=>{ document.getElementById('mainSidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('active'); };
         document.getElementById('logoutBtn').onclick = async () => { await signOut(auth); window.location.href = "index.html"; };
-        document.getElementById('quickWithdrawBtn').onclick = () => activateSection('withdrawals');
-        document.getElementById('reportDepositBtn').onclick = () => showInfoModal("Report","Contact support with transaction proof.");
+        document.getElementById('topUpBalanceBtn').onclick = () => activateSection('deposits');
+        document.getElementById('quickTopUpBtn').onclick = () => activateSection('deposits');
+        document.getElementById('reportDepositBtn').onclick = () => showInfoModal("Report","Contact support with proof.");
         document.getElementById('resetDemoBtn').onclick = async()=>{ if(!isRealMode){ await updateDoc(doc(db,"users",currentUser.uid),{demoBalance:10000}); loadUserData(); showInfoModal("Demo Reset","Balance reset to $10,000"); } };
-        document.getElementById('realModeBtn').onclick = ()=>{ isRealMode=true; document.getElementById('modeLabel').innerHTML='🔴 REAL ACCOUNT'; loadUserData(); };
-        document.getElementById('demoModeBtn').onclick = ()=>{ isRealMode=false; document.getElementById('modeLabel').innerHTML='🟢 DEMO MODE'; loadUserData(); };
+        document.getElementById('realModeBtn').onclick = ()=>{ isRealMode=true; document.getElementById('modeLabel').innerHTML='🔴 REAL ACCOUNT'; loadUserData(); loadOpenTrades(); loadHistory(); };
+        document.getElementById('demoModeBtn').onclick = ()=>{ isRealMode=false; document.getElementById('modeLabel').innerHTML='🟢 DEMO MODE'; loadUserData(); loadOpenTrades(); loadHistory(); };
         document.getElementById('exampleTradeBtn').onclick = () => { if(isRealMode) showInfoModal("Tip","Switch to Demo first"); else requestTradeConfirmation('call'); };
-        for(let i=1;i<=9;i++){ let btn=document.createElement('button'); btn.innerText=i; btn.className='number-btn text-sm'; btn.onclick=()=>{ document.getElementById('stakeAmount').value=i; updateMultiplierByStake(); updateRiskReward(); }; document.getElementById('stakeButtonsContainer').appendChild(btn); }
+        for(let i=1;i<=9;i++){ let btn=document.createElement('button'); btn.innerText=i; btn.className='number-btn'; btn.onclick=()=>{ document.getElementById('stakeAmount').value=i; updateMultiplierByStake(); updateRiskReward(); }; document.getElementById('stakeButtonsContainer').appendChild(btn); }
+        updateRiskReward();
     </script>
 </body>
 </html>
