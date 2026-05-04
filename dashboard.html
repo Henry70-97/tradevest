@@ -34,8 +34,9 @@
         .video-rectangle { width:100%; max-width:280px; border-radius:1rem; overflow:hidden; background:black; margin:0 auto; }
         .video-rectangle video { width:100%; aspect-ratio:16/9; object-fit:cover; }
         .active-invest-card { transition: transform 0.2s; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; }
-        .countdown-live { font-family: monospace; font-weight: bold; font-size: 1rem; background: #f1f5f9; padding: 0.2rem 0.8rem; border-radius: 2rem; display: inline-block; }
+        .countdown-live { font-family: monospace; font-weight: bold; font-size: 0.9rem; background: #f1f5f9; padding: 0.2rem 0.8rem; border-radius: 2rem; display: inline-block; }
         .claim-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .profit-badge { background:#22c55e20; color:#15803d; border-radius:2rem; padding:0.2rem 0.8rem; font-weight:bold; }
     </style>
 </head>
 <body class="bg-amber-50">
@@ -85,7 +86,7 @@
         </div>
 
         <main class="container mx-auto px-4 py-6 space-y-6" id="mainContent">
-            <!-- TRADING SECTION (core unchanged) -->
+            <!-- TRADING SECTION (simplified but fully functional) -->
             <div id="trade" class="content-section active-section">
                 <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
                     <div id="globalTradeStatus" class="status-bar text-sm"><i class="fas fa-chart-simple"></i> <span id="statusText">✅ No active trades</span> <span id="statusTimer" class="font-mono"></span></div>
@@ -108,17 +109,17 @@
                 </div>
             </div>
 
-            <!-- INVESTMENTS with STATS DASHBOARD, image, live countdown -->
-            <div id="investments" class="content-section"><div class="card-glass p-6"><h2 class="text-2xl font-bold mb-4">📊 Investment Dashboard</h2><div id="investmentStatsDashboard" class="investment-stat-grid"></div><h3 class="text-xl font-bold mt-4 mb-2">📦 Investment Products</h3><div id="investmentProductsList" class="grid md:grid-cols-2 gap-4 mb-8"></div><h3 class="text-xl font-bold mb-3">📌 Your Active Investments (Start/End date + image + live countdown)</h3><div id="activeInvestmentsList" class="space-y-4"></div></div></div>
+            <!-- INVESTMENTS with proper investment flow -->
+            <div id="investments" class="content-section"><div class="card-glass p-6"><h2 class="text-2xl font-bold mb-4">📊 Investment Dashboard</h2><div id="investmentStatsDashboard" class="investment-stat-grid"></div><h3 class="text-xl font-bold mt-4 mb-2">📦 Investment Products</h3><div id="investmentProductsList" class="grid md:grid-cols-2 gap-4 mb-8"></div><h3 class="text-xl font-bold mb-3">📌 Your Active Investments</h3><div id="activeInvestmentsList" class="space-y-4"></div></div></div>
             
-            <!-- BALANCES with Investment Finance Statics -->
+            <!-- BALANCES with proper investment finance stats -->
             <div id="balances" class="content-section"><div class="card-glass p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold">💰 Balance Overview</h3><div class="flex gap-2"><button id="quickWithdrawBtn" class="bg-red-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-hand-holding-usd"></i> Withdraw</button><button id="quickTopUpBtn" class="bg-green-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-plus-circle"></i> Top Up</button></div></div><div id="balanceDetails" class="space-y-2"></div><div class="mt-5 p-3 bg-indigo-50 rounded-xl border border-indigo-100"><h4 class="font-bold text-indigo-800"><i class="fas fa-chart-line mr-1"></i> Investment Finance Statistics</h4><div id="investmentFinanceStats" class="grid grid-cols-2 gap-3 mt-2 text-sm"></div></div><div class="mt-4 p-3 bg-gray-100 rounded"><div class="font-medium">Exchange Rate (USD → KES): <span id="exchangeRate">1 USD = 0 KES</span></div></div></div></div>
             
-            <!-- TRANSACTIONS (all types) -->
+            <!-- TRANSACTIONS -->
             <div id="transactions" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">📜 Full Transaction History</h3><div id="historyList" class="space-y-2 max-h-96 overflow-y-auto"></div></div></div>
             <div id="withdrawals" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">🏦 Withdrawals</h3><div id="withdrawBalanceInfo" class="mb-3 text-sm bg-gray-100 p-2 rounded"></div><button id="openWithdrawFormBtn" class="mb-3 bg-blue-600 text-white px-4 py-2 rounded-lg">Request Withdrawal</button><div id="withdrawalsList" class="space-y-3 max-h-96 overflow-y-auto"></div></div></div>
             
-            <!-- DEPOSITS with dynamic payment methods + error handling -->
+            <!-- DEPOSITS with M-Pesa, Bank Transfer, Crypto buttons -->
             <div id="deposits" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold mb-3">💎 Deposit Funds</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" id="depositMethodsContainer"></div><div class="mt-4 p-3 bg-yellow-50 rounded border-l-4 border-yellow-400"><p class="text-sm"><i class="fas fa-exclamation-triangle"></i> Already deposited but not reflected? <a href="#" id="reportDepositBtn" class="font-bold underline text-indigo-600">Click here</a> to report a pending deposit.</p></div><div id="depositsList" class="space-y-2 max-h-60 overflow-y-auto mt-4"></div></div></div>
             
             <div id="referrals" class="content-section"><div class="card-glass p-6"><h3 class="text-xl font-bold">👥 Referral Program</h3><div id="referralStats" class="my-3"></div><div id="referralLinkDisplay" class="bg-gray-100 p-2 rounded break-all text-sm"></div><button id="copyReferralLinkBtn" class="mt-2 bg-indigo-600 text-white px-3 py-1 rounded">Copy Link</button><button id="requestCommissionBtn" class="mt-2 bg-green-600 text-white px-3 py-1 rounded ml-2">Request Commission</button><div class="mt-4"><h4 class="font-bold">Referred Users</h4><div id="referredUsersList" class="space-y-1 text-sm"></div></div></div></div>
@@ -157,13 +158,13 @@
         let currentUser, currentUserData, isRealMode = true;
         let exchangeRate = 130;
         let withdrawalConfig = { minAmount: 10, feePercent: 3 };
-        
+
         function showModal(id){ document.getElementById(id).classList.add('active'); }
         function hideModal(id){ document.getElementById(id).classList.remove('active'); }
         window.closeModal = hideModal;
         function showInfoModal(title, message) { document.getElementById('infoModalTitle').innerText = title; document.getElementById('infoModalMessage').innerHTML = message; showModal('infoModal'); }
         document.getElementById('closeInfoModalBtn').onclick = () => hideModal('infoModal');
-        
+
         async function loadUserData() { 
             const snap = await getDoc(doc(db,"users",currentUser.uid)); 
             currentUserData = snap.data() || { realBalance:0, demoBalance:10000, totalEarned:0 };
@@ -171,230 +172,68 @@
             document.getElementById('liveBalance').innerText = `$${bal.toFixed(2)}`;
             document.getElementById('liveBalanceKES').innerHTML = `≈ KES ${(bal * exchangeRate).toFixed(2)}`;
             document.getElementById('userShort').innerText = currentUserData.displayName?.split(' ')[0] || currentUser.email.split('@')[0]; 
-            document.getElementById('balanceDetails').innerHTML = `<div class="flex justify-between"><span>💰 Real Balance:</span><span class="font-bold">$${(currentUserData.realBalance||0).toFixed(2)}</span></div><div class="flex justify-between"><span>🎮 Demo Balance:</span><span class="font-bold">$${(currentUserData.demoBalance||10000).toFixed(2)}</span></div><div class="flex justify-between"><span>🏆 Total Earned:</span><span class="font-bold">$${(currentUserData.totalEarned||0).toFixed(2)}</span></div>`;
-            document.getElementById('withdrawBalanceInfo').innerHTML = `💰 Available: $${bal.toFixed(2)} | Min withdrawal: $${withdrawalConfig.minAmount} | Fee: ${withdrawalConfig.feePercent}%`;
+            document.getElementById('balanceDetails').innerHTML = `
+                <div class="flex justify-between"><span>💰 Real Balance:</span><span class="font-bold">$${(currentUserData.realBalance||0).toFixed(2)}</span></div>
+                <div class="flex justify-between"><span>🎮 Demo Balance:</span><span class="font-bold">$${(currentUserData.demoBalance||10000).toFixed(2)}</span></div>
+                <div class="flex justify-between"><span>🏆 Total Earned:</span><span class="font-bold">$${(currentUserData.totalEarned||0).toFixed(2)}</span></div>
+            `;
+            document.getElementById('withdrawBalanceInfo').innerHTML = `💰 Available: $${bal.toFixed(2)} | Min: $${withdrawalConfig.minAmount} | Fee: ${withdrawalConfig.feePercent}%`;
         }
-        
+
         async function updateBalanceByMode(changeAmount, isReal) { 
             const field = isReal ? 'realBalance' : 'demoBalance'; 
             await updateDoc(doc(db,"users",currentUser.uid), { [field]: increment(changeAmount), totalEarned: increment(changeAmount>0?changeAmount:0) }); 
             await loadUserData(); 
-            refreshInvestmentStatsDashboard();
+            refreshInvestmentStats();
         }
-        
-        // === INVESTMENT DASHBOARD STATS ===
-        async function refreshInvestmentStatsDashboard() {
+
+        // Investment stats
+        async function refreshInvestmentStats() {
             if(!currentUser) return;
-            const plansSnap = await getDocs(collection(db,"investment_plans"));
-            const productsCount = plansSnap.size;
             const activeInvSnap = await getDocs(query(collection(db,"user_investments"), where("userId","==",currentUser.uid), where("status","==","active")));
-            const activeCount = activeInvSnap.size;
             const profitTxns = await getDocs(query(collection(db,"transactions"), where("userId","==",currentUser.uid), where("type","==","investment_profit")));
             let totalEarnedInv = 0;
             profitTxns.forEach(t => totalEarnedInv += (t.data().amount || 0));
             let pendingEarnings = 0;
-            for(const invSnap of activeInvSnap.docs){
-                const inv = invSnap.data();
-                const lastClaim = inv.lastProfitClaim ? inv.lastProfitClaim.toDate() : inv.startDate.toDate();
-                const now = new Date();
-                const daysSinceClaim = Math.floor((now - lastClaim) / 86400000);
-                const dailyProfit = inv.amount * inv.dailyROI / 100;
-                pendingEarnings += dailyProfit * daysSinceClaim;
+            for(const inv of activeInvSnap.docs){
+                const d = inv.data();
+                const lastClaim = d.lastProfitClaim ? d.lastProfitClaim.toDate() : d.startDate.toDate();
+                const daysSinceClaim = Math.floor((Date.now() - lastClaim) / 86400000);
+                const dailyProfit = d.amount * d.dailyROI / 100;
+                pendingEarnings += dailyProfit * Math.max(0, daysSinceClaim);
             }
             const withdrawalsInvSnap = await getDocs(query(collection(db,"investment_withdrawals"), where("userId","==",currentUser.uid)));
             let totalWithdrawalsInv = 0;
             withdrawalsInvSnap.forEach(w => totalWithdrawalsInv += (w.data().amount || 0));
+            const totalInvested = (await getDocs(query(collection(db,"user_investments"), where("userId","==",currentUser.uid)))).docs.reduce((sum, d) => sum + (d.data().amount||0), 0);
             document.getElementById('investmentStatsDashboard').innerHTML = `
-                <div class="stats-card"><i class="fas fa-cubes"></i><div class="stats-value">${productsCount}</div><div>Products</div></div>
-                <div class="stats-card"><i class="fas fa-chart-line"></i><div class="stats-value">${activeCount}</div><div>Active</div></div>
+                <div class="stats-card"><i class="fas fa-chart-line"></i><div class="stats-value">${activeInvSnap.size}</div><div>Active</div></div>
                 <div class="stats-card"><i class="fas fa-dollar-sign"></i><div class="stats-value">$${totalEarnedInv.toFixed(2)}</div><div>Total Earned</div></div>
                 <div class="stats-card"><i class="fas fa-hourglass-half"></i><div class="stats-value">$${pendingEarnings.toFixed(2)}</div><div>Pending Earnings</div></div>
                 <div class="stats-card"><i class="fas fa-donate"></i><div class="stats-value">$${totalWithdrawalsInv.toFixed(2)}</div><div>Total Withdrawals</div></div>
             `;
-            const totalInvested = (await getDocs(query(collection(db,"user_investments"), where("userId","==",currentUser.uid)))).docs.reduce((sum, d) => sum + (d.data().amount||0), 0);
             document.getElementById('investmentFinanceStats').innerHTML = `
                 <div><span class="font-semibold">💰 Total Invested:</span> $${totalInvested.toFixed(2)}</div>
                 <div><span class="font-semibold">✅ Claimed Profit:</span> $${totalEarnedInv.toFixed(2)}</div>
                 <div><span class="font-semibold">⏳ Pending Profit:</span> $${pendingEarnings.toFixed(2)}</div>
-                <div><span class="font-semibold">📤 Withdrawn:</span> $${totalWithdrawalsInv.toFixed(2)}</div>
+                <div><span class="font-semibold">📤 Withdrawn from Inv:</span> $${totalWithdrawalsInv.toFixed(2)}</div>
             `;
         }
-        
-        // === ACTIVE INVESTMENTS WITH LIVE COUNTDOWN ===
-        async function loadActiveInvestments() {
-            const snap = await getDocs(query(collection(db,"user_investments"), where("userId","==",currentUser.uid), where("status","==","active")));
-            if(snap.empty) { document.getElementById('activeInvestmentsList').innerHTML = '<div class="empty-message">No active investments</div>'; return; }
-            let html = '';
-            for(const invDoc of snap.docs){
-                const data = invDoc.data();
-                const startDate = data.startDate.toDate();
-                const endDate = new Date(startDate.getTime() + data.durationDays * 86400000);
-                const lastClaim = data.lastProfitClaim ? data.lastProfitClaim.toDate() : startDate;
-                const nextClaim = new Date(lastClaim.getTime() + 24*60*60*1000);
-                const dailyProfit = data.amount * data.dailyROI / 100;
-                const imageUrl = data.imageUrl || data.productUrl || null;
-                html += `<div class="active-invest-card" id="inv-${invDoc.id}">
-                    <div class="flex flex-wrap gap-4 justify-between items-start">
-                        <div class="flex gap-3">
-                            ${imageUrl ? `<img src="${imageUrl}" class="w-20 h-20 object-cover rounded-lg" onerror="this.src='https://via.placeholder.com/80'">` : `<div class="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center"><i class="fas fa-chart-line text-2xl text-gray-400"></i></div>`}
-                            <div><div class="font-bold text-lg">Investment #${invDoc.id.slice(-6)}</div>
-                            <div class="text-sm">Amount: $${data.amount} | ROI: ${data.dailyROI}% daily = $${dailyProfit.toFixed(2)}/day</div>
-                            <div class="text-xs text-gray-500">Start: ${startDate.toLocaleDateString()} | End: ${endDate.toLocaleDateString()}</div></div>
-                        </div>
-                        <div class="text-right">
-                            <div id="countdown-${invDoc.id}" class="countdown-live mb-2"></div>
-                            <button id="claimBtn-${invDoc.id}" class="claim-btn bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold" data-inv-id="${invDoc.id}" data-amount="${data.amount}" data-roi="${data.dailyROI}" data-lastclaim="${lastClaim.getTime()}">⏳ Claim $${dailyProfit.toFixed(2)}</button>
-                            <button onclick="window.showWithdrawInvestmentPrompt('${invDoc.id}', ${data.amount})" class="bg-red-600 text-white px-3 py-1 rounded text-sm mt-2 block w-full">Withdraw Principal</button>
-                        </div>
-                    </div>
-                </div>`;
-            }
-            document.getElementById('activeInvestmentsList').innerHTML = html;
-            // Attach live timers & claim logic
-            for(const invDoc of snap.docs){
-                const data = invDoc.data();
-                const lastClaim = data.lastProfitClaim ? data.lastProfitClaim.toDate() : data.startDate.toDate();
-                const nextClaim = new Date(lastClaim.getTime() + 24*60*60*1000);
-                const invId = invDoc.id;
-                const updateTimer = () => {
-                    const now = Date.now();
-                    const diff = nextClaim.getTime() - now;
-                    const claimBtn = document.getElementById(`claimBtn-${invId}`);
-                    const countdownSpan = document.getElementById(`countdown-${invId}`);
-                    if(diff <= 0) {
-                        if(countdownSpan) countdownSpan.innerText = "✅ Ready to claim!";
-                        if(claimBtn) { claimBtn.disabled = false; claimBtn.classList.remove('opacity-50'); claimBtn.innerHTML = `🎯 Claim $${(data.amount * data.dailyROI / 100).toFixed(2)}`; }
-                    } else {
-                        const hours = Math.floor(diff / (1000*60*60));
-                        const minutes = Math.floor((diff % (3600000)) / 60000);
-                        const seconds = Math.floor((diff % 60000) / 1000);
-                        if(countdownSpan) countdownSpan.innerText = `Next claim: ${hours}h ${minutes}m ${seconds}s`;
-                        if(claimBtn) { claimBtn.disabled = true; claimBtn.classList.add('opacity-50'); claimBtn.innerHTML = `⏳ Locked (${hours}h)`;
-                        }
-                    }
-                };
-                updateTimer();
-                const interval = setInterval(updateTimer, 1000);
-                // Attach claim click handler
-                const claimBtn = document.getElementById(`claimBtn-${invId}`);
-                if(claimBtn){
-                    claimBtn.onclick = () => {
-                        const profit = data.amount * data.dailyROI / 100;
-                        window.pendingClaim = { investmentId: invId, profit: profit };
-                        document.getElementById('profitClaimDetails').innerHTML = `<p>Claim daily profit of <strong>$${profit.toFixed(2)}</strong>?</p>`;
-                        showModal('profitClaimConfirmModal');
-                    };
-                }
-                window[`timer_${invId}`] = interval;
-            }
-        }
-        
-        // Claim modal handlers
-        document.getElementById('confirmClaimProfitBtn').onclick = async () => {
-            if(window.pendingClaim) {
-                const { investmentId, profit } = window.pendingClaim;
-                await updateBalanceByMode(profit, isRealMode);
-                await updateDoc(doc(db,"user_investments",investmentId), { lastProfitClaim: serverTimestamp() });
-                await addDoc(collection(db,"transactions"), { userId: currentUser.uid, type: "investment_profit", amount: profit, description: `Profit from ${investmentId}`, timestamp: serverTimestamp(), status: "completed" });
-                hideModal('profitClaimConfirmModal');
-                showInfoModal("Success", `$${profit.toFixed(2)} claimed!`);
-                loadActiveInvestments();
-                loadUserData();
-                refreshInvestmentStatsDashboard();
-                window.pendingClaim = null;
-            }
-        };
-        document.getElementById('cancelClaimProfitBtn').onclick = () => { hideModal('profitClaimConfirmModal'); window.pendingClaim = null; };
-        
-        window.showWithdrawInvestmentPrompt = (investmentId, amount) => {
-            if(amount < 0.5) { showInfoModal("Error","Minimum $0.5"); return; }
-            document.getElementById('withdrawInvestmentDetails').innerHTML = `<p>Withdraw <strong>$${amount.toFixed(2)}</strong> from investment? Admin will review.</p>`;
-            window.pendingWithdrawInvest = { investmentId, amount };
-            showModal('withdrawInvestmentModal');
-        };
-        document.getElementById('confirmWithdrawInvestmentBtn').onclick = async () => {
-            if(window.pendingWithdrawInvest){
-                const { investmentId, amount } = window.pendingWithdrawInvest;
-                await addDoc(collection(db,"investment_withdrawals"), { userId: currentUser.uid, investmentId, amount, status: "pending", createdAt: serverTimestamp() });
-                await addDoc(collection(db,"transactions"), { userId: currentUser.uid, type: "investment_withdrawal_request", amount: -amount, description: `Principal withdrawal request $${amount}`, timestamp: serverTimestamp(), status: "pending" });
-                hideModal('withdrawInvestmentModal');
-                showInfoModal("Success","Request submitted");
-                loadActiveInvestments();
-                window.pendingWithdrawInvest = null;
-            }
-        };
-        document.getElementById('cancelWithdrawInvestmentBtn').onclick = () => hideModal('withdrawInvestmentModal');
-        
-        // === DEPOSIT METHODS (with error handling) ===
-        async function loadDepositMethods() {
-            try {
-                const methodsSnap = await getDocs(collection(db, "payment_methods"));
-                const container = document.getElementById('depositMethodsContainer');
-                if(methodsSnap.empty) { container.innerHTML = '<div class="col-span-3 text-center text-red-600 bg-red-50 p-3 rounded">❌ No payment methods configured. Please contact support.</div>'; return; }
-                let html = '';
-                methodsSnap.forEach(docSnap => {
-                    const method = docSnap.data();
-                    html += `<button data-url="${method.paymentUrl || ''}" class="deposit-method-btn bg-gray-800 text-white py-3 rounded-xl"><i class="${method.icon || 'fas fa-credit-card'}"></i> ${method.name}</button>`;
-                });
-                container.innerHTML = html;
-                document.querySelectorAll('.deposit-method-btn').forEach(btn => {
-                    btn.onclick = () => {
-                        const url = btn.dataset.url;
-                        if(url && url.startsWith('http')) window.open(url, '_blank');
-                        else showInfoModal("Payment Error","❌ No valid payment link. Use another method or contact support.");
-                    };
-                });
-            } catch(e) { document.getElementById('depositMethodsContainer').innerHTML = '<div class="col-span-3 text-red-600">Error loading payment methods. Try later.</div>'; }
-        }
-        
-        // === WITHDRAWALS (full details) ===
-        async function loadWithdrawals() {
-            const snap = await getDocs(query(collection(db,"withdrawals"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")));
-            if(snap.empty) { document.getElementById('withdrawalsList').innerHTML = '<div class="empty-message">No withdrawal requests</div>'; return; }
-            let html = '';
-            snap.forEach(d => {
-                const w = d.data();
-                html += `<div class="border rounded p-3 bg-white shadow-sm">
-                    <div class="flex justify-between"><span class="font-bold">$${w.amount}</span><span class="text-sm ${w.status==='pending'?'text-yellow-600':w.status==='paid'?'text-green-600':'text-red-600'}">${w.status.toUpperCase()}</span></div>
-                    <div class="text-sm">Fee: $${(w.fee||0).toFixed(2)} | Net: $${(w.netAmount||w.amount).toFixed(2)} | Gateway: ${w.gateway}</div>
-                    <div class="text-xs text-gray-500">Details: ${w.details || 'N/A'} | Created: ${w.createdAt?.toDate().toLocaleString()}</div>
-                </div>`;
-            });
-            document.getElementById('withdrawalsList').innerHTML = html;
-        }
-        
-        document.getElementById('openWithdrawFormBtn').onclick = () => {
-            document.getElementById('withdrawConfirmDetails').innerHTML = `<div class="space-y-3"><input type="number" id="withdrawAmount" placeholder="Amount ($)" class="w-full border p-2 rounded"><select id="withdrawGateway" class="w-full border p-2 rounded"><option>M-Pesa</option><option>Bank Transfer</option><option>Crypto</option></select><input type="text" id="withdrawDetails" placeholder="Account/Wallet details" class="w-full border p-2 rounded"></div>`;
-            showModal('withdrawConfirmModal');
-        };
-        document.getElementById('confirmWithdrawBtn').onclick = async () => {
-            const amount = parseFloat(document.getElementById('withdrawAmount').value);
-            const gateway = document.getElementById('withdrawGateway').value;
-            const details = document.getElementById('withdrawDetails').value;
-            const bal = isRealMode ? (currentUserData.realBalance||0) : 0;
-            if(!isRealMode) { showInfoModal("Error","Only REAL mode for withdrawals"); return; }
-            if(isNaN(amount) || amount < withdrawalConfig.minAmount || amount > bal) { showInfoModal("Invalid","Check min/max balance"); return; }
-            const fee = amount * withdrawalConfig.feePercent / 100;
-            const net = amount - fee;
-            await addDoc(collection(db,"withdrawals"), { userId: currentUser.uid, amount, fee, netAmount: net, gateway, details, status: "pending", createdAt: serverTimestamp() });
-            await addDoc(collection(db,"transactions"), { userId: currentUser.uid, type: "withdrawal_request", amount: -amount, description: `Withdrawal $${amount} via ${gateway}`, timestamp: serverTimestamp(), status: "pending" });
-            hideModal('withdrawConfirmModal');
-            showInfoModal("Success","Withdrawal request submitted");
-            loadWithdrawals();
-            loadUserData();
-        };
-        document.getElementById('cancelWithdrawConfirmBtn').onclick = () => hideModal('withdrawConfirmModal');
-        
-        // === LOAD INVESTMENT PLANS (image support) ===
+
+        // Load investment products and enable invest button
         async function loadInvestmentPlans() {
             const snap = await getDocs(collection(db,"investment_plans"));
-            if(snap.empty) { document.getElementById('investmentProductsList').innerHTML = '<div class="empty-message">No plans available</div>'; return; }
             let html = '';
-            snap.forEach(d => {
+            if(snap.empty) html = '<div class="empty-message">No plans available</div>';
+            else snap.forEach(d => {
                 const p = d.data();
-                const dailyEarn = (p.fixedAmount || p.minAmount) * p.dailyROI / 100;
+                const amount = p.fixedAmount || p.minAmount || 10;
+                const daily = amount * p.dailyROI / 100;
                 const img = p.imageUrl || p.productUrl || '';
-                html += `<div class="border rounded-xl p-4 shadow-sm bg-white"><div class="flex gap-3 items-start">${img ? `<img src="${img}" class="w-20 h-20 object-cover rounded-lg">` : '<div class="w-20 h-20 bg-gray-200 rounded flex items-center justify-center"><i class="fas fa-chart-line text-2xl"></i></div>'}<div><h3 class="font-bold text-lg">${p.name}</h3><div>Amount: $${p.fixedAmount || p.minAmount}</div><div>Daily ROI: ${p.dailyROI}% = $${dailyEarn.toFixed(2)}</div><div>Duration: ${p.durationDays} days</div><button class="invest-plan-btn mt-2 bg-green-600 text-white px-4 py-1 rounded" data-amount="${p.fixedAmount || p.minAmount}" data-roi="${p.dailyROI}" data-duration="${p.durationDays}" data-img="${img}">Invest Now</button></div></div></div>`;
+                html += `<div class="border rounded-xl p-4 shadow-sm bg-white flex gap-3 items-start">
+                            ${img ? `<img src="${img}" class="w-20 h-20 object-cover rounded-lg">` : '<div class="w-20 h-20 bg-gray-200 rounded flex items-center justify-center"><i class="fas fa-chart-line text-2xl"></i></div>'}
+                            <div><h3 class="font-bold text-lg">${p.name}</h3><div>Amount: $${amount}</div><div>Daily ROI: ${p.dailyROI}% = $${daily.toFixed(2)}</div><div>Duration: ${p.durationDays} days</div><button class="invest-plan-btn bg-green-600 text-white px-4 py-1 rounded mt-2" data-amount="${amount}" data-roi="${p.dailyROI}" data-duration="${p.durationDays}" data-img="${img}">Invest Now</button></div>
+                        </div>`;
             });
             document.getElementById('investmentProductsList').innerHTML = html;
             document.querySelectorAll('.invest-plan-btn').forEach(btn => {
@@ -404,7 +243,7 @@
                     const duration = parseInt(btn.dataset.duration);
                     const image = btn.dataset.img;
                     window.pendingInvest = { amount, roi, duration, image };
-                    document.getElementById('investConfirmDetails').innerHTML = `<p>Invest $${amount}? Daily profit $${(amount*roi/100).toFixed(2)} for ${duration} days.</p>`;
+                    document.getElementById('investConfirmDetails').innerHTML = `<p>Confirm investment of <strong>$${amount}</strong>?<br>Daily profit: $${(amount*roi/100).toFixed(2)} for ${duration} days.</p>`;
                     showModal('investConfirmModal');
                 };
             });
@@ -417,52 +256,212 @@
                 await updateBalanceByMode(-amount, isRealMode);
                 await addDoc(collection(db,"user_investments"), { userId:currentUser.uid, amount, dailyROI:roi, durationDays:duration, startDate:serverTimestamp(), lastProfitClaim:Timestamp.fromDate(new Date(0)), status:"active", imageUrl:image });
                 hideModal('investConfirmModal');
-                showInfoModal("Success","Investment active!");
+                showInfoModal("Success","Investment started successfully!");
                 loadActiveInvestments();
                 loadUserData();
-                refreshInvestmentStatsDashboard();
+                refreshInvestmentStats();
                 window.pendingInvest = null;
             }
         };
         document.getElementById('cancelInvestBtn').onclick = () => { hideModal('investConfirmModal'); window.pendingInvest = null; };
-        
-        // === TRANSACTIONS (all types) ===
-        async function loadTransactions() {
+
+        // Active investments with live countdown & claim button + withdraw principal
+        async function loadActiveInvestments() {
+            const snap = await getDocs(query(collection(db,"user_investments"), where("userId","==",currentUser.uid), where("status","==","active")));
+            if(snap.empty) { document.getElementById('activeInvestmentsList').innerHTML = '<div class="empty-message">No active investments</div>'; return; }
+            let html = '';
+            for(const inv of snap.docs){
+                const data = inv.data();
+                const start = data.startDate.toDate();
+                const end = new Date(start.getTime() + data.durationDays*86400000);
+                const dailyProfit = data.amount * data.dailyROI / 100;
+                const lastClaim = data.lastProfitClaim ? data.lastProfitClaim.toDate() : start;
+                const nextClaim = new Date(lastClaim.getTime() + 86400000);
+                const img = data.imageUrl || '';
+                html += `<div class="active-invest-card" data-invid="${inv.id}">
+                    <div class="flex flex-wrap justify-between gap-3">
+                        <div class="flex gap-3">
+                            ${img ? `<img src="${img}" class="w-16 h-16 object-cover rounded-lg">` : '<div class="w-16 h-16 bg-gray-200 rounded flex items-center justify-center"><i class="fas fa-chart-line"></i></div>'}
+                            <div><div class="font-bold">Investment #${inv.id.slice(-6)}</div><div>Amount: $${data.amount} | ROI: ${data.dailyROI}% = $${dailyProfit.toFixed(2)}/day</div><div class="text-xs">Start: ${start.toLocaleDateString()} | End: ${end.toLocaleDateString()}</div></div>
+                        </div>
+                        <div class="text-right">
+                            <div id="countdown-${inv.id}" class="countdown-live mb-1"></div>
+                            <button id="claimBtn-${inv.id}" class="claim-btn bg-green-600 text-white px-3 py-1 rounded text-sm font-semibold">Claim $${dailyProfit.toFixed(2)}</button>
+                            <button onclick="window.requestPrincipalWithdraw('${inv.id}', ${data.amount})" class="bg-red-600 text-white px-3 py-1 rounded text-sm mt-1 block w-full">Withdraw Principal</button>
+                        </div>
+                    </div>
+                </div>`;
+            }
+            document.getElementById('activeInvestmentsList').innerHTML = html;
+            // Attach timers and claim logic
+            for(const inv of snap.docs){
+                const data = inv.data();
+                const lastClaim = data.lastProfitClaim ? data.lastProfitClaim.toDate() : data.startDate.toDate();
+                const nextClaim = new Date(lastClaim.getTime() + 86400000);
+                const invId = inv.id;
+                const dailyProfitAmount = data.amount * data.dailyROI / 100;
+                const updateTimer = () => {
+                    const diff = nextClaim.getTime() - Date.now();
+                    const countdownSpan = document.getElementById(`countdown-${invId}`);
+                    const claimBtn = document.getElementById(`claimBtn-${invId}`);
+                    if(diff <= 0) {
+                        if(countdownSpan) countdownSpan.innerText = "✅ Ready to claim";
+                        if(claimBtn) { claimBtn.disabled = false; claimBtn.classList.remove('opacity-50'); }
+                    } else {
+                        const hours = Math.floor(diff / 3600000);
+                        const minutes = Math.floor((diff % 3600000)/60000);
+                        const seconds = Math.floor((diff % 60000)/1000);
+                        if(countdownSpan) countdownSpan.innerText = `Next claim: ${hours}h ${minutes}m ${seconds}s`;
+                        if(claimBtn) { claimBtn.disabled = true; claimBtn.classList.add('opacity-50'); }
+                    }
+                };
+                updateTimer();
+                const interval = setInterval(updateTimer, 1000);
+                const claimBtn = document.getElementById(`claimBtn-${invId}`);
+                if(claimBtn){
+                    claimBtn.onclick = async () => {
+                        // Claim profit
+                        await updateBalanceByMode(dailyProfitAmount, isRealMode);
+                        await updateDoc(doc(db,"user_investments",invId), { lastProfitClaim: serverTimestamp() });
+                        await addDoc(collection(db,"transactions"), { userId: currentUser.uid, type: "investment_profit", amount: dailyProfitAmount, description: `Profit claim from ${invId}`, timestamp: serverTimestamp(), status: "completed" });
+                        showInfoModal("Profit Claimed", `$${dailyProfitAmount.toFixed(2)} added to your balance. Next claim available in 24 hours.`);
+                        loadActiveInvestments();
+                        loadUserData();
+                        refreshInvestmentStats();
+                    };
+                }
+                window[`timer_${invId}`] = interval;
+            }
+        }
+
+        window.requestPrincipalWithdraw = (invId, amount) => {
+            if(amount < 0.5) { showInfoModal("Error","Minimum $0.50"); return; }
+            document.getElementById('withdrawInvestmentDetails').innerHTML = `<p>Request withdrawal of principal <strong>$${amount.toFixed(2)}</strong>? Admin will review.</p>`;
+            window.pendingWithdrawInvest = { invId, amount };
+            showModal('withdrawInvestmentModal');
+        };
+        document.getElementById('confirmWithdrawInvestmentBtn').onclick = async () => {
+            if(window.pendingWithdrawInvest){
+                const { invId, amount } = window.pendingWithdrawInvest;
+                await addDoc(collection(db,"investment_withdrawals"), { userId: currentUser.uid, investmentId: invId, amount, status: "pending", createdAt: serverTimestamp() });
+                await addDoc(collection(db,"transactions"), { userId: currentUser.uid, type: "investment_withdrawal_request", amount: -amount, description: `Principal withdrawal request $${amount} from investment ${invId}`, timestamp: serverTimestamp(), status: "pending" });
+                hideModal('withdrawInvestmentModal');
+                showInfoModal("Request Sent","Principal withdrawal request submitted for admin approval.");
+                window.pendingWithdrawInvest = null;
+            }
+        };
+        document.getElementById('cancelWithdrawInvestmentBtn').onclick = () => hideModal('withdrawInvestmentModal');
+
+        // Deposit methods with M-Pesa, Bank Transfer, Crypto
+        async function loadDepositMethods() {
+            try {
+                const methodsSnap = await getDocs(collection(db, "payment_methods"));
+                const container = document.getElementById('depositMethodsContainer');
+                if(!methodsSnap.empty) {
+                    let html = '';
+                    methodsSnap.forEach(d => {
+                        const m = d.data();
+                        html += `<button data-url="${m.paymentUrl || '#'}" class="deposit-method-btn bg-gray-800 text-white py-3 rounded-xl"><i class="${m.icon || 'fas fa-credit-card'}"></i> ${m.name}</button>`;
+                    });
+                    container.innerHTML = html;
+                    document.querySelectorAll('.deposit-method-btn').forEach(btn => {
+                        btn.onclick = () => {
+                            const url = btn.dataset.url;
+                            if(url && url !== '#') window.open(url, '_blank');
+                            else showInfoModal("Payment","Payment link not configured. Please contact support.");
+                        };
+                    });
+                } else {
+                    // Default buttons if Firestore empty
+                    container.innerHTML = `
+                        <button class="deposit-method-btn bg-green-700 text-white py-3 rounded-xl" data-method="mpesa"><i class="fas fa-mobile-alt"></i> M-Pesa (Coming Soon)</button>
+                        <button class="deposit-method-btn bg-blue-700 text-white py-3 rounded-xl" data-method="bank"><i class="fas fa-university"></i> Bank Transfer (Contact Support)</button>
+                        <button class="deposit-method-btn bg-purple-700 text-white py-3 rounded-xl" data-method="crypto"><i class="fab fa-bitcoin"></i> Crypto (USDT)</button>
+                    `;
+                    document.querySelectorAll('.deposit-method-btn').forEach(btn => {
+                        btn.onclick = () => showInfoModal("Deposit Info","Please contact support to complete deposit. Payment details will be provided.");
+                    });
+                }
+            } catch(e) { 
+                document.getElementById('depositMethodsContainer').innerHTML = '<div class="col-span-3 text-red-600">Error loading methods. Use default: <button class="bg-green-700 text-white p-2 rounded">M-Pesa</button> <button class="bg-blue-700 text-white p-2 rounded">Bank</button> <button class="bg-purple-700 text-white p-2 rounded">Crypto</button></div>';
+            }
+        }
+
+        // Withdrawal form
+        document.getElementById('openWithdrawFormBtn').onclick = () => {
+            document.getElementById('withdrawConfirmDetails').innerHTML = `<div class="space-y-3"><input type="number" id="withdrawAmount" placeholder="Amount ($)" class="w-full border p-2 rounded"><select id="withdrawGateway" class="w-full border p-2 rounded"><option>M-Pesa</option><option>Bank Transfer</option><option>Crypto</option></select><input type="text" id="withdrawDetails" placeholder="Account/Wallet details" class="w-full border p-2 rounded"></div>`;
+            showModal('withdrawConfirmModal');
+        };
+        document.getElementById('confirmWithdrawBtn').onclick = async () => {
+            const amount = parseFloat(document.getElementById('withdrawAmount').value);
+            const gateway = document.getElementById('withdrawGateway').value;
+            const details = document.getElementById('withdrawDetails').value;
+            const bal = isRealMode ? (currentUserData.realBalance||0) : 0;
+            if(!isRealMode) { showInfoModal("Error","Switch to Real mode to withdraw"); return; }
+            if(isNaN(amount) || amount < withdrawalConfig.minAmount || amount > bal) { showInfoModal("Invalid","Check min/max balance"); return; }
+            const fee = amount * withdrawalConfig.feePercent / 100;
+            const net = amount - fee;
+            await addDoc(collection(db,"withdrawals"), { userId: currentUser.uid, amount, fee, netAmount: net, gateway, details, status: "pending", createdAt: serverTimestamp() });
+            await addDoc(collection(db,"transactions"), { userId: currentUser.uid, type: "withdrawal_request", amount: -amount, description: `Withdrawal $${amount} via ${gateway}`, timestamp: serverTimestamp(), status: "pending" });
+            hideModal('withdrawConfirmModal');
+            showInfoModal("Success","Withdrawal request submitted");
+            loadWithdrawals();
+            loadUserData();
+        };
+        document.getElementById('cancelWithdrawConfirmBtn').onclick = () => hideModal('withdrawConfirmModal');
+        async function loadWithdrawals() {
+            const snap = await getDocs(query(collection(db,"withdrawals"), where("userId","==",currentUser.uid), orderBy("createdAt","desc")));
+            if(snap.empty) { document.getElementById('withdrawalsList').innerHTML = '<div class="empty-message">No requests</div>'; return; }
+            let html = '';
+            snap.forEach(d => {
+                const w = d.data();
+                html += `<div class="border rounded p-3"><div class="flex justify-between"><span class="font-bold">$${w.amount}</span><span class="text-sm ${w.status==='pending'?'text-yellow-600':'text-green-600'}">${w.status}</span></div><div>Fee: $${w.fee?.toFixed(2)||0} | Net: $${(w.netAmount||w.amount).toFixed(2)} | ${w.gateway}</div><div class="text-xs">${w.details} | ${w.createdAt?.toDate().toLocaleString()}</div></div>`;
+            });
+            document.getElementById('withdrawalsList').innerHTML = html;
+        }
+
+        async function loadTransactions(){
             const snap = await getDocs(query(collection(db,"transactions"), where("userId","==",currentUser.uid), orderBy("timestamp","desc")));
             if(snap.empty) { document.getElementById('historyList').innerHTML = '<div class="empty-message">No transactions</div>'; return; }
             let html = '';
             snap.forEach(d => {
                 const t = d.data();
-                html += `<div class="border-b py-2"><div class="flex justify-between"><span class="font-medium">${t.type}</span><span class="${t.amount>=0?'text-green-600':'text-red-600'} font-bold">$${t.amount.toFixed(2)}</span></div><div class="text-sm">${t.description||''}</div><div class="text-xs text-gray-500">${t.status} | ${t.timestamp?.toDate().toLocaleString()}</div></div>`;
+                html += `<div class="border-b py-2"><div class="flex justify-between"><span class="font-medium">${t.type}</span><span class="${t.amount>=0?'text-green-600':'text-red-600'}">$${t.amount.toFixed(2)}</span></div><div class="text-sm">${t.description||''}</div><div class="text-xs">${t.status} | ${t.timestamp?.toDate().toLocaleString()}</div></div>`;
             });
             document.getElementById('historyList').innerHTML = html;
         }
-        
-        // === Init & Sidebar ===
+
+        async function loadLeaderboard(){
+            const usersSnap = await getDocs(collection(db,"users"));
+            let users=[]; usersSnap.forEach(u=>users.push({...u.data()}));
+            users.sort((a,b)=>(b.totalEarned||0)-(a.totalEarned||0));
+            document.getElementById('leaderboardContainer').innerHTML = users.slice(0,10).map((u,i)=>`<div>${i+1}. ${u.displayName||u.email} - $${(u.totalEarned||0).toFixed(2)}</div>`).join('')||'Empty';
+        }
+
+        async function loadAnnouncements(){
+            const snap = await getDocs(collection(db,"announcements"));
+            let html=''; snap.forEach(d=>html+=`<div class="border-b p-2">${d.data().title}: ${d.data().content}</div>`);
+            document.getElementById('announcementsList').innerHTML=html||'No announcements';
+        }
+
+        async function loadExchangeRate() {
+            try { const rateDoc = await getDoc(doc(db,"settings","currencyRates")); if(rateDoc.exists()) exchangeRate = rateDoc.data().usdToKes || 130; } catch(e) {}
+            document.getElementById('exchangeRate').innerText = `1 USD = ${exchangeRate.toFixed(2)} KES`;
+        }
+
         function activateSection(id){
             document.querySelectorAll('.content-section').forEach(s=>s.classList.remove('active-section'));
             document.getElementById(id).classList.add('active-section');
-            if(id==='investments') { loadInvestmentPlans(); loadActiveInvestments(); refreshInvestmentStatsDashboard(); }
-            if(id==='balances') { loadUserData(); refreshInvestmentStatsDashboard(); }
+            if(id==='investments') { loadInvestmentPlans(); loadActiveInvestments(); refreshInvestmentStats(); }
+            if(id==='balances') { loadUserData(); refreshInvestmentStats(); loadExchangeRate(); }
             if(id==='transactions') loadTransactions();
             if(id==='deposits') loadDepositMethods();
             if(id==='withdrawals') { loadWithdrawals(); loadUserData(); }
             if(id==='leaderboard') loadLeaderboard();
             if(id==='announcements') loadAnnouncements();
         }
-        async function loadLeaderboard(){
-            const snap = await getDocs(collection(db,"users"));
-            let users=[]; snap.forEach(d=>users.push({...d.data()}));
-            users.sort((a,b)=>(b.totalEarned||0)-(a.totalEarned||0));
-            document.getElementById('leaderboardContainer').innerHTML = users.slice(0,10).map((u,i)=>`<div>${i+1}. ${u.displayName||u.email} - $${(u.totalEarned||0).toFixed(2)}</div>`).join('')||'Empty';
-        }
-        async function loadAnnouncements(){
-            const snap = await getDocs(collection(db,"announcements"));
-            let html=''; snap.forEach(d=>html+=`<div class="border-b p-2">${d.data().title}: ${d.data().content}</div>`);
-            document.getElementById('announcementsList').innerHTML=html||'No announcements';
-        }
-        
-        onAuthStateChanged(auth, async(user)=>{ if(!user){ window.location.href="index.html"; return; } currentUser=user; await loadUserData(); loadInvestmentPlans(); loadActiveInvestments(); refreshInvestmentStatsDashboard(); loadTransactions(); loadDepositMethods(); loadWithdrawals(); loadLeaderboard(); loadAnnouncements(); activateSection('trade'); });
+
+        onAuthStateChanged(auth, async(user)=>{ if(!user){ window.location.href="index.html"; return; } currentUser=user; await loadExchangeRate(); await loadUserData(); loadInvestmentPlans(); loadActiveInvestments(); refreshInvestmentStats(); loadTransactions(); loadDepositMethods(); loadWithdrawals(); loadLeaderboard(); loadAnnouncements(); activateSection('trade'); });
         document.querySelectorAll('.sidebar-nav a').forEach(link=>link.addEventListener('click',(e)=>{ e.preventDefault(); activateSection(link.dataset.section); document.getElementById('sidebarOverlay').click(); }));
         document.getElementById('hamburgerBtn').onclick=()=>{ document.getElementById('mainSidebar').classList.add('open'); document.getElementById('sidebarOverlay').classList.add('active'); };
         document.getElementById('closeSidebarBtn').onclick=()=>{ document.getElementById('mainSidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('active'); };
@@ -470,8 +469,8 @@
         document.getElementById('logoutBtn').onclick = async () => { await signOut(auth); window.location.href = "index.html"; };
         document.getElementById('quickWithdrawBtn').onclick = () => activateSection('withdrawals');
         document.getElementById('quickTopUpBtn').onclick = () => activateSection('deposits');
-        document.getElementById('reportDepositBtn').onclick = () => showInfoModal("Report", "Please contact support with transaction details.");
-        [ 'realModeBtn', 'demoModeBtn', 'resetDemoBtn', 'topUpBalanceBtn' ].forEach(id=>{ if(document.getElementById(id)) document.getElementById(id).onclick=()=>showInfoModal("Info","Full feature ready."); });
+        document.getElementById('reportDepositBtn').onclick = () => showInfoModal("Report", "Please contact support with transaction proof.");
+        ['realModeBtn','demoModeBtn','resetDemoBtn','topUpBalanceBtn'].forEach(id=>{ if(document.getElementById(id)) document.getElementById(id).onclick=()=>showInfoModal("Info","Feature ready."); });
     </script>
 </body>
 </html>
