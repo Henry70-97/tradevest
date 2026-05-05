@@ -8,8 +8,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- TradingView Widget -->
-    <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async></script>
     <style>
         * { font-family: 'Inter', sans-serif; }
         body { background: linear-gradient(145deg, #f0f4fa 0%, #e9eef5 100%); }
@@ -24,6 +22,8 @@
         ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
         .nav-active { background: #eef2ff; color: #1e40af; border-left: 3px solid #2563eb; }
         button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .tradingview-widget-container { height: 100%; width: 100%; }
+        .tradingview-widget-container__widget { height: calc(100% - 32px); width: 100%; }
     </style>
 </head>
 <body class="antialiased">
@@ -104,7 +104,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, query, where, getDocs, orderBy, limit, serverTimestamp, increment, deleteField, Timestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, query, where, getDocs, orderBy, limit, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
     // Firebase config
     const firebaseConfig = { apiKey: "AIzaSyDtGN7KCK0A4fhztLN0CgxsKkGROcO_-vI", authDomain: "bestpay-5b78c.firebaseapp.com", projectId: "bestpay-5b78c", storageBucket: "bestpay-5b78c.firebasestorage.app", messagingSenderId: "583230068716", appId: "1:583230068716:web:3e8d298b4d00b46c8652c9" };
@@ -115,11 +115,11 @@
     // Global state
     let currentUser = null;
     let userData = { realBalance: 0, demoBalance: 10000, totalEarned: 0, kycStatus: "unverified", username: "Trader", referralCode: "" };
-    let activeMode = "demo";  // "demo" or "real"
+    let activeMode = "demo";
     let currentPrice = 1.08750;
     let priceInterval = null;
     let priceSubscribers = [];
-    let activeTrades = [];     // { id, stake, multiplier, direction, entryPrice, endTime, timerInterval }
+    let activeTrades = [];
     let autoTradeInterval = null;
     let autoTradeActive = false;
     let autoTradeParams = { stake: 10, multiplier: 1, direction: "CALL" };
@@ -128,7 +128,6 @@
 
     // Helper: fetch/seed settings & payment methods & investment plans
     async function initFirestoreData() {
-        // settings/trading
         const tradingRef = doc(db, "settings/trading");
         const tradingSnap = await getDoc(tradingRef);
         if (!tradingSnap.exists()) await setDoc(tradingRef, { minStakeExpert: 5 });
@@ -145,7 +144,6 @@
         if (!currSnap.exists()) await setDoc(currRef, { usdToKes: 130 });
         settings.usdToKes = currSnap.exists() ? currSnap.data().usdToKes : 130;
         
-        // payment methods seeding
         const methodsCol = collection(db, "payment_methods");
         const methodsSnap = await getDocs(methodsCol);
         if (methodsSnap.empty) {
@@ -154,7 +152,6 @@
             await setDoc(doc(methodsCol, "crypto"), { name: "Crypto (USDT)", paymentUrl: "", icon: "fab fa-bitcoin" });
         }
         
-        // investment plans
         const plansSnap = await getDocs(collection(db, "investment_plans"));
         if (plansSnap.empty) {
             await setDoc(doc(db, "investment_plans", "starter"), { name: "Starter", fixedAmount: 50, dailyROI: 5, durationDays: 30, imageUrl: "https://placehold.co/200x120/1e3a8a/white?text=Starter" });
@@ -165,7 +162,6 @@
         investmentPlans = freshPlans.docs.map(d => ({ id: d.id, ...d.data() }));
     }
 
-    // fetch user doc
     async function fetchUserData() {
         if (!currentUser) return;
         const userRef = doc(db, "users", currentUser.uid);
@@ -186,7 +182,7 @@
         document.getElementById("userGreeting").innerHTML = `<i class="fas fa-user-circle mr-2 text-blue-500"></i> ${userData.username || "Trader"} | ${activeMode === "real" ? "🔴 REAL" : "🎮 DEMO"}`;
     }
 
-    async function updateBalance(delta, reason = "") {
+    async function updateBalance(delta) {
         const field = activeMode === "real" ? "realBalance" : "demoBalance";
         const newBalance = (activeMode === "real" ? userData.realBalance : userData.demoBalance) + delta;
         if (newBalance < 0) return false;
@@ -195,7 +191,7 @@
         return true;
     }
 
-    // Price simulation
+    // Price simulation (only for trade logic, chart is independent)
     function startPriceSimulation() {
         if (priceInterval) clearInterval(priceInterval);
         priceInterval = setInterval(() => {
@@ -208,7 +204,7 @@
         }, 2000);
     }
 
-    // --- Binary Options Core ---
+    // Binary Options Core
     function placeTrade(stake, multiplier, direction) {
         if (stake < settings.minStake) { alert(`Minimum stake $${settings.minStake}`); return false; }
         if (multiplier > 10) multiplier = 10;
@@ -216,11 +212,11 @@
         const balance = activeMode === "real" ? userData.realBalance : userData.demoBalance;
         if (balance < stake) { alert("Insufficient balance"); return false; }
         const entryPrice = currentPrice;
-        const endTime = Date.now() + 60000; // 60s
+        const endTime = Date.now() + 60000;
         const tradeId = Date.now() + "_" + Math.random();
         const timerInterval = setInterval(() => updateSingleTrade(tradeId, endTime), 1000);
         activeTrades.push({ id: tradeId, stake, multiplier, direction, entryPrice, endTime, timerInterval, status: "active" });
-        updateBalance(-stake, "trade_stake");
+        updateBalance(-stake);
         updateActiveTradesUI();
         return true;
     }
@@ -237,10 +233,9 @@
         const exitPrice = currentPrice;
         const isWin = (trade.direction === "CALL" && exitPrice > trade.entryPrice) || (trade.direction === "PUT" && exitPrice < trade.entryPrice);
         let netProfit = isWin ? trade.stake * trade.multiplier : -trade.stake;
-        if (isWin) await updateBalance(netProfit, "trade_win");
-        else await updateBalance(-trade.stake, "trade_loss");
+        if (isWin) await updateBalance(netProfit);
+        else await updateBalance(-trade.stake);
         
-        // record in binary_trades & transactions
         await addDoc(collection(db, "binary_trades"), { userId: currentUser.uid, stake: trade.stake, multiplier: trade.multiplier, direction: trade.direction, entryPrice: trade.entryPrice, exitPrice, result: isWin ? "win" : "loss", profit: netProfit, timestamp: serverTimestamp() });
         await addDoc(collection(db, "transactions"), { userId: currentUser.uid, amount: Math.abs(netProfit), type: isWin ? "trade_win" : "trade_loss", description: `${trade.direction} ${trade.multiplier}x`, status: "completed", timestamp: serverTimestamp() });
         
@@ -278,7 +273,6 @@
         }).join('');
     }
 
-    // Auto Trade
     function startAutoTrade(stake, mult, dir) {
         if (autoTradeInterval) stopAutoTrade();
         autoTradeActive = true;
@@ -317,22 +311,64 @@
         let wins = 0; historySnap.forEach(d => { if (d.data().result === "win") wins++; });
         const winRate = historySnap.size ? ((wins / historySnap.size) * 100).toFixed(1) : 0;
         const html = `<div class="space-y-5">
-            <div class="bg-white rounded-2xl shadow-md overflow-hidden p-1"><div id="tradingview-chart" class="h-[420px] w-full"></div></div>
+            <div class="bg-white rounded-2xl shadow-md overflow-hidden p-1" style="height: 520px;">
+                <!-- TradingView Widget according to user specification -->
+                <div class="tradingview-widget-container" style="height:100%;width:100%">
+                    <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
+                    <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/NASDAQ-AAPL/" rel="noopener nofollow" target="_blank"><span class="blue-text">AAPL stock chart</span></a><span class="trademark"> by TradingView</span></div>
+                    <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+                    {
+                      "allow_symbol_change": true,
+                      "calendar": false,
+                      "details": true,
+                      "hide_side_toolbar": false,
+                      "hide_top_toolbar": false,
+                      "hide_legend": false,
+                      "hide_volume": false,
+                      "hotlist": true,
+                      "interval": "D",
+                      "locale": "en",
+                      "save_image": true,
+                      "style": "1",
+                      "symbol": "OANDA:EURUSD",
+                      "theme": "dark",
+                      "timezone": "Etc/UTC",
+                      "backgroundColor": "#0F0F0F",
+                      "gridColor": "rgba(242, 242, 242, 0.06)",
+                      "watchlist": [
+                        "OANDA:EURUSD",
+                        "FX:EURUSD"
+                      ],
+                      "withdateranges": true,
+                      "range": "YTD",
+                      "compareSymbols": [
+                        {
+                          "symbol": "AMEX:SPY",
+                          "position": "SameScale"
+                        }
+                      ],
+                      "show_popup_button": true,
+                      "popup_height": "650",
+                      "popup_width": "1000",
+                      "studies": [
+                        "STD;24h%Volume",
+                        "STD;Advance%1Decline%1Line",
+                        "STD;Accumulation_Distribution",
+                        "STD;Advance%1Decline%1Ratio",
+                        "STD;Advance_Decline_Ratio_Bars"
+                      ],
+                      "autosize": true
+                    }
+                    </script>
+                </div>
+            </div>
             <div class="grid md:grid-cols-3 gap-5">
                 <div class="bg-white rounded-2xl p-5 shadow-md"><label class="font-semibold">Stake ($)</label><input id="stakeInput" type="number" value="10" min="${settings.minStake}" class="border p-2 rounded w-full mb-2"><label class="font-semibold">Multiplier (1-10x)</label><input id="multiplierInput" type="number" value="1" min="1" max="10" class="border p-2 rounded w-full"><div class="flex gap-3 mt-4"><button id="callBtn" class="bg-green-600 hover:bg-green-700 text-white py-2.5 flex-1 rounded-xl font-bold"><i class="fas fa-arrow-up"></i> CALL</button><button id="putBtn" class="bg-red-600 hover:bg-red-700 text-white py-2.5 flex-1 rounded-xl font-bold"><i class="fas fa-arrow-down"></i> PUT</button></div><button id="autoTradeBtn" class="bg-amber-500 w-full mt-3 text-white py-2 rounded-xl">🤖 Auto Trade (CALL)</button><button id="stopAutoBtn" class="bg-gray-500 w-full mt-1 text-white py-2 rounded-xl">⏹️ Stop Auto</button></div>
-                <div class="bg-white rounded-2xl p-5 shadow-md"><h3 class="font-bold flex items-center gap-1"><i class="fas fa-chart-simple"></i> Live Price</h3><div id="livePriceDisplay" class="text-3xl font-mono font-bold text-blue-700">${currentPrice.toFixed(5)}</div><div class="mt-3">Win Rate: ${winRate}% (${wins}/${historySnap.size})</div><div class="mt-3 max-h-48 overflow-y-auto"><h4 class="font-semibold">Recent Trades</h4>${historySnap.docs.map(d => `<div class="text-sm border-b py-1">$${d.data().stake} ${d.data().direction} → ${d.data().result} ${d.data().profit >=0 ? '+' : ''}$${d.data().profit?.toFixed(2)}</div>`).join('')}</div></div>
+                <div class="bg-white rounded-2xl p-5 shadow-md"><h3 class="font-bold flex items-center gap-1"><i class="fas fa-chart-simple"></i> Live Price (Simulated)</h3><div id="livePriceDisplay" class="text-3xl font-mono font-bold text-blue-700">${currentPrice.toFixed(5)}</div><div class="mt-3">Win Rate: ${winRate}% (${wins}/${historySnap.size})</div><div class="mt-3 max-h-48 overflow-y-auto"><h4 class="font-semibold">Recent Trades</h4>${historySnap.docs.map(d => `<div class="text-sm border-b py-1">$${d.data().stake} ${d.data().direction} → ${d.data().result} ${d.data().profit >=0 ? '+' : ''}$${d.data().profit?.toFixed(2)}</div>`).join('')}</div></div>
                 <div class="bg-white rounded-2xl p-5 shadow-md"><h3 class="font-bold"><i class="fas fa-hourglass-half"></i> Active Positions</h3><div id="activePositionsContainer"></div></div>
             </div>
         </div>`;
         document.getElementById("pageContainer").innerHTML = html;
-        // TradingView embed
-        const tvContainer = document.getElementById("tradingview-chart");
-        if (tvContainer) {
-            tvContainer.innerHTML = '<div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div></div>';
-            const script = document.createElement('script'); script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js'; script.type = 'text/javascript'; script.async = true;
-            script.innerHTML = JSON.stringify({ autosize: true, symbol: "OANDA:EURUSD", interval: "1", theme: "light" });
-            tvContainer.querySelector('.tradingview-widget-container').appendChild(script);
-        }
         priceSubscribers.push((price) => { const el = document.getElementById("livePriceDisplay"); if (el) el.innerText = price.toFixed(5); });
         document.getElementById("callBtn")?.addEventListener("click", () => openConfirmModal("CALL"));
         document.getElementById("putBtn")?.addEventListener("click", () => openConfirmModal("PUT"));
@@ -361,24 +397,21 @@
             return `<div class="bg-gray-50 p-4 rounded-xl flex flex-wrap justify-between items-center"><div><p><strong>$${inv.amount}</strong> | ${inv.dailyROI}% daily</p><p class="text-xs">Start: ${startDate.toLocaleDateString()} | End: ${end.toLocaleDateString()}</p><p class="text-xs">Next claim: ${nextClaim.toLocaleString()}</p></div><button data-id="${docSnap.id}" data-daily="${inv.dailyROI}" data-amount="${inv.amount}" class="claimProfitBtn ${canClaim ? 'bg-green-600' : 'bg-gray-400'} text-white px-3 py-1 rounded-lg text-sm" ${!canClaim ? 'disabled' : ''}>Claim Profit</button></div>`;
         }));
         document.getElementById("pageContainer").innerHTML = `<div><h2 class="text-2xl font-bold mb-4">📈 Investment Plans</h2><div class="grid md:grid-cols-3 gap-4">${plansHtml}</div><hr class="my-6"><h3 class="text-xl font-bold">Your Active Investments</h3><div id="activeInvestList" class="space-y-3 mt-3">${activeHtml.join('') || '<p class="text-gray-400">No active investments</p>'}</div></div>`;
-        document.querySelectorAll(".investNowBtn").forEach(btn => btn.addEventListener("click", () => { const plan = JSON.parse(btn.dataset.plan); const balance = activeMode === "real" ? userData.realBalance : userData.demoBalance; if (balance < plan.fixedAmount) { alert("Insufficient balance"); return; } document.getElementById("investPlanInfo").innerHTML = `<p>Invest $${plan.fixedAmount} into ${plan.name}? Daily ROI ${plan.dailyROI}% for ${plan.durationDays} days.</p>`; const modal = document.getElementById("investmentModal"); modal.classList.remove("hidden"); document.getElementById("confirmInvestBtn").onclick = async () => { await updateBalance(-plan.fixedAmount, "investment"); await addDoc(collection(db, "user_investments"), { userId: currentUser.uid, planId: plan.id, amount: plan.fixedAmount, dailyROI: plan.dailyROI, durationDays: plan.durationDays, startDate: serverTimestamp(), lastProfitClaim: new Date(), status: "active" }); modal.classList.add("hidden"); renderCurrentPage("investments"); }; document.getElementById("closeInvestModal").onclick = () => modal.classList.add("hidden"); }));
-        document.querySelectorAll(".claimProfitBtn").forEach(btn => btn.addEventListener("click", async () => { const id = btn.dataset.id; const daily = parseFloat(btn.dataset.daily); const amount = parseFloat(btn.dataset.amount); const profitAmount = (amount * daily) / 100; await updateBalance(profitAmount, "investment_profit"); await addDoc(collection(db, "transactions"), { userId: currentUser.uid, amount: profitAmount, type: "investment_profit", description: "Daily ROI claim", status: "completed", timestamp: serverTimestamp() }); await updateDoc(doc(db, "user_investments", id), { lastProfitClaim: new Date() }); renderCurrentPage("investments"); alert(`$${profitAmount.toFixed(2)} claimed!`); }));
+        document.querySelectorAll(".investNowBtn").forEach(btn => btn.addEventListener("click", () => { const plan = JSON.parse(btn.dataset.plan); const balance = activeMode === "real" ? userData.realBalance : userData.demoBalance; if (balance < plan.fixedAmount) { alert("Insufficient balance"); return; } document.getElementById("investPlanInfo").innerHTML = `<p>Invest $${plan.fixedAmount} into ${plan.name}? Daily ROI ${plan.dailyROI}% for ${plan.durationDays} days.</p>`; const modal = document.getElementById("investmentModal"); modal.classList.remove("hidden"); document.getElementById("confirmInvestBtn").onclick = async () => { await updateBalance(-plan.fixedAmount); await addDoc(collection(db, "user_investments"), { userId: currentUser.uid, planId: plan.id, amount: plan.fixedAmount, dailyROI: plan.dailyROI, durationDays: plan.durationDays, startDate: serverTimestamp(), lastProfitClaim: new Date(), status: "active" }); modal.classList.add("hidden"); renderCurrentPage("investments"); }; document.getElementById("closeInvestModal").onclick = () => modal.classList.add("hidden"); }));
+        document.querySelectorAll(".claimProfitBtn").forEach(btn => btn.addEventListener("click", async () => { const id = btn.dataset.id; const daily = parseFloat(btn.dataset.daily); const amount = parseFloat(btn.dataset.amount); const profitAmount = (amount * daily) / 100; await updateBalance(profitAmount); await addDoc(collection(db, "transactions"), { userId: currentUser.uid, amount: profitAmount, type: "investment_profit", description: "Daily ROI claim", status: "completed", timestamp: serverTimestamp() }); await updateDoc(doc(db, "user_investments", id), { lastProfitClaim: new Date() }); renderCurrentPage("investments"); alert(`$${profitAmount.toFixed(2)} claimed!`); }));
     }
     
     async function renderDepositsPage() { const methods = await getDocs(collection(db,"payment_methods")); const html = `<div class="bg-white p-6 rounded-2xl"><h2>Deposit Funds</h2><div class="grid grid-cols-2 gap-4 mt-4">${methods.docs.map(m=>`<button class="paymentBtn flex flex-col items-center p-4 border rounded-xl hover:shadow" data-url="${m.data().paymentUrl||''}"><i class="${m.data().icon||'fas fa-credit-card'} text-2xl mb-1"></i><span>${m.data().name}</span></button>`).join('')}</div><button id="reportDepositBtn" class="mt-6 bg-orange-500 text-white px-5 py-2 rounded-lg">📢 Report pending deposit</button></div>`; document.getElementById("pageContainer").innerHTML = html; document.querySelectorAll(".paymentBtn").forEach(btn=>btn.addEventListener("click",()=>{ const url=btn.dataset.url; if(url) window.open(url,"_blank"); else alert("No payment link — contact support"); })); document.getElementById("reportDepositBtn")?.addEventListener("click",()=>document.getElementById("supportTicketModal").classList.remove("hidden")); }
     async function renderWithdrawalsPage() { const wdList = await getDocs(query(collection(db,"withdrawals"), where("userId","==",currentUser.uid), orderBy("timestamp","desc"))); const html = `<div class="bg-white p-6 rounded-2xl"><h2>Withdraw Funds</h2><button id="newWithdrawBtn" class="bg-amber-600 text-white px-5 py-2 rounded-lg">+ Request Withdrawal</button><div class="mt-6"><h3 class="font-semibold">History</h3>${wdList.docs.map(d=>`<div class="border-b py-2">$${d.data().amount} - ${d.data().gateway} - ${d.data().status}</div>`).join('')||"None"}</div></div>`; document.getElementById("pageContainer").innerHTML = html; document.getElementById("newWithdrawBtn")?.addEventListener("click",()=>{ const modal = document.getElementById("withdrawalModal"); document.getElementById("withdrawFeeMsg").innerText = `Min: $${settings.withdrawalMin} | Fee ${settings.withdrawalFee}%`; modal.classList.remove("hidden"); document.getElementById("submitWithdrawBtn").onclick = async () => { const amount = parseFloat(document.getElementById("withdrawAmount").value); const gateway = document.getElementById("withdrawGateway").value; const details = document.getElementById("withdrawDetails").value; if(activeMode !== "real"){ alert("Withdrawals only in REAL mode"); return; } if(amount < settings.withdrawalMin || amount > userData.realBalance){ alert("Invalid amount"); return; } const fee = amount * settings.withdrawalFee/100; await addDoc(collection(db,"withdrawals"),{ userId:currentUser.uid, amount, fee, net:amount-fee, gateway, accountDetails:details, status:"pending", timestamp:serverTimestamp() }); await addDoc(collection(db,"transactions"),{ userId:currentUser.uid, amount, type:"withdrawal_request", description:`Request via ${gateway}`, status:"pending", timestamp:serverTimestamp() }); alert("Withdrawal request submitted"); modal.classList.add("hidden"); renderCurrentPage("withdrawals"); }; document.getElementById("closeWithdrawModal").onclick = () => modal.classList.add("hidden"); }); }
-    async function renderBalancesPage() { const invStats = { totalInvested:0, claimedProfit:0 }; const html = `<div class="bg-white p-6 rounded-2xl"><h2>Balances Overview</h2><div class="grid md:grid-cols-2 gap-4 mt-4"><div class="bg-blue-50 p-4 rounded-xl"><p>Real Balance</p><p class="text-2xl font-bold">$${userData.realBalance}</p></div><div class="bg-purple-50 p-4 rounded-xl"><p>Demo Balance</p><p class="text-2xl font-bold">$${userData.demoBalance}</p></div><div class="bg-green-50 p-4 rounded-xl"><p>Total Earned</p><p class="text-2xl font-bold">$${userData.totalEarned}</p></div><div class="bg-gray-100 p-4 rounded-xl"><p>USD/KES Rate</p><p class="text-2xl font-bold">${settings.usdToKes}</p></div></div></div>`; document.getElementById("pageContainer").innerHTML = html; }
+    async function renderBalancesPage() { const html = `<div class="bg-white p-6 rounded-2xl"><h2>Balances Overview</h2><div class="grid md:grid-cols-2 gap-4 mt-4"><div class="bg-blue-50 p-4 rounded-xl"><p>Real Balance</p><p class="text-2xl font-bold">$${userData.realBalance}</p></div><div class="bg-purple-50 p-4 rounded-xl"><p>Demo Balance</p><p class="text-2xl font-bold">$${userData.demoBalance}</p></div><div class="bg-green-50 p-4 rounded-xl"><p>Total Earned</p><p class="text-2xl font-bold">$${userData.totalEarned}</p></div><div class="bg-gray-100 p-4 rounded-xl"><p>USD/KES Rate</p><p class="text-2xl font-bold">${settings.usdToKes}</p></div></div></div>`; document.getElementById("pageContainer").innerHTML = html; }
     async function renderTransactionsPage() { const txs = await getDocs(query(collection(db,"transactions"), where("userId","==",currentUser.uid), orderBy("timestamp","desc"), limit(30))); const html = `<div class="bg-white p-6 rounded-2xl"><h2>Transaction History</h2><div class="space-y-2 mt-4">${txs.docs.map(t=>`<div class="flex justify-between border-b py-2"><span>${t.data().type}</span><span>$${t.data().amount}</span><span class="text-xs">${t.data().status}</span></div>`).join('')}</div></div>`; document.getElementById("pageContainer").innerHTML = html; }
     async function renderLeaderboard(container) { const topUsers = await getDocs(query(collection(db,"users"), orderBy("totalEarned","desc"), limit(10))); container.innerHTML = `<div class="bg-white p-6 rounded-2xl"><h2>🏆 Top Traders</h2>${topUsers.docs.map((d,i)=>`<div class="flex justify-between py-2 border-b"><span>${i+1}. ${d.data().username}</span><span>$${d.data().totalEarned||0}</span></div>`).join('')}</div>`; }
     async function renderSupportPage(container) { container.innerHTML = `<div class="bg-white p-6 rounded-2xl"><button id="openTicketModalBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg">🎫 New Support Ticket</button><div id="ticketListContainer">Loading...</div></div>`; document.getElementById("openTicketModalBtn")?.addEventListener("click",()=>document.getElementById("supportTicketModal").classList.remove("hidden")); const tickets = await getDocs(query(collection(db,"support_tickets"), where("userId","==",currentUser.uid))); document.getElementById("ticketListContainer").innerHTML = tickets.docs.map(d=>`<div class="border p-3 rounded mt-2"><b>${d.data().subject}</b><p>${d.data().message}</p><span class="text-xs">${d.data().status}</span></div>`).join('') || "<p>No tickets</p>"; }
     
-    // modal listeners for support ticket
     document.getElementById("submitTicketBtn")?.addEventListener("click", async () => { const sub = document.getElementById("ticketSubject").value, msg = document.getElementById("ticketMsg").value; if (!sub || !msg) return; await addDoc(collection(db, "support_tickets"), { userId: currentUser.uid, subject: sub, message: msg, status: "open", timestamp: serverTimestamp() }); alert("Ticket submitted"); document.getElementById("supportTicketModal").classList.add("hidden"); if (currentPage === "support") renderCurrentPage("support"); });
     document.getElementById("closeTicketModal")?.addEventListener("click", () => document.getElementById("supportTicketModal").classList.add("hidden"));
     
-    // Auth & init
     onAuthStateChanged(auth, async (user) => { if (!user) { const email = prompt("🔐 Login / Signup required\nEnter your email:", `trader_${Date.now()}@bestpay.com`); const pwd = "Pass123!"; try { await signInWithEmailAndPassword(auth, email, pwd); } catch { await createUserWithEmailAndPassword(auth, email, pwd); } } else { currentUser = user; await initFirestoreData(); await fetchUserData(); startPriceSimulation(); renderCurrentPage("trading"); } });
-    // global sidebar & navigation
     window.closeSidebar = () => { document.getElementById("sidebar").classList.add("-translate-x-full"); document.getElementById("sidebarOverlay").classList.add("hidden"); };
     document.getElementById("mobileOpenBtn")?.addEventListener("click", () => { document.getElementById("sidebar").classList.remove("-translate-x-full"); document.getElementById("sidebarOverlay").classList.remove("hidden"); });
     document.querySelectorAll(".nav-btn").forEach(btn => btn.addEventListener("click", (e) => { const page = btn.dataset.page; if (page) { currentPage = page; renderCurrentPage(page); closeSidebar(); } }));
