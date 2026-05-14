@@ -9,7 +9,7 @@
     <style>
         body {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            font-family: 'Inter', system-ui, sans-serif;
+            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
         }
         .glass {
             backdrop-filter: blur(16px);
@@ -44,8 +44,16 @@
             background: #10b981;
             color: white;
         }
-        .slide-transition {
-            transition: all 0.3s ease;
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -71,7 +79,7 @@
                     <input type="password" id="loginPassword" class="w-full p-3 rounded-lg bg-white/10 border border-white/20 focus:border-indigo-500 outline-none transition">
                 </div>
                 <button id="doLogin" class="w-full bg-indigo-600 hover:bg-indigo-700 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2">
-                    <span>Sign In</span>
+                    Sign In
                 </button>
                 <div id="loginFeedback" class="text-sm text-center hidden"></div>
             </div>
@@ -103,7 +111,7 @@
             </div>
 
             <!-- Step 1: Basic Info -->
-            <div id="step1" class="slide-transition space-y-4">
+            <div id="step1" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium mb-1">Full name</label>
                     <input type="text" id="regName" class="w-full p-3 rounded-lg bg-white/10 border border-white/20 focus:border-indigo-500 outline-none" placeholder="Alex Johnson">
@@ -128,7 +136,7 @@
             </div>
 
             <!-- Step 2: Role & Skills -->
-            <div id="step2" class="slide-transition space-y-4 hidden">
+            <div id="step2" class="space-y-4 hidden">
                 <div>
                     <label class="block text-sm font-medium mb-1">I am a</label>
                     <select id="regRole" class="w-full p-3 rounded-lg bg-white/10 border border-white/20">
@@ -141,7 +149,7 @@
                     <div class="flex flex-wrap gap-2 mb-2" id="skillsContainer"></div>
                     <div class="flex gap-2">
                         <input type="text" id="skillInput" class="flex-1 p-2 rounded-lg bg-white/10 border border-white/20" placeholder="e.g., Python, AI, Prompt Engineering">
-                        <button type="button" id="addSkillBtn" class="bg-indigo-500 px-3 rounded-lg">Add</button>
+                        <button type="button" id="addSkillBtn" class="bg-indigo-500 px-3 rounded-lg hover:bg-indigo-600">Add</button>
                     </div>
                     <p id="skillsError" class="text-red-400 text-xs mt-1 hidden"></p>
                 </div>
@@ -151,8 +159,8 @@
                 </div>
             </div>
 
-            <!-- Step 3: Profile Picture (optional but recommended) -->
-            <div id="step3" class="slide-transition space-y-4 hidden">
+            <!-- Step 3: Profile Picture (optional) -->
+            <div id="step3" class="space-y-4 hidden">
                 <div>
                     <label class="block text-sm font-medium mb-1">Profile Picture (recommended)</label>
                     <input type="file" id="profilePic" accept="image/*" class="w-full p-2 rounded-lg bg-white/10 border border-white/20">
@@ -164,7 +172,7 @@
                 <div class="flex gap-3">
                     <button id="prevStep3" class="flex-1 bg-gray-600 hover:bg-gray-700 py-3 rounded-lg font-semibold transition">Back</button>
                     <button id="submitRegister" class="flex-1 bg-green-600 hover:bg-green-700 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2">
-                        <span>Complete Registration</span>
+                        Complete Registration
                     </button>
                 </div>
             </div>
@@ -228,7 +236,6 @@
             progressFill.style.width = `${percent}%`;
             stepPercent.innerText = `${Math.round(percent)}%`;
             
-            // Update step icons
             [step1Icon, step2Icon, step3Icon].forEach((icon, idx) => {
                 icon.classList.remove('active', 'completed');
                 if (idx + 1 === step) icon.classList.add('active');
@@ -291,7 +298,7 @@
                 skillsContainer.appendChild(badge);
             });
             document.querySelectorAll('.remove-skill').forEach(btn => {
-                btn.addEventListener('click', () => {
+                btn.addEventListener('click', (e) => {
                     const skill = btn.getAttribute('data-skill');
                     selectedSkills = selectedSkills.filter(s => s !== skill);
                     renderSkills();
@@ -334,42 +341,52 @@
         });
         document.getElementById('prevStep3').addEventListener('click', () => goToStep(2));
 
-        // Registration submission
-        document.getElementById('submitRegister').addEventListener('click', async () => {
+        // Registration submission (FIXED: button now works)
+        const submitBtn = document.getElementById('submitRegister');
+        submitBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            
             const name = regName.value.trim();
             const email = regEmail.value.trim();
             const password = regPassword.value;
             const role = regRole.value;
 
             // Double-check validation
-            if (!validateStep1() || !validateStep2()) return;
+            if (!validateStep1() || !validateStep2()) {
+                // Show which step has error
+                if (!validateStep1()) goToStep(1);
+                else if (!validateStep2()) goToStep(2);
+                return;
+            }
 
-            const btn = document.getElementById('submitRegister');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<div class="spinner-border animate-spin border-2 border-white border-t-transparent rounded-full w-5 h-5"></div> Creating...';
-            btn.disabled = true;
+            // Disable button and show loading
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<div style="width:20px;height:20px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;"></div> Creating...';
+            submitBtn.disabled = true;
 
-            registerFeedbackDiv.classList.add('hidden');
-            registerFeedbackDiv.classList.remove('text-green-400', 'text-red-400');
+            registerFeedbackDiv.classList.remove('hidden');
+            registerFeedbackDiv.className = 'mt-4 text-sm text-center text-gray-300';
+            registerFeedbackDiv.innerText = 'Creating your account, please wait...';
 
             try {
-                // Step 1: Create Appwrite account
+                // 1. Create Appwrite account
                 const userId = ID.unique();
                 await account.create(userId, email, password, name);
                 
-                // Step 2: Login to create session
+                // 2. Login to create session
                 await account.createEmailPasswordSession(email, password);
-                
                 const user = await account.get();
                 
-                // Step 3: Upload profile picture if provided
+                // 3. Upload profile picture if provided
                 let profilePicId = null;
                 if (profileFile) {
-                    const uploaded = await storage.createFile('profile_bucket', ID.unique(), profileFile);
-                    profilePicId = uploaded.$id;
+                    try {
+                        const uploaded = await storage.createFile('profile_bucket', ID.unique(), profileFile);
+                        profilePicId = uploaded.$id;
+                    } catch(err) { console.warn('Profile pic upload failed:', err); }
                 }
                 
-                // Step 4: Create user document in 'users' collection
+                // 4. Create user document
                 await databases.createDocument(DATABASE_ID, USERS_COLLECTION, ID.unique(), {
                     userId: user.$id,
                     name,
@@ -383,13 +400,11 @@
                 });
                 
                 // Success feedback
+                registerFeedbackDiv.className = 'mt-4 text-sm text-center text-green-400';
                 registerFeedbackDiv.innerText = '✅ Registration successful! Redirecting to dashboard...';
-                registerFeedbackDiv.classList.remove('hidden');
-                registerFeedbackDiv.classList.add('text-green-400');
                 
-                // Redirect based on role
                 setTimeout(() => {
-                    if (email === 'hankwane1@gmail.com' || role === 'admin') {
+                    if (email === 'hankwane1@gmail.com') {
                         window.location.href = 'admin.html';
                     } else {
                         window.location.href = 'user-dashboard.html';
@@ -398,15 +413,16 @@
                 
             } catch (err) {
                 console.error(err);
-                let errorMsg = 'Registration failed: ';
-                if (err.message.includes('user already exists')) errorMsg += 'Email already registered.';
-                else if (err.message.includes('weak password')) errorMsg += 'Password too weak. Use 8+ chars with numbers/letters.';
-                else errorMsg += err.message;
+                let errorMsg = err.message;
+                if (errorMsg.includes('user already exists')) errorMsg = 'Email already registered. Please use a different email.';
+                else if (errorMsg.includes('weak password')) errorMsg = 'Password too weak. Use at least 8 characters with letters and numbers.';
+                
+                registerFeedbackDiv.className = 'mt-4 text-sm text-center text-red-400';
                 registerFeedbackDiv.innerText = '❌ ' + errorMsg;
-                registerFeedbackDiv.classList.remove('hidden');
-                registerFeedbackDiv.classList.add('text-red-400');
-                btn.innerHTML = originalText;
-                btn.disabled = false;
+                
+                // Re-enable button
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
             }
         });
 
@@ -417,16 +433,16 @@
             loginFeedback.classList.add('hidden');
             if (!email || !password) {
                 loginFeedback.innerText = 'Email and password required';
-                loginFeedback.classList.remove('hidden', 'text-green-400');
+                loginFeedback.classList.remove('hidden');
                 loginFeedback.classList.add('text-red-400');
                 return;
             }
-            doLogin.innerHTML = '<div class="spinner-border animate-spin border-2 border-white border-t-transparent rounded-full w-5 h-5"></div> Signing...';
+            const originalLoginText = doLogin.innerHTML;
+            doLogin.innerHTML = '<div style="width:20px;height:20px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;"></div> Signing...';
             doLogin.disabled = true;
             try {
                 await account.createEmailPasswordSession(email, password);
                 const user = await account.get();
-                // Fetch user role
                 const docs = await databases.listDocuments(DATABASE_ID, USERS_COLLECTION, [Appwrite.Query.equal('userId', user.$id)]);
                 if (docs.total === 0) throw new Error('User profile not found');
                 const userDoc = docs.documents[0];
@@ -437,9 +453,9 @@
                 }
             } catch (err) {
                 loginFeedback.innerText = 'Login error: ' + err.message;
-                loginFeedback.classList.remove('hidden', 'text-green-400');
+                loginFeedback.classList.remove('hidden');
                 loginFeedback.classList.add('text-red-400');
-                doLogin.innerHTML = 'Sign In';
+                doLogin.innerHTML = originalLoginText;
                 doLogin.disabled = false;
             }
         });
@@ -460,11 +476,10 @@
             registerTab.classList.remove('bg-gray-700', 'text-gray-300');
             loginTab.classList.add('bg-gray-700', 'text-gray-300');
             loginTab.classList.remove('bg-indigo-600', 'text-white');
-            // reset to step 1 when switching to register
             if (currentStep !== 1) goToStep(1);
         });
 
-        // Initial reset
+        // Initialize
         goToStep(1);
     </script>
 </body>
