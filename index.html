@@ -1,472 +1,115 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>AI Marketplace | Join the Future</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/appwrite@16.0.0/dist/umd/sdk.min.js"></script>
-    <style>
-        body {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
-        }
-        .glass {
-            backdrop-filter: blur(16px);
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.15);
-        }
-        .progress-bar {
-            transition: width 0.3s ease;
-        }
-        .step-indicator {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 2rem;
-        }
-        .step {
-            width: 2.5rem;
-            height: 2.5rem;
-            border-radius: 9999px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            background: #334155;
-            color: #94a3b8;
-        }
-        .step.active {
-            background: #4f46e5;
-            color: white;
-            box-shadow: 0 0 0 3px rgba(79,70,229,0.3);
-        }
-        .step.completed {
-            background: #10b981;
-            color: white;
-        }
-        .animate-spin {
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        .fade-toggle {
-            transition: all 0.2s ease;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Nexus AI - Registration</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
-    <div class="w-full max-w-md">
-        <!-- Registration Panel (default visible) -->
-        <div id="registerPanel" class="glass rounded-2xl p-6 backdrop-blur-md text-white fade-toggle">
-            <h2 class="text-2xl font-bold mb-2">Create account</h2>
-            <p class="text-gray-400 text-sm mb-6">Join the AI revolution</p>
-            
-            <!-- Progress Bar -->
-            <div class="mb-6">
-                <div class="flex justify-between text-xs text-gray-400 mb-1">
-                    <span>Step 1/3</span>
-                    <span id="stepPercent">0%</span>
-                </div>
-                <div class="w-full bg-gray-700 rounded-full h-2">
-                    <div id="progressFill" class="bg-indigo-600 h-2 rounded-full progress-bar" style="width: 0%"></div>
-                </div>
-            </div>
 
-            <!-- Step indicators -->
-            <div class="step-indicator mb-6">
-                <div id="step1Icon" class="step active">1</div>
-                <div class="flex-1 border-t border-gray-600 self-center mx-2"></div>
-                <div id="step2Icon" class="step">2</div>
-                <div class="flex-1 border-t border-gray-600 self-center mx-2"></div>
-                <div id="step3Icon" class="step">3</div>
-            </div>
+<body class="bg-gray-950 text-white flex items-center justify-center min-h-screen">
 
-            <!-- Step 1: Basic Info -->
-            <div id="step1" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium mb-1">Full name</label>
-                    <input type="text" id="regName" class="w-full p-3 rounded-lg bg-white/10 border border-white/20 focus:border-indigo-500 outline-none" placeholder="Alex Johnson">
-                    <p id="nameError" class="text-red-400 text-xs mt-1 hidden"></p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-1">Email address</label>
-                    <input type="email" id="regEmail" class="w-full p-3 rounded-lg bg-white/10 border border-white/20 focus:border-indigo-500 outline-none" placeholder="hello@example.com">
-                    <p id="emailError" class="text-red-400 text-xs mt-1 hidden"></p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-1">Password (min 8 chars)</label>
-                    <input type="password" id="regPassword" class="w-full p-3 rounded-lg bg-white/10 border border-white/20 focus:border-indigo-500 outline-none">
-                    <p id="passwordError" class="text-red-400 text-xs mt-1 hidden"></p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-1">Confirm password</label>
-                    <input type="password" id="regConfirm" class="w-full p-3 rounded-lg bg-white/10 border border-white/20 focus:border-indigo-500 outline-none">
-                    <p id="confirmError" class="text-red-400 text-xs mt-1 hidden"></p>
-                </div>
-                <button id="nextStep1" class="w-full bg-indigo-600 hover:bg-indigo-700 py-3 rounded-lg font-semibold transition">Next</button>
-            </div>
+  <div class="w-full max-w-md bg-gray-900 p-8 rounded-2xl shadow-xl">
 
-            <!-- Step 2: Role & Skills -->
-            <div id="step2" class="space-y-4 hidden">
-                <div>
-                    <label class="block text-sm font-medium mb-1">I am a</label>
-                    <select id="regRole" class="w-full p-3 rounded-lg bg-white/10 border border-white/20">
-                        <option value="client">Client – Hire AI experts</option>
-                        <option value="freelancer">Freelancer – Offer AI services</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-1">Skills (add at least one)</label>
-                    <div class="flex flex-wrap gap-2 mb-2" id="skillsContainer"></div>
-                    <div class="flex gap-2">
-                        <input type="text" id="skillInput" class="flex-1 p-2 rounded-lg bg-white/10 border border-white/20" placeholder="e.g., Python, AI, Prompt Engineering">
-                        <button type="button" id="addSkillBtn" class="bg-indigo-500 px-3 rounded-lg hover:bg-indigo-600">Add</button>
-                    </div>
-                    <p id="skillsError" class="text-red-400 text-xs mt-1 hidden"></p>
-                </div>
-                <div class="flex gap-3">
-                    <button id="prevStep2" class="flex-1 bg-gray-600 hover:bg-gray-700 py-3 rounded-lg font-semibold transition">Back</button>
-                    <button id="nextStep2" class="flex-1 bg-indigo-600 hover:bg-indigo-700 py-3 rounded-lg font-semibold transition">Next</button>
-                </div>
-            </div>
+    <h1 class="text-2xl font-bold text-center mb-6">Nexus AI Registration</h1>
 
-            <!-- Step 3: Profile Picture (optional) -->
-            <div id="step3" class="space-y-4 hidden">
-                <div>
-                    <label class="block text-sm font-medium mb-1">Profile Picture (recommended)</label>
-                    <input type="file" id="profilePic" accept="image/*" class="w-full p-2 rounded-lg bg-white/10 border border-white/20">
-                    <p class="text-xs text-gray-400 mt-1">You can upload later, but chat requires a picture.</p>
-                    <div id="picPreview" class="mt-2 hidden">
-                        <img id="previewImg" class="w-20 h-20 rounded-full object-cover">
-                    </div>
-                </div>
-                <div class="flex gap-3">
-                    <button id="prevStep3" class="flex-1 bg-gray-600 hover:bg-gray-700 py-3 rounded-lg font-semibold transition">Back</button>
-                    <button id="submitRegister" class="flex-1 bg-green-600 hover:bg-green-700 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2">
-                        Complete Registration
-                    </button>
-                </div>
-            </div>
+    <div id="msg" class="text-sm text-center mb-4 text-red-400"></div>
 
-            <div id="registerFeedback" class="mt-4 text-sm text-center hidden"></div>
-            
-            <!-- Toggle link to login -->
-            <div class="text-center mt-6">
-                <button id="showLoginLink" class="text-indigo-400 hover:text-indigo-300 text-sm underline">Already registered? Click here to login</button>
-            </div>
-        </div>
+    <input id="name" type="text" placeholder="Full Name"
+      class="w-full p-3 mb-3 rounded bg-gray-800 outline-none"/>
 
-        <!-- Login Panel (hidden initially) -->
-        <div id="loginPanel" class="glass rounded-2xl p-6 backdrop-blur-md text-white hidden fade-toggle">
-            <h2 class="text-2xl font-bold mb-2">Welcome back</h2>
-            <p class="text-gray-400 text-sm mb-6">Sign in to continue</p>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium mb-1">Email</label>
-                    <input type="email" id="loginEmail" class="w-full p-3 rounded-lg bg-white/10 border border-white/20 focus:border-indigo-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-1">Password</label>
-                    <input type="password" id="loginPassword" class="w-full p-3 rounded-lg bg-white/10 border border-white/20 focus:border-indigo-500 outline-none">
-                </div>
-                <button id="doLogin" class="w-full bg-indigo-600 hover:bg-indigo-700 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2">
-                    Sign In
-                </button>
-                <div id="loginFeedback" class="text-sm text-center hidden"></div>
-            </div>
-            <div class="text-center mt-6">
-                <button id="showRegisterLink" class="text-indigo-400 hover:text-indigo-300 text-sm underline">Need an account? Register here</button>
-            </div>
-        </div>
-    </div>
+    <input id="email" type="email" placeholder="Email"
+      class="w-full p-3 mb-3 rounded bg-gray-800 outline-none"/>
 
-    <script>
-        // ------------------- Appwrite Config -------------------
-        const ENDPOINT = 'https://fra.cloud.appwrite.io/v1';
-        const PROJECT_ID = '6a01720e0005a5f59bb9';
-        const DATABASE_ID = '6a01723d0014a5c79b6f';
-        const USERS_COLLECTION = 'users';
-        const { Client, Account, Databases, ID, Storage } = Appwrite;
+    <input id="password" type="password" placeholder="Password"
+      class="w-full p-3 mb-4 rounded bg-gray-800 outline-none"/>
 
-        const client = new Client().setEndpoint(ENDPOINT).setProject(PROJECT_ID);
-        const account = new Account(client);
-        const databases = new Databases(client);
-        const storage = new Storage(client);
+    <button onclick="registerUser()"
+      class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded font-semibold">
+      Register
+    </button>
 
-        // DOM elements for registration
-        const registerPanel = document.getElementById('registerPanel');
-        const loginPanel = document.getElementById('loginPanel');
-        const showLoginLink = document.getElementById('showLoginLink');
-        const showRegisterLink = document.getElementById('showRegisterLink');
-        
-        // Multi-step elements
-        const step1Div = document.getElementById('step1');
-        const step2Div = document.getElementById('step2');
-        const step3Div = document.getElementById('step3');
-        const step1Icon = document.getElementById('step1Icon');
-        const step2Icon = document.getElementById('step2Icon');
-        const step3Icon = document.getElementById('step3Icon');
-        const progressFill = document.getElementById('progressFill');
-        const stepPercent = document.getElementById('stepPercent');
-        
-        // Form fields
-        const regName = document.getElementById('regName');
-        const regEmail = document.getElementById('regEmail');
-        const regPassword = document.getElementById('regPassword');
-        const regConfirm = document.getElementById('regConfirm');
-        const regRole = document.getElementById('regRole');
-        const skillInput = document.getElementById('skillInput');
-        const skillsContainer = document.getElementById('skillsContainer');
-        const profilePic = document.getElementById('profilePic');
-        const previewImg = document.getElementById('previewImg');
-        const picPreview = document.getElementById('picPreview');
-        const registerFeedbackDiv = document.getElementById('registerFeedback');
-        
-        let selectedSkills = [];
-        let profileFile = null;
-        let currentStep = 1;
-        const totalSteps = 3;
+    <button onclick="checkVerification()"
+      class="w-full mt-3 bg-green-600 hover:bg-green-700 p-3 rounded font-semibold">
+      I have verified my email
+    </button>
 
-        // Toggle between register and login panels
-        showLoginLink.addEventListener('click', () => {
-            registerPanel.classList.add('hidden');
-            loginPanel.classList.remove('hidden');
-        });
-        showRegisterLink.addEventListener('click', () => {
-            loginPanel.classList.add('hidden');
-            registerPanel.classList.remove('hidden');
-            // reset registration steps when returning
-            if (currentStep !== 1) goToStep(1);
-        });
+  </div>
 
-        // Update progress bar and step icons
-        function updateProgress(step) {
-            const percent = ((step - 1) / (totalSteps - 1)) * 100;
-            progressFill.style.width = `${percent}%`;
-            stepPercent.innerText = `${Math.round(percent)}%`;
-            
-            [step1Icon, step2Icon, step3Icon].forEach((icon, idx) => {
-                icon.classList.remove('active', 'completed');
-                if (idx + 1 === step) icon.classList.add('active');
-                else if (idx + 1 < step) icon.classList.add('completed');
-            });
-        }
+<script>
+  const client = new Appwrite.Client();
 
-        function goToStep(step) {
-            currentStep = step;
-            step1Div.classList.add('hidden');
-            step2Div.classList.add('hidden');
-            step3Div.classList.add('hidden');
-            if (step === 1) step1Div.classList.remove('hidden');
-            if (step === 2) step2Div.classList.remove('hidden');
-            if (step === 3) step3Div.classList.remove('hidden');
-            updateProgress(step);
-        }
+  client
+    .setEndpoint("https://fra.cloud.appwrite.io/v1")
+    .setProject("6a01720e0005a5f59bb9");
 
-        // Validation helpers
-        function showError(id, msg) {
-            const el = document.getElementById(id);
-            if (el) { el.innerText = msg; el.classList.remove('hidden'); }
-        }
-        function hideError(id) {
-            const el = document.getElementById(id);
-            if (el) el.classList.add('hidden');
-        }
+  const account = new Appwrite.Account(client);
 
-        function validateStep1() {
-            let valid = true;
-            const name = regName.value.trim();
-            const email = regEmail.value.trim();
-            const password = regPassword.value;
-            const confirm = regConfirm.value;
+  const ADMIN_EMAIL = "hankwane1@gmail.com";
 
-            if (!name) { showError('nameError', 'Full name required'); valid = false; } else hideError('nameError');
-            if (!email || !/^\S+@\S+\.\S+$/.test(email)) { showError('emailError', 'Valid email required'); valid = false; } else hideError('emailError');
-            if (password.length < 8) { showError('passwordError', 'Minimum 8 characters'); valid = false; } else hideError('passwordError');
-            if (password !== confirm) { showError('confirmError', 'Passwords do not match'); valid = false; } else hideError('confirmError');
-            return valid;
-        }
+  function showMsg(msg, color="red") {
+    const el = document.getElementById("msg");
+    el.style.color = color;
+    el.innerText = msg;
+  }
 
-        function validateStep2() {
-            if (selectedSkills.length === 0) {
-                showError('skillsError', 'Add at least one skill');
-                return false;
-            }
-            hideError('skillsError');
-            return true;
-        }
+  async function registerUser() {
+    const name = document.getElementById("name").value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
 
-        // Skill management
-        function renderSkills() {
-            skillsContainer.innerHTML = '';
-            selectedSkills.forEach(skill => {
-                const badge = document.createElement('span');
-                badge.className = 'bg-indigo-600 px-3 py-1 rounded-full text-sm flex items-center gap-1';
-                badge.innerHTML = `${skill} <button type="button" class="remove-skill ml-1 hover:text-red-300" data-skill="${skill}">×</button>`;
-                skillsContainer.appendChild(badge);
-            });
-            document.querySelectorAll('.remove-skill').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const skill = btn.getAttribute('data-skill');
-                    selectedSkills = selectedSkills.filter(s => s !== skill);
-                    renderSkills();
-                });
-            });
-        }
+    if (!name || !email || !password) {
+      showMsg("All fields are required");
+      return;
+    }
 
-        document.getElementById('addSkillBtn').addEventListener('click', () => {
-            const skill = skillInput.value.trim();
-            if (skill && !selectedSkills.includes(skill)) {
-                selectedSkills.push(skill);
-                renderSkills();
-                skillInput.value = '';
-            }
-        });
+    try {
+      // Create account
+      await account.create(
+        "unique()",
+        email,
+        password,
+        name
+      );
 
-        // Profile picture preview
-        profilePic.addEventListener('change', (e) => {
-            if (e.target.files.length) {
-                profileFile = e.target.files[0];
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    previewImg.src = ev.target.result;
-                    picPreview.classList.remove('hidden');
-                };
-                reader.readAsDataURL(profileFile);
-            } else {
-                profileFile = null;
-                picPreview.classList.add('hidden');
-            }
-        });
+      // Create session (login)
+      await account.createEmailPasswordSession(email, password);
 
-        // Navigation buttons
-        document.getElementById('nextStep1').addEventListener('click', () => {
-            if (validateStep1()) goToStep(2);
-        });
-        document.getElementById('prevStep2').addEventListener('click', () => goToStep(1));
-        document.getElementById('nextStep2').addEventListener('click', () => {
-            if (validateStep2()) goToStep(3);
-        });
-        document.getElementById('prevStep3').addEventListener('click', () => goToStep(2));
+      // Send verification email
+      await account.createVerification(
+        window.location.href
+      );
 
-        // Registration submission
-        const submitBtn = document.getElementById('submitRegister');
-        submitBtn.addEventListener('click', async function(e) {
-            e.preventDefault();
-            
-            const name = regName.value.trim();
-            const email = regEmail.value.trim();
-            const password = regPassword.value;
-            const role = regRole.value;
+      showMsg("Verification email sent. Check your inbox.", "green");
 
-            if (!validateStep1() || !validateStep2()) {
-                if (!validateStep1()) goToStep(1);
-                else if (!validateStep2()) goToStep(2);
-                return;
-            }
+    } catch (err) {
+      showMsg(err.message);
+    }
+  }
 
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<div style="width:20px;height:20px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;"></div> Creating...';
-            submitBtn.disabled = true;
+  async function checkVerification() {
+    try {
+      const user = await account.get();
 
-            registerFeedbackDiv.classList.remove('hidden');
-            registerFeedbackDiv.className = 'mt-4 text-sm text-center text-gray-300';
-            registerFeedbackDiv.innerText = 'Creating your account, please wait...';
+      if (!user.emailVerification) {
+        showMsg("Email not verified yet. Please verify first.");
+        return;
+      }
 
-            try {
-                const userId = ID.unique();
-                await account.create(userId, email, password, name);
-                await account.createEmailPasswordSession(email, password);
-                const user = await account.get();
-                
-                let profilePicId = null;
-                if (profileFile) {
-                    try {
-                        const uploaded = await storage.createFile('profile_bucket', ID.unique(), profileFile);
-                        profilePicId = uploaded.$id;
-                    } catch(err) { console.warn('Profile pic upload failed:', err); }
-                }
-                
-                await databases.createDocument(DATABASE_ID, USERS_COLLECTION, ID.unique(), {
-                    userId: user.$id,
-                    name,
-                    email,
-                    role,
-                    skills: selectedSkills,
-                    profilePictureId: profilePicId,
-                    isChatSuspended: false,
-                    walletBalance: 0,
-                    pendingBalance: 0
-                });
-                
-                registerFeedbackDiv.className = 'mt-4 text-sm text-center text-green-400';
-                registerFeedbackDiv.innerText = '✅ Registration successful! Redirecting to dashboard...';
-                
-                setTimeout(() => {
-                    if (email === 'hankwane1@gmail.com') {
-                        window.location.href = 'admin.html';
-                    } else {
-                        window.location.href = 'user-dashboard.html';
-                    }
-                }, 2000);
-                
-            } catch (err) {
-                console.error(err);
-                let errorMsg = err.message;
-                if (errorMsg.includes('user already exists')) errorMsg = 'Email already registered. Please use a different email.';
-                else if (errorMsg.includes('weak password')) errorMsg = 'Password too weak. Use at least 8 characters with letters and numbers.';
-                
-                registerFeedbackDiv.className = 'mt-4 text-sm text-center text-red-400';
-                registerFeedbackDiv.innerText = '❌ ' + errorMsg;
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-            }
-        });
+      // Role-based redirect
+      if (user.email === ADMIN_EMAIL) {
+        window.location.href = "admin.html";
+      } else {
+        window.location.href = "user-dashboard.html";
+      }
 
-        // Login logic
-        const doLogin = document.getElementById('doLogin');
-        const loginFeedback = document.getElementById('loginFeedback');
-        doLogin.addEventListener('click', async () => {
-            const email = document.getElementById('loginEmail').value.trim();
-            const password = document.getElementById('loginPassword').value;
-            loginFeedback.classList.add('hidden');
-            if (!email || !password) {
-                loginFeedback.innerText = 'Email and password required';
-                loginFeedback.classList.remove('hidden');
-                loginFeedback.classList.add('text-red-400');
-                return;
-            }
-            const originalLoginText = doLogin.innerHTML;
-            doLogin.innerHTML = '<div style="width:20px;height:20px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;"></div> Signing...';
-            doLogin.disabled = true;
-            try {
-                await account.createEmailPasswordSession(email, password);
-                const user = await account.get();
-                const docs = await databases.listDocuments(DATABASE_ID, USERS_COLLECTION, [Appwrite.Query.equal('userId', user.$id)]);
-                if (docs.total === 0) throw new Error('User profile not found');
-                const userDoc = docs.documents[0];
-                if (userDoc.role === 'admin' || email === 'hankwane1@gmail.com') {
-                    window.location.href = 'admin.html';
-                } else {
-                    window.location.href = 'user-dashboard.html';
-                }
-            } catch (err) {
-                loginFeedback.innerText = 'Login error: ' + err.message;
-                loginFeedback.classList.remove('hidden');
-                loginFeedback.classList.add('text-red-400');
-                doLogin.innerHTML = originalLoginText;
-                doLogin.disabled = false;
-            }
-        });
+    } catch (err) {
+      showMsg("Please login first or verify email.");
+    }
+  }
+</script>
 
-        // Initialize registration step 1
-        goToStep(1);
-    </script>
 </body>
 </html>
