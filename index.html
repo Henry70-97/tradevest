@@ -1,144 +1,186 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Nexus AI Auth</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus AI Marketplace</title>
+
 <script src="https://cdn.tailwindcss.com"></script>
-<!-- Load Appwrite SDK FIRST -->
-<script src="https://cdn.jsdelivr.net/npm/appwrite@16.0.0/dist/umd/sdk.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
+
+<style>
+body{
+    background:#0f172a;
+}
+.glass{
+    background:rgba(255,255,255,0.05);
+    backdrop-filter:blur(10px);
+}
+</style>
 </head>
-<body class="bg-black text-white flex items-center justify-center min-h-screen">
 
-<div class="w-full max-w-md bg-gray-900 p-6 rounded-xl shadow-lg">
-    <h1 class="text-2xl font-bold text-center mb-6">Nexus AI</h1>
+<body class="min-h-screen flex items-center justify-center text-white p-4">
 
-    <input id="name" type="text" placeholder="Full Name" class="w-full p-3 mb-3 bg-gray-800 rounded"/>
-    <input id="email" type="email" placeholder="Email" class="w-full p-3 mb-3 bg-gray-800 rounded"/>
-    <input id="password" type="password" placeholder="Password" class="w-full p-3 mb-4 bg-gray-800 rounded"/>
+<div class="glass w-full max-w-md rounded-3xl p-8 shadow-2xl border border-gray-700">
 
-    <button onclick="register()" class="w-full bg-green-600 p-3 rounded mb-2">Register</button>
-    <button onclick="login()" class="w-full bg-blue-600 p-3 rounded">Login</button>
+<h1 class="text-4xl font-bold text-center mb-2">
+Nexus AI
+</h1>
 
-    <p id="msg" class="text-center mt-4 text-sm text-gray-400"></p>
+<p class="text-center text-gray-400 mb-8">
+AI Freelancing Marketplace
+</p>
+
+<div class="space-y-4">
+
+<input id="name"
+class="w-full p-4 rounded-xl bg-slate-800 border border-slate-700"
+placeholder="Full Name">
+
+<input id="email"
+type="email"
+class="w-full p-4 rounded-xl bg-slate-800 border border-slate-700"
+placeholder="Email Address">
+
+<input id="password"
+type="password"
+class="w-full p-4 rounded-xl bg-slate-800 border border-slate-700"
+placeholder="Password">
+
+<select id="role"
+class="w-full p-4 rounded-xl bg-slate-800 border border-slate-700">
+
+<option value="user">Freelancer</option>
+<option value="admin">Admin</option>
+
+</select>
+
+<button onclick="register()"
+class="w-full bg-green-600 hover:bg-green-700 p-4 rounded-xl font-bold">
+Create Account
+</button>
+
+<button onclick="login()"
+class="w-full bg-blue-600 hover:bg-blue-700 p-4 rounded-xl font-bold">
+Login
+</button>
+
+</div>
+
+<p id="msg" class="text-center mt-6 text-gray-300"></p>
+
 </div>
 
 <script>
-// Wait for DOM and SDK to be fully ready
-(function() {
-    // Check if Appwrite SDK loaded
-    if (typeof Appwrite === 'undefined') {
-        document.getElementById('msg').innerText = 'Error: Appwrite SDK failed to load. Please refresh.';
-        console.error('Appwrite SDK not loaded');
-        return;
-    }
 
-    // Initialize Appwrite clients
-    const { Client, Account, Databases, ID } = Appwrite;
-    
-    const client = new Client()
-        .setEndpoint("https://fra.cloud.appwrite.io/v1")
-        .setProject("6a01720e0005a5f59bb9");
-    
-    const account = new Account(client);
-    const databases = new Databases(client);
+const client = new Appwrite.Client()
+.setEndpoint("https://fra.cloud.appwrite.io/v1")
+.setProject("6a01720e0005a5f59bb9");
 
-    // Database constants (must match dashboard)
-    const DATABASE_ID = '6a01723d0014a5c79b6f';
-    const USERS_COLLECTION = 'users';
+const account = new Appwrite.Account(client);
+const databases = new Appwrite.Databases(client);
 
-    // Expose functions globally so buttons can call them
-    window.register = async function() {
-        const name = document.getElementById("name").value.trim();
-        const email = document.getElementById("email").value.trim();
-        const password = document.getElementById("password").value;
+const DATABASE_ID = "6a01723d0014a5c79b6f";
 
-        const msgEl = document.getElementById("msg");
-        
-        if (!name || !email || !password) {
-            msgEl.innerText = "All fields required";
-            return;
-        }
+const USERS = "users";
 
-        msgEl.innerText = "Creating account...";
+async function register(){
 
-        try {
-            // 1. Create Appwrite user account
-            const user = await account.create(ID.unique(), email, password);
-            console.log("User created:", user.$id);
-            
-            // 2. Create email session
-            await account.createEmailSession(email, password);
-            console.log("Session created");
-            
-            // 3. Create user document in database
-            await databases.createDocument(DATABASE_ID, USERS_COLLECTION, ID.unique(), {
-                userId: user.$id,
-                name: name,
-                email: email,
-                role: 'freelancer',
-                walletBalance: 0,
-                totalEarnings: 0,
-                followersCount: 0,
-                activeGigs: 0,
-                kycStatus: 'pending',
-                referralBalance: 0,
-                createdAt: new Date().toISOString()
-            });
-            
-            msgEl.innerText = "Registration successful! Redirecting...";
-            setTimeout(() => { window.location.href = "user-dashboard.html"; }, 1000);
-            
-        } catch (err) {
-            console.error("Registration error:", err);
-            msgEl.innerText = err.message;
-        }
-    };
+const name = document.getElementById("name").value;
+const email = document.getElementById("email").value;
+const password = document.getElementById("password").value;
+const role = document.getElementById("role").value;
 
-    window.login = async function() {
-        const email = document.getElementById("email").value.trim();
-        const password = document.getElementById("password").value;
-        const msgEl = document.getElementById("msg");
-        
-        if (!email || !password) {
-            msgEl.innerText = "Email and password required";
-            return;
-        }
-        
-        msgEl.innerText = "Logging in...";
-        
-        try {
-            // Check if already logged in
-            try {
-                await account.get();
-                window.location.href = "user-dashboard.html";
-                return;
-            } catch (e) {}
-            
-            await account.createEmailSession(email, password);
-            msgEl.innerText = "Login successful! Redirecting...";
-            setTimeout(() => { window.location.href = "user-dashboard.html"; }, 500);
-            
-        } catch (err) {
-            console.error("Login error:", err);
-            msgEl.innerText = err.message;
-        }
-    };
+const msg = document.getElementById("msg");
 
-    // Check for existing session on page load (but don't auto-redirect immediately to avoid confusion)
-    async function checkSession() {
-        try {
-            await account.get();
-            // Already logged in - redirect to dashboard
-            window.location.href = "user-dashboard.html";
-        } catch (err) {
-            console.log("No active session");
-        }
-    }
-    
-    // Run session check after a short delay to allow page to settle
-    setTimeout(checkSession, 100);
-})();
+try{
+
+msg.innerText = "Creating account...";
+
+const user = await account.create(
+Appwrite.ID.unique(),
+email,
+password,
+name
+);
+
+await account.createEmailSession(email,password);
+
+await databases.createDocument(
+DATABASE_ID,
+USERS,
+Appwrite.ID.unique(),
+{
+userId:user.$id,
+name,
+email,
+role,
+wallet:0,
+earnings:0,
+createdAt:new Date().toISOString()
+}
+);
+
+msg.innerText = "Registration successful";
+
+setTimeout(()=>{
+if(role === "admin"){
+window.location.href = "admin.html";
+}else{
+window.location.href = "user-dashboard.html";
+}
+},1000);
+
+}catch(err){
+console.error(err);
+msg.innerText = err.message;
+}
+}
+
+async function login(){
+
+const email = document.getElementById("email").value;
+const password = document.getElementById("password").value;
+
+const msg = document.getElementById("msg");
+
+try{
+
+msg.innerText = "Logging in...";
+
+await account.createEmailSession(email,password);
+
+const user = await account.get();
+
+const profile = await databases.listDocuments(
+DATABASE_ID,
+USERS,
+[
+Appwrite.Query.equal("userId",user.$id)
+]
+);
+
+const role = profile.documents[0].role;
+
+msg.innerText = "Success";
+
+setTimeout(()=>{
+
+if(role === "admin"){
+window.location.href = "admin.html";
+}else{
+window.location.href = "user-dashboard.html";
+}
+
+},1000);
+
+}catch(err){
+console.error(err);
+msg.innerText = err.message;
+}
+}
+
 </script>
+
 </body>
 </html>
