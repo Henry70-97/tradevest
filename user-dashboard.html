@@ -1,484 +1,342 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Nexus AI | Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/appwrite@16.0.0/dist/umd/sdk.min.js"></script>
-    <style>
-        * { font-family: 'Inter', sans-serif; }
-        h1, h2, h3, .futuristic { font-family: 'Space Grotesk', monospace; letter-spacing: -0.02em; }
-        .glass-card { background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); }
-        .sidebar { transition: transform 0.3s ease; }
-        .bottom-nav a.active { color: #4f46e5; background: rgba(79,70,229,0.2); }
-        .error-toast { position: fixed; bottom: 20px; right: 20px; background: #ef4444; padding: 10px 20px; border-radius: 8px; z-index: 1000; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Dashboard</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
+
+<style>
+body{
+background:#0f172a;
+}
+.sidebar{
+width:260px;
+}
+</style>
+
 </head>
-<body class="bg-gray-950 text-gray-200">
-    <!-- Mobile Hamburger Menu -->
-    <div class="fixed top-4 left-4 z-50 md:hidden">
-        <button id="menuToggle" class="text-white text-2xl">☰</button>
-    </div>
-    <div id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-gray-900 border-r border-gray-800 transform -translate-x-full transition-transform z-40 md:translate-x-0 md:relative overflow-y-auto">
-        <div class="p-6">
-            <h2 class="text-2xl font-bold text-indigo-400">Nexus AI</h2>
-            <nav class="mt-8 space-y-2">
-                <a href="#" data-page="home" class="nav-link block py-2 px-3 rounded-lg hover:bg-gray-800">🏠 Dashboard Home</a>
-                <a href="#" data-page="overview" class="nav-link block py-2 px-3 rounded-lg hover:bg-gray-800">📊 Overview</a>
-                <a href="#" data-page="gigs" class="nav-link block py-2 px-3 rounded-lg hover:bg-gray-800">🎯 My Gigs</a>
-                <a href="#" data-page="orders" class="nav-link block py-2 px-3 rounded-lg hover:bg-gray-800">📦 Orders</a>
-                <a href="#" data-page="proposals" class="nav-link block py-2 px-3 rounded-lg hover:bg-gray-800">📝 Proposals/Bids</a>
-                <a href="#" data-page="jobfeed" class="nav-link block py-2 px-3 rounded-lg hover:bg-gray-800">💼 Job Feed</a>
-                <a href="#" data-page="followers" class="nav-link block py-2 px-3 rounded-lg hover:bg-gray-800">👥 Followers & Networking</a>
-                <a href="#" data-page="chat" class="nav-link block py-2 px-3 rounded-lg hover:bg-gray-800">💬 Messaging</a>
-                <a href="#" data-page="wallet" class="nav-link block py-2 px-3 rounded-lg hover:bg-gray-800">💰 Wallet & Finance</a>
-                <a href="#" data-page="escrow" class="nav-link block py-2 px-3 rounded-lg hover:bg-gray-800">⚖️ Escrow & Milestones</a>
-                <a href="#" data-page="analytics" class="nav-link block py-2 px-3 rounded-lg hover:bg-gray-800">📈 Analytics</a>
-                <a href="#" data-page="reviews" class="nav-link block py-2 px-3 rounded-lg hover:bg-gray-800">⭐ Reviews & Reputation</a>
-                <a href="#" data-page="certificates" class="nav-link block py-2 px-3 rounded-lg hover:bg-gray-800">🎓 Certificates & School</a>
-                <a href="#" data-page="referrals" class="nav-link block py-2 px-3 rounded-lg hover:bg-gray-800">🤝 Referral/Invite</a>
-                <a href="#" data-page="notifications" class="nav-link block py-2 px-3 rounded-lg hover:bg-gray-800">🔔 Notifications</a>
-                <a href="#" data-page="kyc" class="nav-link block py-2 px-3 rounded-lg hover:bg-gray-800">🆔 KYC Verification</a>
-                <a href="#" data-page="settings" class="nav-link block py-2 px-3 rounded-lg hover:bg-gray-800">⚙️ Settings</a>
-                <a href="#" onclick="logout()" class="block py-2 px-3 rounded-lg hover:bg-gray-800 mt-4">🚪 Logout</a>
-            </nav>
-        </div>
-    </div>
 
-    <!-- Main Content -->
-    <div class="md:ml-64 p-4 pb-20 md:pb-4">
-        <div id="pageContent" class="max-w-7xl mx-auto">
-            <div class="text-center py-20">Loading dashboard...</div>
-        </div>
-    </div>
+<body class="text-white flex">
 
-    <!-- Bottom Navigation (Mobile) -->
-    <div class="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 flex justify-around py-2 md:hidden z-30">
-        <a href="#" data-page="home" class="bottom-nav-link text-gray-400 p-2">🏠</a>
-        <a href="#" data-page="jobfeed" class="bottom-nav-link text-gray-400 p-2">💼</a>
-        <a href="#" data-page="chat" class="bottom-nav-link text-gray-400 p-2">💬</a>
-        <a href="#" data-page="wallet" class="bottom-nav-link text-gray-400 p-2">💰</a>
-        <a href="#" data-page="overview" class="bottom-nav-link text-gray-400 p-2">👤</a>
-        <div class="relative">
-            <button id="aiAssistantBtn" class="bg-indigo-600 rounded-full w-12 h-12 flex items-center justify-center text-xl shadow-lg -mt-6 border-2 border-gray-900">🤖</button>
-        </div>
-    </div>
+<!-- SIDEBAR -->
 
-    <script>
-        // ---------- Appwrite Config ----------
-        const ENDPOINT = 'https://fra.cloud.appwrite.io/v1';
-        const PROJECT_ID = '6a01720e0005a5f59bb9';
-        const DATABASE_ID = '6a01723d0014a5c79b6f';
-        const USERS_COLLECTION = 'users';
-        const GIGS_COLLECTION = 'gigs';
-        const ORDERS_COLLECTION = 'orders';
-        const PROPOSALS_COLLECTION = 'proposals';
-        const JOBS_COLLECTION = 'jobs';
-        const FOLLOWS_COLLECTION = 'follows';
-        const CHATS_COLLECTION = 'chats';
-        const MESSAGES_COLLECTION = 'messages';
-        const NOTIFICATIONS_COLLECTION = 'notifications';
-        const COURSES_COLLECTION = 'courses';
-        const ENROLLMENTS_COLLECTION = 'enrollments';
-        const TRANSACTIONS_COLLECTION = 'transactions';
-        const KYC_COLLECTION = 'kyc_documents';
+<div class="sidebar min-h-screen bg-slate-900 p-5">
 
-        const { Client, Account, Databases, ID, Query } = Appwrite;
-        const client = new Client().setEndpoint(ENDPOINT).setProject(PROJECT_ID);
-        const account = new Account(client);
-        const databases = new Databases(client);
+<h1 class="text-3xl font-bold mb-10">
+Nexus AI
+</h1>
 
-        let currentUser = null;
-        let currentUserDoc = null;
-        let userRole = null;
+<div class="space-y-3">
 
-        // Show error toast
-        function showError(message) {
-            const toast = document.createElement('div');
-            toast.className = 'error-toast';
-            toast.innerText = message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 5000);
-            console.error(message);
-        }
+<button onclick="showSection('dashboard')" class="w-full text-left p-3 bg-slate-800 rounded-xl">Dashboard</button>
 
-        // Helper: load user data with better error handling
-        async function loadUser() {
-            try {
-                // Get current session
-                const user = await account.get();
-                
-                // Find user document - FIXED: use correct field name
-                const docs = await databases.listDocuments(DATABASE_ID, USERS_COLLECTION, [
-                    Query.equal('userId', user.$id)
-                ]);
-                
-                if (docs.total === 0) {
-                    throw new Error('User profile not found. Please re-register or contact support.');
-                }
-                
-                currentUser = user;
-                currentUserDoc = docs.documents[0];
-                userRole = currentUserDoc.role;
-                
-                // Render home page
-                await renderPage('home');
-                
-                // Setup realtime if needed
-                setupRealtime();
-                
-            } catch(e) {
-                console.error('Load user error:', e);
-                showError(e.message || 'Failed to load user data');
-                // Redirect to login after 3 seconds
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 3000);
-            }
-        }
+<button onclick="showSection('jobs')" class="w-full text-left p-3 bg-slate-800 rounded-xl">Browse Jobs</button>
 
-        // Realtime for notifications (basic)
-        function setupRealtime() {
-            try {
-                client.subscribe(`databases.${DATABASE_ID}.collections.${NOTIFICATIONS_COLLECTION}.documents`, (response) => {
-                    if (response.payload.userId === currentUser.$id) {
-                        showError('New notification received!');
-                        updateNotificationBadge();
-                    }
-                });
-            } catch(e) {
-                console.log('Realtime setup skipped:', e.message);
-            }
-        }
+<button onclick="showSection('myjobs')" class="w-full text-left p-3 bg-slate-800 rounded-xl">My Jobs</button>
 
-        // Page rendering with error boundaries
-        async function renderPage(page) {
-            const container = document.getElementById('pageContent');
-            if (!container) return;
-            
-            try {
-                let html = '';
-                if (page === 'home') html = await renderHome();
-                else if (page === 'overview') html = await renderOverview();
-                else if (page === 'gigs') html = await renderGigs();
-                else if (page === 'orders') html = await renderOrders();
-                else if (page === 'proposals') html = await renderProposals();
-                else if (page === 'jobfeed') html = await renderJobFeed();
-                else if (page === 'followers') html = await renderFollowers();
-                else if (page === 'chat') html = await renderChat();
-                else if (page === 'wallet') html = await renderWallet();
-                else if (page === 'escrow') html = await renderEscrow();
-                else if (page === 'analytics') html = await renderAnalytics();
-                else if (page === 'reviews') html = await renderReviews();
-                else if (page === 'certificates') html = await renderCertificates();
-                else if (page === 'referrals') html = await renderReferrals();
-                else if (page === 'notifications') html = await renderNotifications();
-                else if (page === 'kyc') html = await renderKYC();
-                else if (page === 'settings') html = await renderSettings();
-                else html = '<div class="glass-card p-6">Page not found</div>';
-                
-                container.innerHTML = html;
-                attachPageScripts(page);
-            } catch(err) {
-                console.error(`Error rendering ${page}:`, err);
-                container.innerHTML = `<div class="glass-card p-6 text-red-400">Error loading page: ${err.message}. Check console for details.</div>`;
-            }
-        }
+<button onclick="showSection('proposals')" class="w-full text-left p-3 bg-slate-800 rounded-xl">My Proposals</button>
 
-        // ---------- Dashboard Home ----------
-        async function renderHome() {
-            // Get active orders count for demo
-            let activeOrders = 0;
-            try {
-                const orders = await databases.listDocuments(DATABASE_ID, ORDERS_COLLECTION, [
-                    Query.equal('freelancerId', currentUser.$id),
-                    Query.equal('status', 'active')
-                ]);
-                activeOrders = orders.total;
-            } catch(e) { console.log('Orders query failed:', e.message); }
-            
-            return `
-                <div class="space-y-6">
-                    <div class="glass-card p-6 rounded-2xl">
-                        <h2 class="text-2xl font-bold">Welcome back, ${escapeHtml(currentUserDoc.name)} 🚀</h2>
-                        <div class="grid md:grid-cols-4 gap-4 mt-4">
-                            <div class="bg-gray-800/50 p-3 rounded">💰 Wallet: $${currentUserDoc.walletBalance || 0}</div>
-                            <div class="bg-gray-800/50 p-3 rounded">📦 Active Orders: ${activeOrders}</div>
-                            <div class="bg-gray-800/50 p-3 rounded">⭐ AI Rating: 4.8</div>
-                            <div class="bg-gray-800/50 p-3 rounded">✅ KYC: ${currentUserDoc.kycStatus || 'pending'}</div>
-                        </div>
-                        <div class="mt-6 flex flex-wrap gap-3">
-                            <button onclick="quickAction('createGig')" class="bg-indigo-600 px-4 py-2 rounded">➕ Create Gig</button>
-                            <button onclick="quickAction('postJob')" class="bg-indigo-600 px-4 py-2 rounded">📢 Post Job</button>
-                            <button onclick="renderPage('wallet')" class="bg-green-600 px-4 py-2 rounded">💸 Withdraw</button>
-                            <button onclick="renderPage('jobfeed')" class="bg-blue-600 px-4 py-2 rounded">🔍 Browse Jobs</button>
-                            <button onclick="renderPage('referrals')" class="bg-purple-600 px-4 py-2 rounded">👥 Invite Friends</button>
-                        </div>
-                    </div>
-                    <div class="grid md:grid-cols-2 gap-6">
-                        <div class="glass-card p-4 rounded-xl"><h3>🤖 AI Assistant</h3><p class="text-sm text-gray-300">Need help? Ask me to optimize your gig or find projects.</p><input type="text" placeholder="Ask AI..." class="w-full bg-gray-800 p-2 rounded mt-2" id="aiInput"><button onclick="askAI()" class="mt-2 bg-indigo-600 px-3 py-1 rounded text-sm">Ask</button></div>
-                        <div class="glass-card p-4 rounded-xl"><h3>📢 Trending Gigs</h3><div id="trendingGigs">Check the Job Feed for opportunities!</div></div>
-                    </div>
-                </div>
-            `;
-        }
+<button onclick="showSection('wallet')" class="w-full text-left p-3 bg-slate-800 rounded-xl">Wallet</button>
 
-        // ---------- Overview ----------
-        async function renderOverview() {
-            const earnings = currentUserDoc.totalEarnings || 0;
-            const followers = currentUserDoc.followersCount || 0;
-            return `
-                <div class="glass-card p-6 rounded-2xl">
-                    <h2 class="text-2xl font-bold">Performance Overview</h2>
-                    <div class="grid md:grid-cols-4 gap-4 mt-4">
-                        <div class="bg-gray-800 p-3 rounded">💰 Total Earnings: $${earnings}</div>
-                        <div class="bg-gray-800 p-3 rounded">🎯 Active Gigs: ${currentUserDoc.activeGigs || 0}</div>
-                        <div class="bg-gray-800 p-3 rounded">📊 Proposal Success: 67%</div>
-                        <div class="bg-gray-800 p-3 rounded">👥 Followers: ${followers}</div>
-                    </div>
-                    <div class="mt-6 p-4 bg-gray-800/30 rounded">📈 Analytics chart would appear here (Chart.js integration)</div>
-                </div>
-            `;
-        }
+<button onclick="showSection('messages')" class="w-full text-left p-3 bg-slate-800 rounded-xl">Messages</button>
 
-        // ---------- My Gigs (with error handling) ----------
-        async function renderGigs() {
-            try {
-                const gigs = await databases.listDocuments(DATABASE_ID, GIGS_COLLECTION, [
-                    Query.equal('userId', currentUser.$id)
-                ]);
-                let html = `<div class="space-y-4"><div class="flex justify-between"><h2 class="text-2xl font-bold">My Gigs</h2><button onclick="showCreateGigModal()" class="bg-indigo-600 px-4 py-2 rounded">+ New Gig</button></div>`;
-                
-                if (gigs.documents.length === 0) {
-                    html += `<div class="glass-card p-6 text-center">No gigs yet. Click "New Gig" to create your first service!</div>`;
-                } else {
-                    for (const gig of gigs.documents) {
-                        html += `<div class="glass-card p-4 rounded-xl"><h3 class="font-bold">${escapeHtml(gig.title)}</h3><p>${escapeHtml(gig.description || 'No description')}</p><p class="text-indigo-400">$${gig.price} · ${gig.deliveryDays || 3} days</p><button onclick="deleteGig('${gig.$id}')" class="bg-red-600 px-3 py-1 rounded text-sm mt-2">Delete</button></div>`;
-                    }
-                }
-                return html + `</div>`;
-            } catch(e) {
-                console.error('Gigs error:', e);
-                return `<div class="glass-card p-6">Error loading gigs: ${e.message}. Make sure the 'gigs' collection exists in your Appwrite database.</div>`;
-            }
-        }
+<button onclick="showSection('settings')" class="w-full text-left p-3 bg-slate-800 rounded-xl">Settings</button>
 
-        window.showCreateGigModal = () => {
-            const title = prompt('Gig title');
-            const price = prompt('Price in USD');
-            const description = prompt('Short description');
-            if(title && price) {
-                databases.createDocument(DATABASE_ID, GIGS_COLLECTION, ID.unique(), { 
-                    userId: currentUser.$id, 
-                    title, 
-                    price: parseFloat(price), 
-                    deliveryDays: 3, 
-                    description: description || 'Professional AI service',
-                    createdAt: new Date().toISOString()
-                }).then(() => renderPage('gigs')).catch(err => showError('Failed to create gig: ' + err.message));
-            }
-        };
-        
-        window.deleteGig = async (id) => { 
-            if(confirm('Delete this gig?')) {
-                await databases.deleteDocument(DATABASE_ID, GIGS_COLLECTION, id); 
-                renderPage('gigs');
-            }
-        };
+<button onclick="logout()" class="w-full text-left p-3 bg-red-600 rounded-xl">Logout</button>
 
-        // ---------- Orders ----------
-        async function renderOrders() {
-            try {
-                const orders = await databases.listDocuments(DATABASE_ID, ORDERS_COLLECTION, [
-                    Query.equal('freelancerId', currentUser.$id)
-                ]);
-                let html = `<h2 class="text-2xl font-bold mb-4">Orders</h2><div class="space-y-2">`;
-                if (orders.documents.length === 0) {
-                    html += `<div class="glass-card p-4">No orders yet.</div>`;
-                } else {
-                    for (const order of orders.documents) {
-                        html += `<div class="glass-card p-3">Order #${order.$id.slice(-6)} - ${order.status || 'pending'} - $${order.amount || 0}</div>`;
-                    }
-                }
-                return html + `</div>`;
-            } catch(e) {
-                return `<div class="glass-card p-6">Orders collection not ready: ${e.message}</div>`;
-            }
-        }
+</div>
 
-        // ---------- Proposals ----------
-        async function renderProposals() {
-            try {
-                const proposals = await databases.listDocuments(DATABASE_ID, PROPOSALS_COLLECTION, [
-                    Query.equal('freelancerId', currentUser.$id)
-                ]);
-                let html = `<h2 class="text-2xl font-bold mb-4">My Proposals</h2>`;
-                if (proposals.documents.length === 0) {
-                    html += `<div class="glass-card p-4">No proposals submitted yet. Browse the Job Feed!</div>`;
-                } else {
-                    for (const p of proposals.documents) {
-                        html += `<div class="glass-card p-3 mb-2">${escapeHtml(p.coverLetter || 'No cover letter')} - Status: ${p.status || 'pending'}</div>`;
-                    }
-                }
-                return html;
-            } catch(e) {
-                return `<div class="glass-card p-6">Proposals error: ${e.message}</div>`;
-            }
-        }
+</div>
 
-        // ---------- Job Feed ----------
-        async function renderJobFeed() {
-            try {
-                const jobs = await databases.listDocuments(DATABASE_ID, JOBS_COLLECTION, [
-                    Query.equal('status', 'open')
-                ]);
-                let html = `<h2 class="text-2xl font-bold mb-4">Latest AI Jobs</h2><div class="grid md:grid-cols-2 gap-4">`;
-                if (jobs.documents.length === 0) {
-                    html += `<div class="glass-card p-6 col-span-2">No open jobs at the moment. Check back later!</div>`;
-                } else {
-                    for (const job of jobs.documents) {
-                        html += `<div class="glass-card p-4"><h3 class="font-bold">${escapeHtml(job.title)}</h3><p>${escapeHtml(job.description || 'No description')}</p><p class="text-indigo-400">Budget: $${job.budget || 0}</p><button onclick="applyToJob('${job.$id}')" class="bg-green-600 px-4 py-1 rounded mt-2">Apply</button></div>`;
-                    }
-                }
-                return html + `</div>`;
-            } catch(e) {
-                return `<div class="glass-card p-6">Job feed error: ${e.message}. Please ensure 'jobs' collection exists.</div>`;
-            }
-        }
-        
-        window.applyToJob = async (jobId) => { 
-            try {
-                await databases.createDocument(DATABASE_ID, PROPOSALS_COLLECTION, ID.unique(), { 
-                    freelancerId: currentUser.$id, 
-                    jobId, 
-                    status: 'pending', 
-                    coverLetter: 'I have the skills you need!',
-                    createdAt: new Date().toISOString()
-                }); 
-                alert('Proposal sent successfully!');
-            } catch(e) {
-                showError('Failed to apply: ' + e.message);
-            }
-        };
+<!-- MAIN -->
 
-        // ---------- Followers (simplified) ----------
-        async function renderFollowers() {
-            try {
-                const freelancers = await databases.listDocuments(DATABASE_ID, USERS_COLLECTION, [
-                    Query.equal('role', 'freelancer'),
-                    Query.notEqual('userId', currentUser.$id)
-                ]);
-                let html = `<h2 class="text-2xl font-bold mb-4">Discover Freelancers</h2><div class="grid md:grid-cols-3 gap-4">`;
-                for (const f of freelancers.documents) {
-                    html += `<div class="glass-card p-4"><h3>${escapeHtml(f.name)}</h3><p>👥 ${f.followersCount || 0} followers</p><button onclick="followUser('${f.userId}')" class="mt-2 bg-indigo-600 px-3 py-1 rounded text-sm">Follow</button></div>`;
-                }
-                return html + `</div>`;
-            } catch(e) {
-                return `<div class="glass-card p-6">Followers feature: ${e.message}</div>`;
-            }
-        }
-        
-        window.followUser = async (followedId) => { 
-            try {
-                await databases.createDocument(DATABASE_ID, FOLLOWS_COLLECTION, ID.unique(), { 
-                    followerId: currentUser.$id, 
-                    followedId, 
-                    createdAt: new Date() 
-                });
-                alert('Followed successfully!');
-                renderPage('followers');
-            } catch(e) {
-                showError('Follow failed: ' + e.message);
-            }
-        };
+<div class="flex-1 p-8">
 
-        // ---------- Chat (simplified) ----------
-        async function renderChat() {
-            return `<div class="glass-card p-6"><h2 class="text-2xl font-bold">Messaging</h2><p class="mt-4">Chat system coming soon. Follow freelancers to start messaging!</p><div id="chatWindow" class="hidden mt-6"></div></div>`;
-        }
+<!-- DASHBOARD -->
 
-        // ---------- Wallet ----------
-        async function renderWallet() {
-            return `<div class="glass-card p-6 rounded-2xl">
-                        <h2 class="text-2xl font-bold">Wallet Balance: $${currentUserDoc.walletBalance || 0} USD</h2>
-                        <div class="mt-4 text-gray-300">≈ KES ${((currentUserDoc.walletBalance || 0) * 130).toFixed(2)}</div>
-                        <div class="flex gap-4 mt-6">
-                            <input type="number" id="depositAmount" placeholder="Amount (KES)" class="bg-gray-800 p-2 rounded">
-                            <button onclick="depositMpesa()" class="bg-green-600 px-4 py-2 rounded">M-Pesa Deposit</button>
-                            <button onclick="withdraw()" class="bg-yellow-600 px-4 py-2 rounded">Withdraw</button>
-                        </div>
-                    </div>`;
-        }
-        
-        window.depositMpesa = async () => { alert('M-Pesa integration would go here (requires backend)'); };
-        window.withdraw = async () => { alert('Withdrawal request submitted'); };
+<div id="dashboard" class="section">
 
-        // ---------- Other pages (simplified placeholders) ----------
-        async function renderEscrow() { return `<div class="glass-card p-6"><h2>Escrow & Milestones</h2><p>Coming soon. Secure payments with milestone tracking.</p></div>`; }
-        async function renderAnalytics() { return `<div class="glass-card p-6"><h2>Analytics Dashboard</h2><p>View your earnings, proposal success rate, and demand trends.</p></div>`; }
-        async function renderReviews() { return `<div class="glass-card p-6"><h2>Reviews & Reputation</h2><p>⭐ 4.8 average rating (12 reviews)</p><p>Badges: AI Expert, Verified Professional</p></div>`; }
-        async function renderCertificates() { return `<div class="glass-card p-6"><h2>Nexus AI School</h2><p>Enroll in courses to earn certificates and boost your profile.</p><button class="bg-indigo-600 px-4 py-2 rounded mt-2">Browse Courses</button></div>`; }
-        async function renderReferrals() { return `<div class="glass-card p-6"><h2>Referral Program</h2><p>Your referral link: <code class="bg-gray-800 p-1 rounded">${window.location.origin}/ref/${currentUser.$id}</code></p><p>Earn $20 for each friend who completes KYC and 5 certificates!</p><p>Current referral balance: $${currentUserDoc.referralBalance || 0}</p></div>`; }
-        async function renderNotifications() { 
-            try {
-                const notifs = await databases.listDocuments(DATABASE_ID, NOTIFICATIONS_COLLECTION, [Query.equal('userId', currentUser.$id)]);
-                let html = `<h2>Notifications</h2>`;
-                if(notifs.total === 0) html += `<div class="glass-card p-4">No notifications yet</div>`;
-                else for (const n of notifs.documents) html += `<div class="glass-card p-3 my-2">${escapeHtml(n.message)}</div>`;
-                return html;
-            } catch(e) { return `<div class="glass-card p-6">Notifications: ${e.message}</div>`; }
-        }
-        async function renderKYC() { return `<div class="glass-card p-6"><h2>KYC Verification</h2><p>Status: ${currentUserDoc.kycStatus || 'pending'}</p><input type="file" id="kycFile" class="mt-2"><button onclick="submitKYC()" class="bg-indigo-600 px-4 py-2 rounded mt-2">Submit Documents</button></div>`; }
-        window.submitKYC = async () => { alert('Documents uploaded. Admin will review shortly.'); };
-        async function renderSettings() { return `<div class="glass-card p-6"><h2>Settings</h2><p>Profile settings, password change, and preferences coming soon.</p></div>`; }
+<h2 class="text-4xl font-bold mb-6">
+Dashboard
+</h2>
 
-        // Helper functions
-        window.quickAction = (action) => { 
-            if(action === 'createGig') showCreateGigModal(); 
-            else if(action === 'postJob') alert('Post a job feature - coming soon!'); 
-        };
-        
-        window.askAI = () => {
-            const input = document.getElementById('aiInput');
-            if(input && input.value) {
-                alert(`AI Assistant: I'm helping with "${input.value}". Check back for automated suggestions!`);
-            } else {
-                alert('AI Assistant: Please type a question about gigs, proposals, or earnings.');
-            }
-        };
-        
-        window.logout = async () => { 
-            await account.deleteSession('current'); 
-            window.location.href = 'index.html'; 
-        };
-        
-        function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m) { if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; return m;}); }
-        
-        // Navigation setup
-        window.renderPage = renderPage;
-        
-        document.getElementById('menuToggle')?.addEventListener('click', () => { 
-            document.getElementById('sidebar').classList.toggle('-translate-x-full'); 
-        });
-        
-        document.querySelectorAll('.nav-link, .bottom-nav-link').forEach(link => { 
-            link.addEventListener('click', (e) => { 
-                e.preventDefault(); 
-                const page = link.dataset.page;
-                if(page) renderPage(page); 
-                if(window.innerWidth < 768) document.getElementById('sidebar').classList.add('-translate-x-full'); 
-            }); 
-        });
-        
-        document.getElementById('aiAssistantBtn')?.addEventListener('click', () => alert('AI Assistant: How can I help you today? Ask about creating gigs, finding jobs, or withdrawing earnings.'));
-        
-        function updateNotificationBadge() { /* placeholder */ }
-        function attachPageScripts(page) { /* dynamic bindings */ }
-        
-        // Start the app
-        loadUser();
-    </script>
+<div class="grid grid-cols-3 gap-5">
+
+<div class="bg-slate-800 p-6 rounded-2xl">
+<h3 class="text-gray-400">Wallet</h3>
+<p class="text-3xl font-bold">$0</p>
+</div>
+
+<div class="bg-slate-800 p-6 rounded-2xl">
+<h3 class="text-gray-400">Active Jobs</h3>
+<p class="text-3xl font-bold" id="activeJobs">0</p>
+</div>
+
+<div class="bg-slate-800 p-6 rounded-2xl">
+<h3 class="text-gray-400">Proposals</h3>
+<p class="text-3xl font-bold" id="proposalCount">0</p>
+</div>
+
+</div>
+
+</div>
+
+<!-- JOBS -->
+
+<div id="jobs" class="section hidden">
+
+<h2 class="text-4xl font-bold mb-6">
+Browse Jobs
+</h2>
+
+<div id="jobsContainer"></div>
+
+</div>
+
+<!-- MY JOBS -->
+
+<div id="myjobs" class="section hidden">
+
+<h2 class="text-4xl font-bold mb-6">
+Post Job
+</h2>
+
+<div class="bg-slate-800 p-6 rounded-2xl max-w-xl">
+
+<input id="title"
+placeholder="Job title"
+class="w-full p-4 rounded-xl bg-slate-900 mb-4">
+
+<textarea id="description"
+placeholder="Description"
+class="w-full p-4 rounded-xl bg-slate-900 mb-4"></textarea>
+
+<input id="budget"
+placeholder="Budget"
+class="w-full p-4 rounded-xl bg-slate-900 mb-4">
+
+<button onclick="createGig()"
+class="bg-green-600 px-6 py-3 rounded-xl">
+Post Job
+</button>
+
+</div>
+
+</div>
+
+<!-- PROPOSALS -->
+
+<div id="proposals" class="section hidden">
+
+<h2 class="text-4xl font-bold mb-6">
+My Proposals
+</h2>
+
+<div id="proposalContainer"></div>
+
+</div>
+
+<!-- WALLET -->
+
+<div id="wallet" class="section hidden">
+
+<h2 class="text-4xl font-bold mb-6">
+Wallet
+</h2>
+
+<div class="bg-slate-800 p-8 rounded-2xl">
+Balance: $0
+</div>
+
+</div>
+
+<!-- MESSAGES -->
+
+<div id="messages" class="section hidden">
+
+<h2 class="text-4xl font-bold mb-6">
+Messages
+</h2>
+
+<div class="bg-slate-800 p-8 rounded-2xl">
+No messages yet
+</div>
+
+</div>
+
+<!-- SETTINGS -->
+
+<div id="settings" class="section hidden">
+
+<h2 class="text-4xl font-bold mb-6">
+Settings
+</h2>
+
+<div class="bg-slate-800 p-8 rounded-2xl">
+Profile settings coming soon
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const client = new Appwrite.Client()
+.setEndpoint("https://fra.cloud.appwrite.io/v1")
+.setProject("6a01720e0005a5f59bb9");
+
+const account = new Appwrite.Account(client);
+const databases = new Appwrite.Databases(client);
+
+const DATABASE_ID = "6a01723d0014a5c79b6f";
+
+const GIGS = "gigs";
+const PROPOSALS = "proposals";
+
+function showSection(id){
+
+document.querySelectorAll(".section").forEach(sec=>{
+sec.classList.add("hidden");
+});
+
+document.getElementById(id).classList.remove("hidden");
+
+}
+
+async function createGig(){
+
+const user = await account.get();
+
+await databases.createDocument(
+DATABASE_ID,
+GIGS,
+Appwrite.ID.unique(),
+{
+title:title.value,
+description:description.value,
+budget:Number(budget.value),
+clientId:user.$id,
+status:"open"
+}
+);
+
+alert("Job posted");
+
+loadJobs();
+
+}
+
+async function loadJobs(){
+
+const res = await databases.listDocuments(
+DATABASE_ID,
+GIGS
+);
+
+document.getElementById("jobsContainer").innerHTML =
+res.documents.map(job=>`
+
+<div class="bg-slate-800 p-6 rounded-2xl mb-4">
+
+<h3 class="text-2xl font-bold">
+${job.title}
+</h3>
+
+<p class="text-gray-400 mt-2">
+${job.description}
+</p>
+
+<p class="mt-4">
+Budget: $${job.budget}
+</p>
+
+<button onclick="apply('${job.$id}')"
+class="mt-4 bg-blue-600 px-5 py-2 rounded-xl">
+Apply
+</button>
+
+</div>
+
+`).join("");
+
+document.getElementById("activeJobs").innerText =
+res.documents.length;
+
+}
+
+async function apply(gigId){
+
+const user = await account.get();
+
+const coverLetter = prompt("Cover Letter");
+const price = prompt("Your Price");
+
+await databases.createDocument(
+DATABASE_ID,
+PROPOSALS,
+Appwrite.ID.unique(),
+{
+gigId,
+freelancerId:user.$id,
+coverLetter,
+price:Number(price),
+status:"pending"
+}
+);
+
+alert("Applied");
+
+loadProposals();
+
+}
+
+async function loadProposals(){
+
+const user = await account.get();
+
+const res = await databases.listDocuments(
+DATABASE_ID,
+PROPOSALS,
+[
+Appwrite.Query.equal("freelancerId",user.$id)
+]
+);
+
+document.getElementById("proposalContainer").innerHTML =
+res.documents.map(p=>`
+
+<div class="bg-slate-800 p-6 rounded-2xl mb-4">
+
+<p>
+Proposal Price: $${p.price}
+</p>
+
+<p class="mt-2">
+Status: ${p.status}
+</p>
+
+</div>
+
+`).join("");
+
+document.getElementById("proposalCount").innerText =
+res.documents.length;
+
+}
+
+async function logout(){
+await account.deleteSessions();
+window.location.href = "index.html";
+}
+
+loadJobs();
+loadProposals();
+
+</script>
+
 </body>
 </html>
