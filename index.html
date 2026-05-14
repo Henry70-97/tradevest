@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Nexus AI - Registration</title>
+  <title>Nexus AI Auth</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
@@ -28,37 +28,57 @@
       from { opacity: 0; transform: translateY(-10px); }
       to { opacity: 1; transform: translateY(0); }
     }
+
+    .tab-active {
+      background: #2563eb;
+    }
   </style>
 </head>
 
 <body class="bg-gray-950 text-white flex items-center justify-center min-h-screen">
 
-  <div class="w-full max-w-md bg-gray-900 p-8 rounded-2xl shadow-xl">
+<div class="w-full max-w-md bg-gray-900 p-8 rounded-2xl shadow-xl">
 
-    <h1 class="text-2xl font-bold text-center mb-6">Nexus AI Registration</h1>
+  <h1 class="text-2xl font-bold text-center mb-4">Nexus AI</h1>
 
-    <input id="name" type="text" placeholder="Full Name"
+  <!-- Tabs -->
+  <div class="flex mb-6 bg-gray-800 rounded-lg overflow-hidden">
+    <button id="tabRegister" onclick="showRegister()" class="w-1/2 p-2 tab-active">Register</button>
+    <button id="tabLogin" onclick="showLogin()" class="w-1/2 p-2">Login</button>
+  </div>
+
+  <!-- Register -->
+  <div id="registerBox">
+    <input id="rName" type="text" placeholder="Full Name"
       class="w-full p-3 mb-3 rounded bg-gray-800 outline-none"/>
 
-    <input id="email" type="email" placeholder="Email"
+    <input id="rEmail" type="email" placeholder="Email"
       class="w-full p-3 mb-3 rounded bg-gray-800 outline-none"/>
 
-    <input id="password" type="password" placeholder="Password"
+    <input id="rPassword" type="password" placeholder="Password"
       class="w-full p-3 mb-4 rounded bg-gray-800 outline-none"/>
 
     <button onclick="registerUser()"
       class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded font-semibold">
       Register
     </button>
-
-    <p class="text-center text-sm mt-4 text-gray-400">
-      Already registered?
-      <a href="login.html" class="text-blue-400 hover:underline">
-        Click here to login
-      </a>
-    </p>
-
   </div>
+
+  <!-- Login -->
+  <div id="loginBox" class="hidden">
+    <input id="lEmail" type="email" placeholder="Email"
+      class="w-full p-3 mb-3 rounded bg-gray-800 outline-none"/>
+
+    <input id="lPassword" type="password" placeholder="Password"
+      class="w-full p-3 mb-4 rounded bg-gray-800 outline-none"/>
+
+    <button onclick="loginUser()"
+      class="w-full bg-green-600 hover:bg-green-700 p-3 rounded font-semibold">
+      Login
+    </button>
+  </div>
+
+</div>
 
 <script>
   const client = new Appwrite.Client();
@@ -71,57 +91,79 @@
 
   const ADMIN_EMAIL = "hankwane1@gmail.com";
 
-  function toast(message, type="success") {
-    const div = document.createElement("div");
-    div.className = `toast ${type}`;
-    div.innerText = message;
+  function toast(msg, type="success") {
+    const t = document.createElement("div");
+    t.className = `toast ${type}`;
+    t.innerText = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
 
-    document.body.appendChild(div);
+  function showRegister() {
+    document.getElementById("registerBox").classList.remove("hidden");
+    document.getElementById("loginBox").classList.add("hidden");
 
-    setTimeout(() => {
-      div.remove();
-    }, 3500);
+    document.getElementById("tabRegister").classList.add("tab-active");
+    document.getElementById("tabLogin").classList.remove("tab-active");
+  }
+
+  function showLogin() {
+    document.getElementById("registerBox").classList.add("hidden");
+    document.getElementById("loginBox").classList.remove("hidden");
+
+    document.getElementById("tabLogin").classList.add("tab-active");
+    document.getElementById("tabRegister").classList.remove("tab-active");
   }
 
   async function registerUser() {
-    const name = document.getElementById("name").value;
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
+    const name = document.getElementById("rName").value;
+    const email = document.getElementById("rEmail").value;
+    const password = document.getElementById("rPassword").value;
 
     if (!name || !email || !password) {
-      toast("All fields are required", "error");
+      toast("All fields required", "error");
       return;
     }
 
     try {
-      // Create account
-      await account.create(
-        "unique()",
-        email,
-        password,
-        name
-      );
-
-      // Login session
+      await account.create("unique()", email, password, name);
       await account.createEmailPasswordSession(email, password);
+      await account.createVerification(window.location.href);
 
-      // Send verification email
-      await account.createVerification(
-        window.location.href
-      );
+      toast("Verification email sent!", "success");
 
-      toast("Verification email sent! Check your inbox.", "success");
+    } catch (err) {
+      toast(err.message, "error");
+    }
+  }
 
-      // Auto redirect after short delay
-      setTimeout(async () => {
-        const user = await account.get();
+  async function loginUser() {
+    const email = document.getElementById("lEmail").value;
+    const password = document.getElementById("lPassword").value;
 
+    if (!email || !password) {
+      toast("Fill all fields", "error");
+      return;
+    }
+
+    try {
+      await account.createEmailPasswordSession(email, password);
+      const user = await account.get();
+
+      if (!user.emailVerification) {
+        toast("Please verify your email first", "error");
+        return;
+      }
+
+      toast("Login successful!", "success");
+
+      setTimeout(() => {
         if (user.email === ADMIN_EMAIL) {
           window.location.href = "admin.html";
         } else {
           window.location.href = "user-dashboard.html";
         }
-      }, 2500);
+      }, 1200);
 
     } catch (err) {
       toast(err.message, "error");
