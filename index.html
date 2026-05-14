@@ -3,21 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Nexus AI Marketplace</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
 
 <style>
+
 body{
-    background:#020617;
-    font-family:Arial, sans-serif;
+background:#020617;
+font-family:Arial, sans-serif;
 }
+
 .glass{
-    background:rgba(255,255,255,0.05);
-    backdrop-filter:blur(10px);
+background:rgba(255,255,255,0.05);
+backdrop-filter:blur(10px);
 }
+
 </style>
+
 </head>
 
 <body class="min-h-screen flex items-center justify-center text-white p-4">
@@ -59,8 +64,10 @@ class="w-full p-4 rounded-xl bg-slate-800 border border-slate-700 outline-none"
 id="role"
 class="w-full p-4 rounded-xl bg-slate-800 border border-slate-700 outline-none"
 >
+
 <option value="user">Freelancer</option>
 <option value="admin">Admin</option>
+
 </select>
 
 <button
@@ -85,6 +92,10 @@ Login
 
 <script>
 
+/* =========================
+APPWRITE CONFIG
+========================= */
+
 const client = new Appwrite.Client();
 
 client
@@ -97,11 +108,77 @@ const databases = new Appwrite.Databases(client);
 const DATABASE_ID = "6a01723d0014a5c79b6f";
 
 /*
-USE YOUR REAL COLLECTION IDS
-CHANGE THESE IF NECESSARY
+IMPORTANT:
+REPLACE WITH YOUR REAL COLLECTION ID
 */
 
 const USERS_COLLECTION = "users";
+
+/* =========================
+CHECK LOGGED IN USER
+========================= */
+
+async function getLoggedInUser(){
+
+try{
+
+const user = await account.get();
+
+return user;
+
+}catch(error){
+
+return null;
+
+}
+
+}
+
+/* =========================
+AUTO REDIRECT
+========================= */
+
+async function checkSession(){
+
+const currentUser = await getLoggedInUser();
+
+if(!currentUser) return;
+
+try{
+
+const profile = await databases.listDocuments(
+DATABASE_ID,
+USERS_COLLECTION,
+[
+Appwrite.Query.equal("userId",currentUser.$id)
+]
+);
+
+if(profile.documents.length > 0){
+
+const role = profile.documents[0].role;
+
+if(role === "admin"){
+
+window.location.href = "admin.html";
+
+}else{
+
+window.location.href = "user-dashboard.html";
+
+}
+
+}
+
+}catch(error){
+
+console.error(error);
+
+}
+
+}
+
+checkSession();
 
 /* =========================
 REGISTER
@@ -125,6 +202,52 @@ return;
 
 try{
 
+msg.innerText = "Checking session...";
+
+/* CHECK IF USER ALREADY LOGGED IN */
+
+const existingUser = await getLoggedInUser();
+
+if(existingUser){
+
+msg.innerText = "Already logged in";
+
+/* REDIRECT USER */
+
+const profile = await databases.listDocuments(
+DATABASE_ID,
+USERS_COLLECTION,
+[
+Appwrite.Query.equal("userId",existingUser.$id)
+]
+);
+
+if(profile.documents.length > 0){
+
+const existingRole = profile.documents[0].role;
+
+setTimeout(()=>{
+
+if(existingRole === "admin"){
+
+window.location.href = "admin.html";
+
+}else{
+
+window.location.href = "user-dashboard.html";
+
+}
+
+},500);
+
+}
+
+return;
+
+}
+
+/* CREATE ACCOUNT */
+
 msg.innerText = "Creating account...";
 
 const newUser = await account.create(
@@ -134,7 +257,7 @@ password,
 name
 );
 
-/* LOGIN AFTER REGISTER */
+/* LOGIN USER */
 
 await account.createEmailPasswordSession(
 email,
@@ -155,11 +278,11 @@ role:role,
 walletBalance:0,
 totalEarnings:0,
 activeJobs:0,
-createdAt:new Date().toISOString(),
-status:"active",
+followers:0,
 verified:false,
+status:"active",
 kycStatus:"pending",
-followers:0
+createdAt:new Date().toISOString()
 }
 );
 
@@ -210,6 +333,50 @@ return;
 
 try{
 
+/* CHECK EXISTING SESSION */
+
+const existingUser = await getLoggedInUser();
+
+if(existingUser){
+
+msg.innerText = "Already logged in";
+
+/* REDIRECT */
+
+const profile = await databases.listDocuments(
+DATABASE_ID,
+USERS_COLLECTION,
+[
+Appwrite.Query.equal("userId",existingUser.$id)
+]
+);
+
+if(profile.documents.length > 0){
+
+const role = profile.documents[0].role;
+
+setTimeout(()=>{
+
+if(role === "admin"){
+
+window.location.href = "admin.html";
+
+}else{
+
+window.location.href = "user-dashboard.html";
+
+}
+
+},500);
+
+}
+
+return;
+
+}
+
+/* LOGIN */
+
 msg.innerText = "Logging in...";
 
 await account.createEmailPasswordSession(
@@ -219,9 +386,9 @@ password
 
 const currentUser = await account.get();
 
-/* GET USER ROLE */
+/* GET PROFILE */
 
-const userProfile = await databases.listDocuments(
+const profile = await databases.listDocuments(
 DATABASE_ID,
 USERS_COLLECTION,
 [
@@ -229,14 +396,14 @@ Appwrite.Query.equal("userId",currentUser.$id)
 ]
 );
 
-if(userProfile.documents.length === 0){
+if(profile.documents.length === 0){
 
 msg.innerText = "Profile not found";
 return;
 
 }
 
-const role = userProfile.documents[0].role;
+const role = profile.documents[0].role;
 
 msg.innerText = "Login successful";
 
@@ -264,54 +431,6 @@ msg.innerText = error.message;
 }
 
 }
-
-/* =========================
-AUTO LOGIN
-========================= */
-
-async function checkSession(){
-
-try{
-
-const current = await account.get();
-
-if(current){
-
-const userProfile = await databases.listDocuments(
-DATABASE_ID,
-USERS_COLLECTION,
-[
-Appwrite.Query.equal("userId",current.$id)
-]
-);
-
-if(userProfile.documents.length > 0){
-
-const role = userProfile.documents[0].role;
-
-if(role === "admin"){
-
-window.location.href = "admin.html";
-
-}else{
-
-window.location.href = "user-dashboard.html";
-
-}
-
-}
-
-}
-
-}catch(error){
-
-console.log("No active session");
-
-}
-
-}
-
-checkSession();
 
 </script>
 
