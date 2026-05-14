@@ -3,100 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Nexus AI Marketplace</title>
+<title>Nexus AI Auth</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
 
-<style>
-
-body{
-background:#020617;
-font-family:Arial,sans-serif;
-}
-
-.glass{
-background:rgba(255,255,255,0.05);
-backdrop-filter:blur(12px);
-}
-
-</style>
-
 </head>
 
-<body class="min-h-screen flex items-center justify-center text-white p-4">
+<body class="bg-slate-950 text-white flex items-center justify-center min-h-screen">
 
-<div class="glass w-full max-w-md rounded-3xl p-8 border border-slate-700 shadow-2xl">
+<div class="bg-slate-900 p-8 rounded-2xl w-full max-w-md">
 
-<h1 class="text-4xl font-bold text-center mb-2">
-Nexus AI
-</h1>
+<h1 class="text-3xl font-bold mb-6 text-center">Nexus AI</h1>
 
-<p class="text-center text-gray-400 mb-8">
-AI Freelancing Marketplace
-</p>
+<input id="name" placeholder="Name" class="w-full p-3 mb-3 bg-slate-800 rounded">
+<input id="email" placeholder="Email" class="w-full p-3 mb-3 bg-slate-800 rounded">
+<input id="password" type="password" placeholder="Password" class="w-full p-3 mb-3 bg-slate-800 rounded">
 
-<div class="space-y-4">
-
-<input
-id="name"
-type="text"
-placeholder="Full Name"
-class="w-full p-4 rounded-xl bg-slate-800 border border-slate-700 outline-none"
-/>
-
-<input
-id="email"
-type="email"
-placeholder="Email Address"
-class="w-full p-4 rounded-xl bg-slate-800 border border-slate-700 outline-none"
-/>
-
-<input
-id="password"
-type="password"
-placeholder="Password"
-class="w-full p-4 rounded-xl bg-slate-800 border border-slate-700 outline-none"
-/>
-
-<select
-id="role"
-class="w-full p-4 rounded-xl bg-slate-800 border border-slate-700 outline-none"
->
-<option value="user">Freelancer</option>
+<select id="role" class="w-full p-3 mb-4 bg-slate-800 rounded">
+<option value="user">User</option>
 <option value="admin">Admin</option>
 </select>
 
-<button
-onclick="register()"
-class="w-full bg-green-600 hover:bg-green-700 transition p-4 rounded-xl font-bold"
->
-Create Account
-</button>
+<button onclick="register()" class="w-full bg-green-600 p-3 rounded mb-2">Register</button>
+<button onclick="login()" class="w-full bg-blue-600 p-3 rounded">Login</button>
 
-<button
-onclick="login()"
-class="w-full bg-blue-600 hover:bg-blue-700 transition p-4 rounded-xl font-bold"
->
-Login
-</button>
-
-</div>
-
-<p id="msg" class="text-center mt-6 text-gray-300"></p>
+<p id="msg" class="text-center mt-4 text-sm text-gray-400"></p>
 
 </div>
 
 <script>
 
-/* =========================
-APPWRITE CONFIG
-========================= */
-
-const client = new Appwrite.Client();
-
-client
+const client = new Appwrite.Client()
 .setEndpoint("https://fra.cloud.appwrite.io/v1")
 .setProject("6a01720e0005a5f59bb9");
 
@@ -104,152 +42,50 @@ const account = new Appwrite.Account(client);
 const databases = new Appwrite.Databases(client);
 
 const DATABASE_ID = "6a01723d0014a5c79b6f";
+const USERS = "users";
 
-/*
-IMPORTANT:
-PUT YOUR REAL COLLECTION ID HERE
-NOT COLLECTION NAME IF DIFFERENT
-*/
+/* ================= CHECK SESSION ================= */
 
-const USERS_COLLECTION = "users";
-
-/* =========================
-GET CURRENT USER
-========================= */
-
-async function getLoggedInUser(){
-
+async function getUser(){
 try{
-
-const user = await account.get();
-
-return user;
-
-}catch(error){
-
+return await account.get();
+}catch{
 return null;
-
+}
 }
 
-}
-
-/* =========================
-AUTO REDIRECT IF LOGGED IN
-========================= */
-
-async function checkSession(){
-
-const currentUser = await getLoggedInUser();
-
-if(!currentUser) return;
-
-try{
+async function autoRedirect(){
+const user = await getUser();
+if(!user) return;
 
 const profile = await databases.listDocuments(
 DATABASE_ID,
-USERS_COLLECTION,
-[
-Appwrite.Query.equal("id",currentUser.$id)
-]
+USERS,
+[Appwrite.Query.equal("userId", user.$id)]
 );
 
-if(profile.documents.length > 0){
+if(profile.documents.length === 0) return;
 
 const role = profile.documents[0].role;
 
-if(role === "admin"){
-
-window.location.href = "admin.html";
-
-}else{
-
-window.location.href = "user-dashboard.html";
-
+window.location.href =
+role === "admin" ? "admin.html" : "user-dashboard.html";
 }
 
-}
+autoRedirect();
 
-}catch(error){
-
-console.error(error);
-
-}
-
-}
-
-checkSession();
-
-/* =========================
-REGISTER
-========================= */
+/* ================= REGISTER ================= */
 
 async function register(){
 
-const name = document.getElementById("name").value.trim();
-const email = document.getElementById("email").value.trim();
-const password = document.getElementById("password").value;
+const name = nameInput.value;
+const email = emailInput.value;
+const password = passwordInput.value;
 const role = document.getElementById("role").value;
 
-const msg = document.getElementById("msg");
-
-if(!name || !email || !password){
-
-msg.innerText = "All fields are required";
-return;
-
-}
+msg.innerText = "Creating account...";
 
 try{
-
-msg.innerText = "Checking session...";
-
-/* CHECK ACTIVE SESSION */
-
-const existingUser = await getLoggedInUser();
-
-/* IF USER ALREADY LOGGED IN */
-
-if(existingUser){
-
-msg.innerText = "Already logged in";
-
-/* REDIRECT */
-
-const profile = await databases.listDocuments(
-DATABASE_ID,
-USERS_COLLECTION,
-[
-Appwrite.Query.equal("id",existingUser.$id)
-]
-);
-
-if(profile.documents.length > 0){
-
-const existingRole = profile.documents[0].role;
-
-setTimeout(()=>{
-
-if(existingRole === "admin"){
-
-window.location.href = "admin.html";
-
-}else{
-
-window.location.href = "user-dashboard.html";
-
-}
-
-},500);
-
-}
-
-return;
-
-}
-
-/* CREATE ACCOUNT */
-
-msg.innerText = "Creating account...";
 
 const newUser = await account.create(
 Appwrite.ID.unique(),
@@ -258,181 +94,66 @@ password,
 name
 );
 
-/* LOGIN AFTER REGISTER */
-
-await account.createEmailPasswordSession(
-email,
-password
-);
-
-/* CREATE DATABASE PROFILE */
+await account.createEmailPasswordSession(email, password);
 
 await databases.createDocument(
 DATABASE_ID,
-USERS_COLLECTION,
+USERS,
 Appwrite.ID.unique(),
 {
-id:newUser.$id,
-name:name,
-email:email,
-role:role,
-walletBalance:0,
-totalEarnings:0,
-activeJobs:0,
-followers:0,
-verified:false,
-status:"active",
-kycStatus:"pending",
-createdAt:new Date().toISOString()
+userId: newUser.$id,
+name,
+email,
+role
 }
 );
 
-msg.innerText = "Registration successful";
-
-/* REDIRECT */
+msg.innerText = "Success";
 
 setTimeout(()=>{
+window.location.href =
+role === "admin" ? "admin.html" : "user-dashboard.html";
+},800);
 
-if(role === "admin"){
-
-window.location.href = "admin.html";
-
-}else{
-
-window.location.href = "user-dashboard.html";
-
-}
-
-},1000);
-
-}catch(error){
-
-console.error(error);
-
-msg.innerText = error.message;
-
+}catch(e){
+msg.innerText = e.message;
 }
 
 }
 
-/* =========================
-LOGIN
-========================= */
+/* ================= LOGIN ================= */
 
 async function login(){
 
-const email = document.getElementById("email").value.trim();
-const password = document.getElementById("password").value;
-
-const msg = document.getElementById("msg");
-
-if(!email || !password){
-
-msg.innerText = "Email and password required";
-return;
-
-}
-
-try{
-
-/* CHECK IF ALREADY LOGGED IN */
-
-const existingUser = await getLoggedInUser();
-
-if(existingUser){
-
-msg.innerText = "Already logged in";
-
-/* REDIRECT */
-
-const profile = await databases.listDocuments(
-DATABASE_ID,
-USERS_COLLECTION,
-[
-Appwrite.Query.equal("id",existingUser.$id)
-]
-);
-
-if(profile.documents.length > 0){
-
-const role = profile.documents[0].role;
-
-setTimeout(()=>{
-
-if(role === "admin"){
-
-window.location.href = "admin.html";
-
-}else{
-
-window.location.href = "user-dashboard.html";
-
-}
-
-},500);
-
-}
-
-return;
-
-}
-
-/* LOGIN */
+const email = emailInput.value;
+const password = passwordInput.value;
 
 msg.innerText = "Logging in...";
 
-await account.createEmailPasswordSession(
-email,
-password
-);
+try{
 
-/* GET CURRENT USER */
+await account.createEmailPasswordSession(email, password);
 
-const currentUser = await account.get();
-
-/* GET PROFILE */
+const user = await account.get();
 
 const profile = await databases.listDocuments(
 DATABASE_ID,
-USERS_COLLECTION,
-[
-Appwrite.Query.equal("id",currentUser.$id)
-]
+USERS,
+[Appwrite.Query.equal("userId", user.$id)]
 );
 
 if(profile.documents.length === 0){
-
-msg.innerText = "Profile not found";
+msg.innerText = "No profile found";
 return;
-
 }
 
 const role = profile.documents[0].role;
 
-msg.innerText = "Login successful";
+window.location.href =
+role === "admin" ? "admin.html" : "user-dashboard.html";
 
-/* REDIRECT */
-
-setTimeout(()=>{
-
-if(role === "admin"){
-
-window.location.href = "admin.html";
-
-}else{
-
-window.location.href = "user-dashboard.html";
-
-}
-
-},1000);
-
-}catch(error){
-
-console.error(error);
-
-msg.innerText = error.message;
-
+}catch(e){
+msg.innerText = e.message;
 }
 
 }
