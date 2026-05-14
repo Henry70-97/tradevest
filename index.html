@@ -13,12 +13,12 @@
 
 body{
 background:#020617;
-font-family:Arial, sans-serif;
+font-family:Arial,sans-serif;
 }
 
 .glass{
 background:rgba(255,255,255,0.05);
-backdrop-filter:blur(10px);
+backdrop-filter:blur(12px);
 }
 
 </style>
@@ -64,10 +64,8 @@ class="w-full p-4 rounded-xl bg-slate-800 border border-slate-700 outline-none"
 id="role"
 class="w-full p-4 rounded-xl bg-slate-800 border border-slate-700 outline-none"
 >
-
 <option value="user">Freelancer</option>
 <option value="admin">Admin</option>
-
 </select>
 
 <button
@@ -109,13 +107,14 @@ const DATABASE_ID = "6a01723d0014a5c79b6f";
 
 /*
 IMPORTANT:
-REPLACE WITH YOUR REAL COLLECTION ID
+PUT YOUR REAL COLLECTION ID HERE
+NOT COLLECTION NAME IF DIFFERENT
 */
 
 const USERS_COLLECTION = "users";
 
 /* =========================
-CHECK LOGGED IN USER
+GET CURRENT USER
 ========================= */
 
 async function getLoggedInUser(){
@@ -135,7 +134,7 @@ return null;
 }
 
 /* =========================
-AUTO REDIRECT
+AUTO REDIRECT IF LOGGED IN
 ========================= */
 
 async function checkSession(){
@@ -150,7 +149,7 @@ const profile = await databases.listDocuments(
 DATABASE_ID,
 USERS_COLLECTION,
 [
-Appwrite.Query.equal("userId",currentUser.$id)
+Appwrite.Query.equal("id",currentUser.$id)
 ]
 );
 
@@ -204,21 +203,23 @@ try{
 
 msg.innerText = "Checking session...";
 
-/* CHECK IF USER ALREADY LOGGED IN */
+/* CHECK ACTIVE SESSION */
 
 const existingUser = await getLoggedInUser();
+
+/* IF USER ALREADY LOGGED IN */
 
 if(existingUser){
 
 msg.innerText = "Already logged in";
 
-/* REDIRECT USER */
+/* REDIRECT */
 
 const profile = await databases.listDocuments(
 DATABASE_ID,
 USERS_COLLECTION,
 [
-Appwrite.Query.equal("userId",existingUser.$id)
+Appwrite.Query.equal("id",existingUser.$id)
 ]
 );
 
@@ -257,21 +258,21 @@ password,
 name
 );
 
-/* LOGIN USER */
+/* LOGIN AFTER REGISTER */
 
 await account.createEmailPasswordSession(
 email,
 password
 );
 
-/* CREATE USER PROFILE */
+/* CREATE DATABASE PROFILE */
 
 await databases.createDocument(
 DATABASE_ID,
 USERS_COLLECTION,
 Appwrite.ID.unique(),
 {
-userId:newUser.$id,
+id:newUser.$id,
 name:name,
 email:email,
 role:role,
@@ -307,6 +308,7 @@ window.location.href = "user-dashboard.html";
 }catch(error){
 
 console.error(error);
+
 msg.innerText = error.message;
 
 }
@@ -333,7 +335,7 @@ return;
 
 try{
 
-/* CHECK EXISTING SESSION */
+/* CHECK IF ALREADY LOGGED IN */
 
 const existingUser = await getLoggedInUser();
 
@@ -347,7 +349,7 @@ const profile = await databases.listDocuments(
 DATABASE_ID,
 USERS_COLLECTION,
 [
-Appwrite.Query.equal("userId",existingUser.$id)
+Appwrite.Query.equal("id",existingUser.$id)
 ]
 );
 
@@ -384,6 +386,8 @@ email,
 password
 );
 
+/* GET CURRENT USER */
+
 const currentUser = await account.get();
 
 /* GET PROFILE */
@@ -392,7 +396,7 @@ const profile = await databases.listDocuments(
 DATABASE_ID,
 USERS_COLLECTION,
 [
-Appwrite.Query.equal("userId",currentUser.$id)
+Appwrite.Query.equal("id",currentUser.$id)
 ]
 );
 
@@ -426,6 +430,7 @@ window.location.href = "user-dashboard.html";
 }catch(error){
 
 console.error(error);
+
 msg.innerText = error.message;
 
 }
