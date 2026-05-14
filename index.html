@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Nexus AI Auth</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<!-- Use same SDK version as dashboard (v16) -->
+<!-- Load Appwrite SDK FIRST -->
 <script src="https://cdn.jsdelivr.net/npm/appwrite@16.0.0/dist/umd/sdk.min.js"></script>
 </head>
 <body class="bg-black text-white flex items-center justify-center min-h-screen">
@@ -24,96 +24,121 @@
 </div>
 
 <script>
-// Appwrite config (matching dashboard)
-const { Client, Account, Databases, ID } = Appwrite;
-const client = new Client()
-    .setEndpoint("https://fra.cloud.appwrite.io/v1")
-    .setProject("6a01720e0005a5f59bb9");
-
-const account = new Account(client);
-const databases = new Databases(client);
-
-// Database constants (must match dashboard)
-const DATABASE_ID = '6a01723d0014a5c79b6f';
-const USERS_COLLECTION = 'users';
-
-// Check existing session
-async function checkSession() {
-    try {
-        await account.get();
-        window.location.href = "user-dashboard.html";
-    } catch (err) {
-        console.log("No active session");
-    }
-}
-checkSession();
-
-// REGISTER - Fixed method name and creates user document
-async function register() {
-    const name = document.getElementById("name").value;
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-
-    if (!name || !email || !password) {
-        document.getElementById("msg").innerText = "All fields required";
+// Wait for DOM and SDK to be fully ready
+(function() {
+    // Check if Appwrite SDK loaded
+    if (typeof Appwrite === 'undefined') {
+        document.getElementById('msg').innerText = 'Error: Appwrite SDK failed to load. Please refresh.';
+        console.error('Appwrite SDK not loaded');
         return;
     }
 
-    try {
-        // 1. Create Appwrite user account
-        const user = await account.create(ID.unique(), email, password);
-        
-        // 2. Create email session (FIXED: use createEmailSession, not createEmailPasswordSession)
-        await account.createEmailSession(email, password);
-        
-        // 3. Create user document in database (CRITICAL for dashboard)
-        await databases.createDocument(DATABASE_ID, USERS_COLLECTION, ID.unique(), {
-            userId: user.$id,
-            name: name,
-            email: email,
-            role: 'freelancer',
-            walletBalance: 0,
-            totalEarnings: 0,
-            followersCount: 0,
-            activeGigs: 0,
-            kycStatus: 'pending',
-            referralBalance: 0,
-            createdAt: new Date().toISOString()
-        });
-        
-        document.getElementById("msg").innerText = "Registration successful! Redirecting...";
-        setTimeout(() => { window.location.href = "user-dashboard.html"; }, 1000);
-        
-    } catch (err) {
-        console.error(err);
-        document.getElementById("msg").innerText = err.message;
-    }
-}
+    // Initialize Appwrite clients
+    const { Client, Account, Databases, ID } = Appwrite;
+    
+    const client = new Client()
+        .setEndpoint("https://fra.cloud.appwrite.io/v1")
+        .setProject("6a01720e0005a5f59bb9");
+    
+    const account = new Account(client);
+    const databases = new Databases(client);
 
-// LOGIN - Fixed session method
-async function login() {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
+    // Database constants (must match dashboard)
+    const DATABASE_ID = '6a01723d0014a5c79b6f';
+    const USERS_COLLECTION = 'users';
 
-    try {
-        // Check if already logged in
+    // Expose functions globally so buttons can call them
+    window.register = async function() {
+        const name = document.getElementById("name").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
+
+        const msgEl = document.getElementById("msg");
+        
+        if (!name || !email || !password) {
+            msgEl.innerText = "All fields required";
+            return;
+        }
+
+        msgEl.innerText = "Creating account...";
+
+        try {
+            // 1. Create Appwrite user account
+            const user = await account.create(ID.unique(), email, password);
+            console.log("User created:", user.$id);
+            
+            // 2. Create email session
+            await account.createEmailSession(email, password);
+            console.log("Session created");
+            
+            // 3. Create user document in database
+            await databases.createDocument(DATABASE_ID, USERS_COLLECTION, ID.unique(), {
+                userId: user.$id,
+                name: name,
+                email: email,
+                role: 'freelancer',
+                walletBalance: 0,
+                totalEarnings: 0,
+                followersCount: 0,
+                activeGigs: 0,
+                kycStatus: 'pending',
+                referralBalance: 0,
+                createdAt: new Date().toISOString()
+            });
+            
+            msgEl.innerText = "Registration successful! Redirecting...";
+            setTimeout(() => { window.location.href = "user-dashboard.html"; }, 1000);
+            
+        } catch (err) {
+            console.error("Registration error:", err);
+            msgEl.innerText = err.message;
+        }
+    };
+
+    window.login = async function() {
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
+        const msgEl = document.getElementById("msg");
+        
+        if (!email || !password) {
+            msgEl.innerText = "Email and password required";
+            return;
+        }
+        
+        msgEl.innerText = "Logging in...";
+        
+        try {
+            // Check if already logged in
+            try {
+                await account.get();
+                window.location.href = "user-dashboard.html";
+                return;
+            } catch (e) {}
+            
+            await account.createEmailSession(email, password);
+            msgEl.innerText = "Login successful! Redirecting...";
+            setTimeout(() => { window.location.href = "user-dashboard.html"; }, 500);
+            
+        } catch (err) {
+            console.error("Login error:", err);
+            msgEl.innerText = err.message;
+        }
+    };
+
+    // Check for existing session on page load (but don't auto-redirect immediately to avoid confusion)
+    async function checkSession() {
         try {
             await account.get();
+            // Already logged in - redirect to dashboard
             window.location.href = "user-dashboard.html";
-            return;
-        } catch (e) {}
-        
-        // FIXED: use createEmailSession
-        await account.createEmailSession(email, password);
-        
-        document.getElementById("msg").innerText = "Login successful! Redirecting...";
-        setTimeout(() => { window.location.href = "user-dashboard.html"; }, 500);
-        
-    } catch (err) {
-        console.error(err);
-        document.getElementById("msg").innerText = err.message;
+        } catch (err) {
+            console.log("No active session");
+        }
     }
-}
+    
+    // Run session check after a short delay to allow page to settle
+    setTimeout(checkSession, 100);
+})();
 </script>
 </body>
 </html>
