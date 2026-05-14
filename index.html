@@ -2,198 +2,470 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Join BestPay – Register or Sign In</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>AI Marketplace | Smart Registration</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@16.0.0/dist/umd/sdk.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+        .glass {
+            backdrop-filter: blur(16px);
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .progress-bar {
+            transition: width 0.3s ease;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+        }
+        .step {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            background: #334155;
+            color: #94a3b8;
+        }
+        .step.active {
+            background: #4f46e5;
+            color: white;
+            box-shadow: 0 0 0 3px rgba(79,70,229,0.3);
+        }
+        .step.completed {
+            background: #10b981;
+            color: white;
+        }
+        .slide-transition {
+            transition: all 0.3s ease;
+        }
+    </style>
 </head>
-<body class="bg-gradient-to-br from-indigo-50 via-white to-purple-50 min-h-screen">
-    <div class="container mx-auto px-4 py-12">
-        <div class="max-w-md mx-auto">
-            <div class="text-center mb-8">
-                <i class="fas fa-chart-line text-4xl text-indigo-600"></i>
-                <h1 class="text-3xl font-extrabold mt-2 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">BestPay</h1>
-            </div>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div class="w-full max-w-md">
+        <!-- Tab Switcher -->
+        <div class="flex gap-2 mb-6">
+            <button id="loginTab" class="flex-1 py-2 rounded-lg bg-indigo-600 text-white font-semibold transition-all">Login</button>
+            <button id="registerTab" class="flex-1 py-2 rounded-lg bg-gray-700 text-gray-300 font-semibold transition-all">Register</button>
+        </div>
 
-            <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
-                <div class="bg-gradient-to-r from-indigo-600 to-purple-700 p-5 text-center">
-                    <i class="fas fa-wallet text-4xl text-yellow-200 mb-2"></i>
-                    <h2 id="formTitle" class="text-2xl font-bold text-white">Create Account</h2>
-                    <p class="text-indigo-100 text-sm">Get $20 bonus instantly</p>
+        <!-- Login Panel -->
+        <div id="loginPanel" class="glass rounded-2xl p-6 backdrop-blur-md text-white">
+            <h2 class="text-2xl font-bold mb-2">Welcome back</h2>
+            <p class="text-gray-400 text-sm mb-6">Sign in to access AI marketplace</p>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Email</label>
+                    <input type="email" id="loginEmail" class="w-full p-3 rounded-lg bg-white/10 border border-white/20 focus:border-indigo-500 outline-none transition">
                 </div>
-                <div class="p-6">
-                    <!-- Registration Form -->
-                    <div id="registerForm">
-                        <div class="space-y-4">
-                            <div><label class="block text-sm font-medium">Full Name *</label><input type="text" id="regName" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"></div>
-                            <div><label class="block text-sm font-medium">Email *</label><input type="email" id="regEmail" class="w-full px-4 py-2 border rounded-lg"></div>
-                            <div><label class="block text-sm font-medium">Password *</label><input type="password" id="regPassword" class="w-full px-4 py-2 border rounded-lg" placeholder="Min 6 chars"></div>
-                            <div><label class="block text-sm font-medium">Referral Code (optional)</label><input type="text" id="regReferral" class="w-full px-4 py-2 border rounded-lg"></div>
-                            <div class="flex items-start gap-2"><input type="checkbox" id="termsCheckbox" class="mt-1"><label class="text-sm">I agree to <button type="button" onclick="showTermsModal()" class="text-indigo-600 underline">Terms</button></label></div>
-                            <button onclick="handleRegister()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded-lg">📝 Register & Get $20</button>
-                            <p id="regMessage" class="text-sm text-center text-red-500"></p>
-                            
-                            <!-- Divider -->
-                            <div class="relative my-4"><div class="absolute inset-0 flex items-center"><div class="w-full border-t"></div></div><div class="relative flex justify-center text-xs"><span class="bg-white px-2 text-gray-500">OR</span></div></div>
-                            
-                            <!-- Google Sign-In Button -->
-                            <button onclick="handleGoogleSignIn()" class="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 transition"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5"> Sign in with Google</button>
-                            
-                            <div class="text-center mt-4"><button onclick="showLoginForm()" class="text-indigo-600 hover:underline">Already have an account? Sign In</button></div>
-                        </div>
-                    </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Password</label>
+                    <input type="password" id="loginPassword" class="w-full p-3 rounded-lg bg-white/10 border border-white/20 focus:border-indigo-500 outline-none transition">
+                </div>
+                <button id="doLogin" class="w-full bg-indigo-600 hover:bg-indigo-700 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2">
+                    <span>Sign In</span>
+                </button>
+                <div id="loginFeedback" class="text-sm text-center hidden"></div>
+            </div>
+        </div>
 
-                    <!-- Login Form (hidden) -->
-                    <div id="loginForm" class="hidden">
-                        <div class="space-y-4">
-                            <div><label class="block text-sm font-medium">Email</label><input type="email" id="loginEmail" class="w-full px-4 py-2 border rounded-lg"></div>
-                            <div><label class="block text-sm font-medium">Password</label><input type="password" id="loginPassword" class="w-full px-4 py-2 border rounded-lg"></div>
-                            <button onclick="handleLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg">🔑 Sign In</button>
-                            <div class="relative my-4"><div class="absolute inset-0 flex items-center"><div class="w-full border-t"></div></div><div class="relative flex justify-center text-xs"><span class="bg-white px-2 text-gray-500">OR</span></div></div>
-                            <button onclick="handleGoogleSignIn()" class="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5"> Sign in with Google</button>
-                            <p id="loginMessage" class="text-sm text-center text-red-500"></p>
-                            <div class="text-center"><button onclick="showRegisterForm()" class="text-indigo-600 hover:underline">No account? Create one (Free $20)</button></div>
-                        </div>
-                    </div>
+        <!-- Register Panel (Multi-step with progress) -->
+        <div id="registerPanel" class="glass rounded-2xl p-6 backdrop-blur-md text-white hidden">
+            <h2 class="text-2xl font-bold mb-2">Create account</h2>
+            <p class="text-gray-400 text-sm mb-6">Join the AI revolution</p>
+            
+            <!-- Progress Bar -->
+            <div class="mb-6">
+                <div class="flex justify-between text-xs text-gray-400 mb-1">
+                    <span>Step 1/3</span>
+                    <span id="stepPercent">0%</span>
+                </div>
+                <div class="w-full bg-gray-700 rounded-full h-2">
+                    <div id="progressFill" class="bg-indigo-600 h-2 rounded-full progress-bar" style="width: 0%"></div>
                 </div>
             </div>
+
+            <!-- Step indicators -->
+            <div class="step-indicator mb-6">
+                <div id="step1Icon" class="step active">1</div>
+                <div class="flex-1 border-t border-gray-600 self-center mx-2"></div>
+                <div id="step2Icon" class="step">2</div>
+                <div class="flex-1 border-t border-gray-600 self-center mx-2"></div>
+                <div id="step3Icon" class="step">3</div>
+            </div>
+
+            <!-- Step 1: Basic Info -->
+            <div id="step1" class="slide-transition space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Full name</label>
+                    <input type="text" id="regName" class="w-full p-3 rounded-lg bg-white/10 border border-white/20 focus:border-indigo-500 outline-none" placeholder="Alex Johnson">
+                    <p id="nameError" class="text-red-400 text-xs mt-1 hidden"></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Email address</label>
+                    <input type="email" id="regEmail" class="w-full p-3 rounded-lg bg-white/10 border border-white/20 focus:border-indigo-500 outline-none" placeholder="hello@example.com">
+                    <p id="emailError" class="text-red-400 text-xs mt-1 hidden"></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Password (min 8 chars)</label>
+                    <input type="password" id="regPassword" class="w-full p-3 rounded-lg bg-white/10 border border-white/20 focus:border-indigo-500 outline-none">
+                    <p id="passwordError" class="text-red-400 text-xs mt-1 hidden"></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Confirm password</label>
+                    <input type="password" id="regConfirm" class="w-full p-3 rounded-lg bg-white/10 border border-white/20 focus:border-indigo-500 outline-none">
+                    <p id="confirmError" class="text-red-400 text-xs mt-1 hidden"></p>
+                </div>
+                <button id="nextStep1" class="w-full bg-indigo-600 hover:bg-indigo-700 py-3 rounded-lg font-semibold transition">Next</button>
+            </div>
+
+            <!-- Step 2: Role & Skills -->
+            <div id="step2" class="slide-transition space-y-4 hidden">
+                <div>
+                    <label class="block text-sm font-medium mb-1">I am a</label>
+                    <select id="regRole" class="w-full p-3 rounded-lg bg-white/10 border border-white/20">
+                        <option value="client">Client – Hire AI experts</option>
+                        <option value="freelancer">Freelancer – Offer AI services</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Skills (add at least one)</label>
+                    <div class="flex flex-wrap gap-2 mb-2" id="skillsContainer"></div>
+                    <div class="flex gap-2">
+                        <input type="text" id="skillInput" class="flex-1 p-2 rounded-lg bg-white/10 border border-white/20" placeholder="e.g., Python, AI, Prompt Engineering">
+                        <button type="button" id="addSkillBtn" class="bg-indigo-500 px-3 rounded-lg">Add</button>
+                    </div>
+                    <p id="skillsError" class="text-red-400 text-xs mt-1 hidden"></p>
+                </div>
+                <div class="flex gap-3">
+                    <button id="prevStep2" class="flex-1 bg-gray-600 hover:bg-gray-700 py-3 rounded-lg font-semibold transition">Back</button>
+                    <button id="nextStep2" class="flex-1 bg-indigo-600 hover:bg-indigo-700 py-3 rounded-lg font-semibold transition">Next</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Profile Picture (optional but recommended) -->
+            <div id="step3" class="slide-transition space-y-4 hidden">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Profile Picture (recommended)</label>
+                    <input type="file" id="profilePic" accept="image/*" class="w-full p-2 rounded-lg bg-white/10 border border-white/20">
+                    <p class="text-xs text-gray-400 mt-1">You can upload later, but chat requires a picture.</p>
+                    <div id="picPreview" class="mt-2 hidden">
+                        <img id="previewImg" class="w-20 h-20 rounded-full object-cover">
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <button id="prevStep3" class="flex-1 bg-gray-600 hover:bg-gray-700 py-3 rounded-lg font-semibold transition">Back</button>
+                    <button id="submitRegister" class="flex-1 bg-green-600 hover:bg-green-700 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2">
+                        <span>Complete Registration</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="registerFeedback" class="mt-4 text-sm text-center hidden"></div>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, getDocs, query, where, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    <script>
+        // ------------------- Appwrite Config -------------------
+        const ENDPOINT = 'https://fra.cloud.appwrite.io/v1';
+        const PROJECT_ID = '6a01720e0005a5f59bb9';
+        const DATABASE_ID = '6a01723d0014a5c79b6f';
+        const USERS_COLLECTION = 'users';
+        const { Client, Account, Databases, ID, Storage } = Appwrite;
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDtGN7KCK0A4fhztLN0CgxsKkGROcO_-vI",
-            authDomain: "bestpay-5b78c.firebaseapp.com",
-            projectId: "bestpay-5b78c",
-            storageBucket: "bestpay-5b78c.firebasestorage.app",
-            messagingSenderId: "583230068716",
-            appId: "1:583230068716:web:3e8d298b4d00b46c8652c9"
-        };
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const googleProvider = new GoogleAuthProvider();
+        const client = new Client().setEndpoint(ENDPOINT).setProject(PROJECT_ID);
+        const account = new Account(client);
+        const databases = new Databases(client);
+        const storage = new Storage(client);
 
-        function generateReferralCode() { return Math.random().toString(36).substring(2, 8).toUpperCase(); }
+        // DOM elements
+        const loginTab = document.getElementById('loginTab');
+        const registerTab = document.getElementById('registerTab');
+        const loginPanel = document.getElementById('loginPanel');
+        const registerPanel = document.getElementById('registerPanel');
+        const doLogin = document.getElementById('doLogin');
+        const loginFeedback = document.getElementById('loginFeedback');
 
-        // Redirect if already logged in
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                if (userDoc.exists()) {
-                    const role = userDoc.data().role;
-                    window.location.href = role === "admin" ? "admin.html" : "dashboard.html";
-                }
+        // Multi-step elements
+        const step1Div = document.getElementById('step1');
+        const step2Div = document.getElementById('step2');
+        const step3Div = document.getElementById('step3');
+        const step1Icon = document.getElementById('step1Icon');
+        const step2Icon = document.getElementById('step2Icon');
+        const step3Icon = document.getElementById('step3Icon');
+        const progressFill = document.getElementById('progressFill');
+        const stepPercent = document.getElementById('stepPercent');
+
+        // Form fields
+        const regName = document.getElementById('regName');
+        const regEmail = document.getElementById('regEmail');
+        const regPassword = document.getElementById('regPassword');
+        const regConfirm = document.getElementById('regConfirm');
+        const regRole = document.getElementById('regRole');
+        const skillInput = document.getElementById('skillInput');
+        const skillsContainer = document.getElementById('skillsContainer');
+        const profilePic = document.getElementById('profilePic');
+        const previewImg = document.getElementById('previewImg');
+        const picPreview = document.getElementById('picPreview');
+        const registerFeedbackDiv = document.getElementById('registerFeedback');
+
+        let selectedSkills = [];
+        let profileFile = null;
+        let currentStep = 1;
+        const totalSteps = 3;
+
+        // Update progress bar and step icons
+        function updateProgress(step) {
+            const percent = ((step - 1) / (totalSteps - 1)) * 100;
+            progressFill.style.width = `${percent}%`;
+            stepPercent.innerText = `${Math.round(percent)}%`;
+            
+            // Update step icons
+            [step1Icon, step2Icon, step3Icon].forEach((icon, idx) => {
+                icon.classList.remove('active', 'completed');
+                if (idx + 1 === step) icon.classList.add('active');
+                else if (idx + 1 < step) icon.classList.add('completed');
+            });
+        }
+
+        function goToStep(step) {
+            currentStep = step;
+            step1Div.classList.add('hidden');
+            step2Div.classList.add('hidden');
+            step3Div.classList.add('hidden');
+            if (step === 1) step1Div.classList.remove('hidden');
+            if (step === 2) step2Div.classList.remove('hidden');
+            if (step === 3) step3Div.classList.remove('hidden');
+            updateProgress(step);
+        }
+
+        // Validate step 1
+        function validateStep1() {
+            let valid = true;
+            const name = regName.value.trim();
+            const email = regEmail.value.trim();
+            const password = regPassword.value;
+            const confirm = regConfirm.value;
+
+            if (!name) { showError('nameError', 'Full name required'); valid = false; } else hideError('nameError');
+            if (!email || !/^\S+@\S+\.\S+$/.test(email)) { showError('emailError', 'Valid email required'); valid = false; } else hideError('emailError');
+            if (password.length < 8) { showError('passwordError', 'Minimum 8 characters'); valid = false; } else hideError('passwordError');
+            if (password !== confirm) { showError('confirmError', 'Passwords do not match'); valid = false; } else hideError('confirmError');
+            return valid;
+        }
+
+        // Validate step 2
+        function validateStep2() {
+            if (selectedSkills.length === 0) {
+                showError('skillsError', 'Add at least one skill');
+                return false;
+            }
+            hideError('skillsError');
+            return true;
+        }
+
+        function showError(id, msg) {
+            const el = document.getElementById(id);
+            if (el) { el.innerText = msg; el.classList.remove('hidden'); }
+        }
+        function hideError(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('hidden');
+        }
+
+        // Skill management
+        function renderSkills() {
+            skillsContainer.innerHTML = '';
+            selectedSkills.forEach(skill => {
+                const badge = document.createElement('span');
+                badge.className = 'bg-indigo-600 px-3 py-1 rounded-full text-sm flex items-center gap-1';
+                badge.innerHTML = `${skill} <button type="button" class="remove-skill ml-1 hover:text-red-300" data-skill="${skill}">×</button>`;
+                skillsContainer.appendChild(badge);
+            });
+            document.querySelectorAll('.remove-skill').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const skill = btn.getAttribute('data-skill');
+                    selectedSkills = selectedSkills.filter(s => s !== skill);
+                    renderSkills();
+                });
+            });
+        }
+
+        document.getElementById('addSkillBtn').addEventListener('click', () => {
+            const skill = skillInput.value.trim();
+            if (skill && !selectedSkills.includes(skill)) {
+                selectedSkills.push(skill);
+                renderSkills();
+                skillInput.value = '';
             }
         });
 
-        // Shared user creation logic
-        async function createOrUpdateUser(user, name, referralCodeFromInput, isNewUser = true) {
-            const uid = user.uid;
-            const userDoc = await getDoc(doc(db, "users", uid));
-            if (!userDoc.exists()) {
-                const usersSnapshot = await getDocs(collection(db, "users"));
-                const isFirstUser = usersSnapshot.empty;
-                const role = isFirstUser ? "admin" : "user";
-                const newReferralCode = generateReferralCode();
-                await setDoc(doc(db, "users", uid), {
-                    email: user.email, displayName: name || user.displayName || "User",
-                    createdAt: serverTimestamp(), referralCode: newReferralCode,
-                    referredBy: referralCodeFromInput || null, kycStatus: "unverified",
-                    isSuspended: false, isFrozen: false, role: role,
-                    totalEarned: 20, realBalance: 20, demoBalance: 10000, totalWithdrawn: 0
-                });
-                await setDoc(doc(db, "wallets", uid), {
-                    investedBalance: 0, bonusBalance: 20, totalDeposited: 0, lastUpdated: serverTimestamp()
-                });
-                await setDoc(doc(db, "login_streaks", uid), {
-                    currentStreak: 1, longestStreak: 1, lastLoginDate: new Date().toISOString().split('T')[0], bonusClaimedToday: true
-                });
-                if (referralCodeFromInput) {
-                    const q = query(collection(db, "users"), where("referralCode", "==", referralCodeFromInput));
-                    const qSnap = await getDocs(q);
-                    if (!qSnap.empty) {
-                        await addDoc(collection(db, "referrals"), {
-                            referrerId: qSnap.docs[0].id, referredId: uid, commissionEarned: 2,
-                            status: "approved", commissionRate: 10, createdAt: serverTimestamp()
-                        });
-                        const referrerRef = doc(db, "users", qSnap.docs[0].id);
-                        const referrerSnap = await getDoc(referrerRef);
-                        if (referrerSnap.exists()) {
-                            await updateDoc(referrerRef, { realBalance: (referrerSnap.data().realBalance || 0) + 2 });
-                        }
-                    }
+        // Profile picture preview
+        profilePic.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                profileFile = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    previewImg.src = ev.target.result;
+                    picPreview.classList.remove('hidden');
+                };
+                reader.readAsDataURL(profileFile);
+            } else {
+                profileFile = null;
+                picPreview.classList.add('hidden');
+            }
+        });
+
+        // Navigation buttons
+        document.getElementById('nextStep1').addEventListener('click', () => {
+            if (validateStep1()) goToStep(2);
+        });
+        document.getElementById('prevStep2').addEventListener('click', () => goToStep(1));
+        document.getElementById('nextStep2').addEventListener('click', () => {
+            if (validateStep2()) goToStep(3);
+        });
+        document.getElementById('prevStep3').addEventListener('click', () => goToStep(2));
+
+        // Registration submission
+        document.getElementById('submitRegister').addEventListener('click', async () => {
+            const name = regName.value.trim();
+            const email = regEmail.value.trim();
+            const password = regPassword.value;
+            const role = regRole.value;
+
+            // Double-check validation
+            if (!validateStep1() || !validateStep2()) return;
+
+            const btn = document.getElementById('submitRegister');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<div class="spinner-border animate-spin border-2 border-white border-t-transparent rounded-full w-5 h-5"></div> Creating...';
+            btn.disabled = true;
+
+            registerFeedbackDiv.classList.add('hidden');
+            registerFeedbackDiv.classList.remove('text-green-400', 'text-red-400');
+
+            try {
+                // Step 1: Create Appwrite account
+                const userId = ID.unique();
+                await account.create(userId, email, password, name);
+                
+                // Step 2: Login to create session
+                await account.createEmailPasswordSession(email, password);
+                
+                const user = await account.get();
+                
+                // Step 3: Upload profile picture if provided
+                let profilePicId = null;
+                if (profileFile) {
+                    const uploaded = await storage.createFile('profile_bucket', ID.unique(), profileFile);
+                    profilePicId = uploaded.$id;
                 }
-                return role;
+                
+                // Step 4: Create user document in 'users' collection
+                await databases.createDocument(DATABASE_ID, USERS_COLLECTION, ID.unique(), {
+                    userId: user.$id,
+                    name,
+                    email,
+                    role,
+                    skills: selectedSkills,
+                    profilePictureId: profilePicId,
+                    isChatSuspended: false,
+                    walletBalance: 0,
+                    pendingBalance: 0
+                });
+                
+                // Success feedback
+                registerFeedbackDiv.innerText = '✅ Registration successful! Redirecting to dashboard...';
+                registerFeedbackDiv.classList.remove('hidden');
+                registerFeedbackDiv.classList.add('text-green-400');
+                
+                // Redirect based on role
+                setTimeout(() => {
+                    if (email === 'hankwane1@gmail.com' || role === 'admin') {
+                        window.location.href = 'admin.html';
+                    } else {
+                        window.location.href = 'user-dashboard.html';
+                    }
+                }, 2000);
+                
+            } catch (err) {
+                console.error(err);
+                let errorMsg = 'Registration failed: ';
+                if (err.message.includes('user already exists')) errorMsg += 'Email already registered.';
+                else if (err.message.includes('weak password')) errorMsg += 'Password too weak. Use 8+ chars with numbers/letters.';
+                else errorMsg += err.message;
+                registerFeedbackDiv.innerText = '❌ ' + errorMsg;
+                registerFeedbackDiv.classList.remove('hidden');
+                registerFeedbackDiv.classList.add('text-red-400');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             }
-            return userDoc.data().role;
-        }
+        });
 
-        window.handleGoogleSignIn = async () => {
-            try {
-                const result = await signInWithPopup(auth, googleProvider);
-                const user = result.user;
-                let name = user.displayName;
-                let email = user.email;
-                let referralInput = document.getElementById('regReferral')?.value.trim() || null;
-                const role = await createOrUpdateUser(user, name, referralInput, true);
-                window.location.href = role === "admin" ? "admin.html" : "dashboard.html";
-            } catch (error) {
-                document.getElementById('regMessage').innerText = `Google Sign-In error: ${error.message}`;
-            }
-        };
-
-        window.showLoginForm = () => {
-            document.getElementById("registerForm").classList.add("hidden");
-            document.getElementById("loginForm").classList.remove("hidden");
-            document.getElementById("formTitle").innerText = "Welcome Back";
-        };
-        window.showRegisterForm = () => {
-            document.getElementById("loginForm").classList.add("hidden");
-            document.getElementById("registerForm").classList.remove("hidden");
-            document.getElementById("formTitle").innerText = "Create Account";
-        };
-
-        window.showTermsModal = () => {
-            const modalHtml = `<div id="termsModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"><div class="bg-white rounded-2xl max-w-3xl w-full max-h-[85vh] overflow-y-auto p-6"><h2 class="text-2xl font-bold mb-3">Terms & Conditions</h2><div class="space-y-2 text-sm">${Array(20).fill().map((_,i)=>`<p><strong>${i+1}.</strong> Clause ${i+1} description...</p>`).join('')}</div><button onclick="this.closest('#termsModal').remove()" class="mt-4 bg-indigo-600 text-white px-6 py-2 rounded">Close</button></div></div>`;
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
-        };
-
-        window.handleRegister = async () => {
-            const name = document.getElementById('regName').value.trim();
-            const email = document.getElementById('regEmail').value.trim();
-            const password = document.getElementById('regPassword').value;
-            const referralCode = document.getElementById('regReferral').value.trim();
-            const termsOk = document.getElementById('termsCheckbox').checked;
-            const msgEl = document.getElementById('regMessage');
-            if (!name || !email || !password) { msgEl.innerText = '❌ All fields required.'; return; }
-            if (password.length < 6) { msgEl.innerText = '❌ Password >=6 characters.'; return; }
-            if (!termsOk) { msgEl.innerText = '❌ Accept Terms.'; return; }
-            msgEl.innerText = '⏳ Creating...';
-            try {
-                const userCred = await createUserWithEmailAndPassword(auth, email, password);
-                await updateProfile(userCred.user, { displayName: name });
-                const role = await createOrUpdateUser(userCred.user, name, referralCode, true);
-                msgEl.innerText = '✅ Success! Redirecting...';
-                setTimeout(() => { window.location.href = role === "admin" ? "admin.html" : "dashboard.html"; }, 1500);
-            } catch (error) { msgEl.innerText = `⚠️ ${error.message}`; }
-        };
-
-        window.handleLogin = async () => {
-            const email = document.getElementById('loginEmail').value;
+        // Login logic
+        doLogin.addEventListener('click', async () => {
+            const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
-            const msgEl = document.getElementById('loginMessage');
-            if (!email || !password) { msgEl.innerText = 'Fill all fields'; return; }
-            msgEl.innerText = 'Signing in...';
+            loginFeedback.classList.add('hidden');
+            if (!email || !password) {
+                loginFeedback.innerText = 'Email and password required';
+                loginFeedback.classList.remove('hidden', 'text-green-400');
+                loginFeedback.classList.add('text-red-400');
+                return;
+            }
+            doLogin.innerHTML = '<div class="spinner-border animate-spin border-2 border-white border-t-transparent rounded-full w-5 h-5"></div> Signing...';
+            doLogin.disabled = true;
             try {
-                await signInWithEmailAndPassword(auth, email, password);
-                // onAuthStateChanged will redirect
-            } catch (err) { msgEl.innerText = err.message; }
-        };
+                await account.createEmailPasswordSession(email, password);
+                const user = await account.get();
+                // Fetch user role
+                const docs = await databases.listDocuments(DATABASE_ID, USERS_COLLECTION, [Appwrite.Query.equal('userId', user.$id)]);
+                if (docs.total === 0) throw new Error('User profile not found');
+                const userDoc = docs.documents[0];
+                if (userDoc.role === 'admin' || email === 'hankwane1@gmail.com') {
+                    window.location.href = 'admin.html';
+                } else {
+                    window.location.href = 'user-dashboard.html';
+                }
+            } catch (err) {
+                loginFeedback.innerText = 'Login error: ' + err.message;
+                loginFeedback.classList.remove('hidden', 'text-green-400');
+                loginFeedback.classList.add('text-red-400');
+                doLogin.innerHTML = 'Sign In';
+                doLogin.disabled = false;
+            }
+        });
+
+        // Tab switching
+        loginTab.addEventListener('click', () => {
+            loginPanel.classList.remove('hidden');
+            registerPanel.classList.add('hidden');
+            loginTab.classList.add('bg-indigo-600', 'text-white');
+            loginTab.classList.remove('bg-gray-700', 'text-gray-300');
+            registerTab.classList.add('bg-gray-700', 'text-gray-300');
+            registerTab.classList.remove('bg-indigo-600', 'text-white');
+        });
+        registerTab.addEventListener('click', () => {
+            registerPanel.classList.remove('hidden');
+            loginPanel.classList.add('hidden');
+            registerTab.classList.add('bg-indigo-600', 'text-white');
+            registerTab.classList.remove('bg-gray-700', 'text-gray-300');
+            loginTab.classList.add('bg-gray-700', 'text-gray-300');
+            loginTab.classList.remove('bg-indigo-600', 'text-white');
+            // reset to step 1 when switching to register
+            if (currentStep !== 1) goToStep(1);
+        });
+
+        // Initial reset
+        goToStep(1);
     </script>
 </body>
 </html>
