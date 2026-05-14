@@ -1,180 +1,218 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus AI | Admin Control</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/appwrite@16.0.0/dist/umd/sdk.min.js"></script>
-    <style>
-        * { font-family: 'Inter', sans-serif; }
-        h1, h2, h3 { font-family: 'Space Grotesk', monospace; }
-        .glass { background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); }
-        .admin-card { transition: transform 0.2s; }
-        .admin-card:hover { transform: translateY(-2px); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Admin Dashboard</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
+
+<style>
+body{
+background:#020617;
+}
+</style>
+
 </head>
-<body class="bg-gray-950 text-gray-200">
-    <div class="flex">
-        <!-- Sidebar -->
-        <div class="w-64 h-screen bg-gray-900 border-r border-gray-800 fixed overflow-y-auto">
-            <div class="p-6">
-                <h2 class="text-2xl font-bold text-indigo-400">Nexus Admin</h2>
-                <nav class="mt-8 space-y-1">
-                    <a href="#" data-admin-page="overview" class="admin-nav block py-2 px-3 rounded hover:bg-gray-800">📊 Dashboard Overview</a>
-                    <a href="#" data-admin-page="users" class="admin-nav block py-2 px-3 rounded hover:bg-gray-800">👥 User Management</a>
-                    <a href="#" data-admin-page="verification" class="admin-nav block py-2 px-3 rounded hover:bg-gray-800">✅ Verification Center</a>
-                    <a href="#" data-admin-page="projects" class="admin-nav block py-2 px-3 rounded hover:bg-gray-800">📁 Project & Gig Management</a>
-                    <a href="#" data-admin-page="orders" class="admin-nav block py-2 px-3 rounded hover:bg-gray-800">📦 Orders & Contracts</a>
-                    <a href="#" data-admin-page="wallet" class="admin-nav block py-2 px-3 rounded hover:bg-gray-800">💰 Wallet & Finance</a>
-                    <a href="#" data-admin-page="escrow" class="admin-nav block py-2 px-3 rounded hover:bg-gray-800">⚖️ Escrow System</a>
-                    <a href="#" data-admin-page="disputes" class="admin-nav block py-2 px-3 rounded hover:bg-gray-800">🔨 Dispute Resolution</a>
-                    <a href="#" data-admin-page="support" class="admin-nav block py-2 px-3 rounded hover:bg-gray-800">🎫 Support Tickets</a>
-                    <a href="#" data-admin-page="moderation" class="admin-nav block py-2 px-3 rounded hover:bg-gray-800">⚠️ Moderation Center</a>
-                    <a href="#" data-admin-page="aiTools" class="admin-nav block py-2 px-3 rounded hover:bg-gray-800">🤖 AI Tools Management</a>
-                    <a href="#" data-admin-page="notifications" class="admin-nav block py-2 px-3 rounded hover:bg-gray-800">📢 Notifications Center</a>
-                    <a href="#" data-admin-page="cms" class="admin-nav block py-2 px-3 rounded hover:bg-gray-800">📄 CMS / Website Content</a>
-                    <a href="#" data-admin-page="reviews" class="admin-nav block py-2 px-3 rounded hover:bg-gray-800">⭐ Reviews & Ratings</a>
-                    <a href="#" data-admin-page="security" class="admin-nav block py-2 px-3 rounded hover:bg-gray-800">🔒 Security Center</a>
-                    <a href="#" data-admin-page="settings" class="admin-nav block py-2 px-3 rounded hover:bg-gray-800">⚙️ System Settings</a>
-                    <a href="#" onclick="logout()" class="block py-2 px-3 rounded hover:bg-gray-800 mt-4">🚪 Logout</a>
-                </nav>
-            </div>
-        </div>
-        <!-- Main content -->
-        <div class="ml-64 flex-1 p-6">
-            <div id="adminContent" class="max-w-7xl mx-auto"></div>
-        </div>
-    </div>
 
-    <script>
-        const ENDPOINT = 'https://fra.cloud.appwrite.io/v1';
-        const PROJECT_ID = '6a01720e0005a5f59bb9';
-        const DATABASE_ID = '6a01723d0014a5c79b6f';
-        const USERS_COLLECTION = 'users';
-        const KYC_COLLECTION = 'kyc_documents';
-        const TRANSACTIONS_COLLECTION = 'transactions';
-        const ORDERS_COLLECTION = 'orders';
-        const GIGS_COLLECTION = 'gigs';
-        const { Client, Account, Databases, ID, Query } = Appwrite;
-        const client = new Client().setEndpoint(ENDPOINT).setProject(PROJECT_ID);
-        const account = new Account(client);
-        const databases = new Databases(client);
+<body class="text-white p-8">
 
-        let adminUser = null;
+<h1 class="text-5xl font-bold mb-10">
+Admin Dashboard
+</h1>
 
-        async function loadAdmin() {
-            try {
-                const user = await account.get();
-                if (user.email !== 'hankwane1@gmail.com') { alert('Unauthorized'); window.location.href = 'index.html'; }
-                adminUser = user;
-                renderAdminPage('overview');
-            } catch(e) { window.location.href = 'index.html'; }
-        }
+<div class="grid grid-cols-3 gap-6 mb-10">
 
-        async function renderAdminPage(page) {
-            const container = document.getElementById('adminContent');
-            if (page === 'overview') container.innerHTML = await renderOverview();
-            else if (page === 'users') container.innerHTML = await renderUserManagement();
-            else if (page === 'verification') container.innerHTML = await renderVerification();
-            else if (page === 'projects') container.innerHTML = await renderProjectManagement();
-            else if (page === 'orders') container.innerHTML = await renderOrders();
-            else if (page === 'wallet') container.innerHTML = await renderWalletFinance();
-            else if (page === 'escrow') container.innerHTML = `<div class="glass p-6 rounded-2xl">Escrow controls: hold/release funds, reverse transactions.</div>`;
-            else if (page === 'disputes') container.innerHTML = `<div class="glass p-6 rounded-2xl">Dispute resolution with evidence uploads, AI summaries.</div>`;
-            else if (page === 'support') container.innerHTML = `<div class="glass p-6 rounded-2xl">Support tickets – reply, assign, close.</div>`;
-            else if (page === 'moderation') container.innerHTML = `<div class="glass p-6 rounded-2xl">Moderate reviews, portfolios, spam gigs.</div>`;
-            else if (page === 'aiTools') container.innerHTML = `<div class="glass p-6 rounded-2xl">Enable/disable AI, set pricing, monitor usage.</div>`;
-            else if (page === 'notifications') container.innerHTML = await renderNotificationsAdmin();
-            else if (page === 'cms') container.innerHTML = `<div class="glass p-6 rounded-2xl">Edit homepage, FAQs, terms, blogs.</div>`;
-            else if (page === 'reviews') container.innerHTML = `<div class="glass p-6 rounded-2xl">Manage fake reviews, feature top freelancers.</div>`;
-            else if (page === 'security') container.innerHTML = `<div class="glass p-6 rounded-2xl">Monitor logins, 2FA enforcement, IP blocking.</div>`;
-            else if (page === 'settings') container.innerHTML = `<div class="glass p-6 rounded-2xl">Platform name, colors, commission %, currencies.</div>`;
-            attachAdminScripts(page);
-        }
+<div class="bg-slate-800 p-6 rounded-2xl">
+<h2 class="text-gray-400">Users</h2>
+<p id="usersCount" class="text-4xl font-bold">0</p>
+</div>
 
-        async function renderOverview() {
-            const totalUsers = (await databases.listDocuments(DATABASE_ID, USERS_COLLECTION)).total;
-            const freelancers = (await databases.listDocuments(DATABASE_ID, USERS_COLLECTION, [Query.equal('role', 'freelancer')])).total;
-            const pendingWithdrawals = 1240;
-            return `
-                <div class="grid md:grid-cols-4 gap-4">
-                    <div class="glass p-6 rounded-2xl admin-card">👥 Total Users: ${totalUsers}</div>
-                    <div class="glass p-6 rounded-2xl admin-card">👨‍💻 Active Freelancers: ${freelancers}</div>
-                    <div class="glass p-6 rounded-2xl admin-card">💰 Pending Withdrawals: $${pendingWithdrawals}</div>
-                    <div class="glass p-6 rounded-2xl admin-card">📊 Revenue: $12,340</div>
-                </div>
-                <div class="mt-6 glass p-6 rounded-2xl"><h3>Live Activity Feed</h3><div id="liveFeed">New user registered: John Doe</div></div>
-            `;
-        }
+<div class="bg-slate-800 p-6 rounded-2xl">
+<h2 class="text-gray-400">Jobs</h2>
+<p id="jobsCount" class="text-4xl font-bold">0</p>
+</div>
 
-        async function renderUserManagement() {
-            const users = await databases.listDocuments(DATABASE_ID, USERS_COLLECTION);
-            let html = `<h2 class="text-2xl font-bold mb-4">All Users</h2><table class="w-full text-left">`;
-            for (const u of users.documents) {
-                html += `<tr class="border-b border-gray-700"><td class="py-2">${u.name}</td><td>${u.email}</td><td>${u.role}</td><td><button onclick="suspendUser('${u.$id}')" class="bg-yellow-600 px-2 py-1 rounded text-sm">Suspend</button> <button onclick="banUser('${u.$id}')" class="bg-red-600 px-2 py-1 rounded text-sm">Ban</button> <button onclick="adjustWalletPopup('${u.$id}')" class="bg-blue-600 px-2 py-1 rounded text-sm">Adjust Wallet</button></td></tr>`;
-            }
-            return html + `</table>`;
-        }
+<div class="bg-slate-800 p-6 rounded-2xl">
+<h2 class="text-gray-400">Proposals</h2>
+<p id="proposalsCount" class="text-4xl font-bold">0</p>
+</div>
 
-        async function renderVerification() {
-            const pendingKYC = await databases.listDocuments(DATABASE_ID, USERS_COLLECTION, [Query.equal('kycStatus', 'pending')]);
-            let html = `<h2>KYC & Freelancer Verification</h2>`;
-            for (const u of pendingKYC.documents) {
-                html += `<div class="glass p-4 my-2 flex justify-between"><span>${u.name}</span><span><button onclick="approveKYC('${u.$id}')" class="bg-green-600 px-3 py-1 rounded">Approve</button> <button onclick="rejectKYC('${u.$id}')" class="bg-red-600 px-3 py-1 rounded">Reject</button></span></div>`;
-            }
-            return html;
-        }
+</div>
 
-        async function renderProjectManagement() {
-            const gigs = await databases.listDocuments(DATABASE_ID, GIGS_COLLECTION);
-            let html = `<h2>Manage Gigs & Jobs</h2><div class="space-y-2">`;
-            for (const g of gigs.documents) {
-                html += `<div class="glass p-3">${g.title} - <button onclick="deleteGig('${g.$id}')" class="text-red-400">Remove</button></div>`;
-            }
-            return html + `</div>`;
-        }
+<h2 class="text-3xl font-bold mb-5">
+Users
+</h2>
 
-        async function renderOrders() {
-            const orders = await databases.listDocuments(DATABASE_ID, ORDERS_COLLECTION);
-            let html = `<h2>Orders & Contracts</h2><table class="w-full">`;
-            for (const o of orders.documents) {
-                html += `<tr><td>Order ${o.$id}</td><td>${o.status}</td><td><button onclick="forceComplete('${o.$id}')" class="bg-green-600 px-2 py-1 rounded">Complete</button> <button onclick="cancelOrder('${o.$id}')" class="bg-red-600 px-2 py-1 rounded">Cancel</button></td></tr>`;
-            }
-            return html + `</table>`;
-        }
+<div id="usersContainer"></div>
 
-        async function renderWalletFinance() {
-            const transactions = await databases.listDocuments(DATABASE_ID, TRANSACTIONS_COLLECTION);
-            let html = `<h2>Transactions & Withdrawals</h2><table class="w-full">`;
-            for (const tx of transactions.documents) {
-                html += `<tr><td>${tx.type}</td><td>$${tx.amount}</td><td>${tx.status}</td><td><button onclick="approveWithdrawal('${tx.$id}')" class="bg-green-600 px-2 py-1 rounded">Approve</button></td></tr>`;
-            }
-            return html + `</table>`;
-        }
+<h2 class="text-3xl font-bold mt-10 mb-5">
+Jobs
+</h2>
 
-        async function renderNotificationsAdmin() {
-            return `<div class="glass p-6 rounded-2xl"><h2>Send Announcement</h2><textarea id="announceMsg" class="w-full p-2 bg-gray-800 rounded" rows="3"></textarea><button onclick="sendGlobalNotification()" class="bg-indigo-600 px-4 py-2 rounded mt-2">Send to All Users</button></div>`;
-        }
+<div id="jobsContainer"></div>
 
-        // Admin actions
-        window.suspendUser = async (id) => { await databases.updateDocument(DATABASE_ID, USERS_COLLECTION, id, { isChatSuspended: true }); alert('User suspended'); renderAdminPage('users'); };
-        window.banUser = async (id) => { await databases.updateDocument(DATABASE_ID, USERS_COLLECTION, id, { isBanned: true }); alert('User banned'); };
-        window.approveKYC = async (id) => { await databases.updateDocument(DATABASE_ID, USERS_COLLECTION, id, { kycStatus: 'approved' }); renderAdminPage('verification'); };
-        window.rejectKYC = async (id) => { await databases.updateDocument(DATABASE_ID, USERS_COLLECTION, id, { kycStatus: 'rejected' }); };
-        window.adjustWalletPopup = async (userId) => { let amt = prompt('Amount to add/subtract (use - for deduction)'); if(amt) { /* implement */ alert('Wallet adjusted'); } };
-        window.forceComplete = async (orderId) => { alert('Order forced completed'); };
-        window.cancelOrder = async (orderId) => { alert('Order cancelled'); };
-        window.approveWithdrawal = async (txId) => { alert('Withdrawal approved'); };
-        window.deleteGig = async (id) => { await databases.deleteDocument(DATABASE_ID, GIGS_COLLECTION, id); renderAdminPage('projects'); };
-        window.sendGlobalNotification = async () => { const msg = document.getElementById('announceMsg').value; /* create notification for all users */ alert('Announcement sent'); };
-        window.logout = async () => { await account.deleteSession('current'); window.location.href = 'index.html'; };
+<h2 class="text-3xl font-bold mt-10 mb-5">
+Proposals
+</h2>
 
-        // Navigation
-        document.querySelectorAll('.admin-nav').forEach(link => { link.addEventListener('click', (e) => { e.preventDefault(); renderAdminPage(link.dataset.adminPage); }); });
-        loadAdmin();
-        function attachAdminScripts(page) {}
-    </script>
+<div id="proposalsContainer"></div>
+
+<button onclick="logout()"
+class="fixed bottom-5 right-5 bg-red-600 px-6 py-3 rounded-xl">
+Logout
+</button>
+
+<script>
+
+const client = new Appwrite.Client()
+.setEndpoint("https://fra.cloud.appwrite.io/v1")
+.setProject("6a01720e0005a5f59bb9");
+
+const account = new Appwrite.Account(client);
+const databases = new Appwrite.Databases(client);
+
+const DATABASE_ID = "6a01723d0014a5c79b6f";
+
+const USERS = "users";
+const GIGS = "gigs";
+const PROPOSALS = "proposals";
+
+async function loadUsers(){
+
+const res = await databases.listDocuments(
+DATABASE_ID,
+USERS
+);
+
+document.getElementById("usersCount").innerText =
+res.documents.length;
+
+document.getElementById("usersContainer").innerHTML =
+res.documents.map(user=>`
+
+<div class="bg-slate-800 p-5 rounded-2xl mb-4">
+
+<h3 class="text-xl font-bold">
+${user.name}
+</h3>
+
+<p>
+${user.email}
+</p>
+
+<p class="text-green-400">
+${user.role}
+</p>
+
+</div>
+
+`).join("");
+
+}
+
+async function loadJobs(){
+
+const res = await databases.listDocuments(
+DATABASE_ID,
+GIGS
+);
+
+document.getElementById("jobsCount").innerText =
+res.documents.length;
+
+document.getElementById("jobsContainer").innerHTML =
+res.documents.map(job=>`
+
+<div class="bg-slate-800 p-5 rounded-2xl mb-4">
+
+<h3 class="text-xl font-bold">
+${job.title}
+</h3>
+
+<p>
+Budget: $${job.budget}
+</p>
+
+<p>
+Status: ${job.status}
+</p>
+
+</div>
+
+`).join("");
+
+}
+
+async function loadProposals(){
+
+const res = await databases.listDocuments(
+DATABASE_ID,
+PROPOSALS
+);
+
+document.getElementById("proposalsCount").innerText =
+res.documents.length;
+
+document.getElementById("proposalsContainer").innerHTML =
+res.documents.map(p=>`
+
+<div class="bg-slate-800 p-5 rounded-2xl mb-4">
+
+<p>
+Price: $${p.price}
+</p>
+
+<p>
+Status: ${p.status}
+</p>
+
+<button onclick="updateProposal('${p.$id}','accepted')"
+class="bg-green-600 px-4 py-2 rounded-xl mt-3 mr-2">
+Accept
+</button>
+
+<button onclick="updateProposal('${p.$id}','rejected')"
+class="bg-red-600 px-4 py-2 rounded-xl mt-3">
+Reject
+</button>
+
+</div>
+
+`).join("");
+
+}
+
+async function updateProposal(id,status){
+
+await databases.updateDocument(
+DATABASE_ID,
+PROPOSALS,
+id,
+{
+status
+}
+);
+
+loadProposals();
+
+}
+
+async function logout(){
+
+await account.deleteSessions();
+
+window.location.href = "index.html";
+
+}
+
+loadUsers();
+loadJobs();
+loadProposals();
+
+</script>
+
 </body>
 </html>
