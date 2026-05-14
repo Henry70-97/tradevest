@@ -1,174 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Nexus AI Auth</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Nexus AI Auth</title>
 
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
-
-  <style>
-    .toast {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 12px 16px;
-      border-radius: 10px;
-      color: white;
-      font-size: 14px;
-      z-index: 9999;
-      animation: fadeIn 0.3s ease;
-    }
-
-    .success { background: #16a34a; }
-    .error { background: #dc2626; }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .tab-active {
-      background: #2563eb;
-    }
-  </style>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/appwrite@13.0.0"></script>
 </head>
 
-<body class="bg-gray-950 text-white flex items-center justify-center min-h-screen">
+<body class="bg-black text-white flex items-center justify-center min-h-screen">
 
-<div class="w-full max-w-md bg-gray-900 p-8 rounded-2xl shadow-xl">
+<div class="w-full max-w-md bg-gray-900 p-6 rounded-xl shadow-lg">
+    <h1 class="text-2xl font-bold text-center mb-6">Nexus AI</h1>
 
-  <h1 class="text-2xl font-bold text-center mb-4">Nexus AI</h1>
+    <input id="email" type="email" placeholder="Email"
+        class="w-full p-3 mb-3 bg-gray-800 rounded"/>
 
-  <!-- Tabs -->
-  <div class="flex mb-6 bg-gray-800 rounded-lg overflow-hidden">
-    <button id="tabRegister" onclick="showRegister()" class="w-1/2 p-2 tab-active">Register</button>
-    <button id="tabLogin" onclick="showLogin()" class="w-1/2 p-2">Login</button>
-  </div>
+    <input id="password" type="password" placeholder="Password"
+        class="w-full p-3 mb-4 bg-gray-800 rounded"/>
 
-  <!-- Register -->
-  <div id="registerBox">
-    <input id="rName" type="text" placeholder="Full Name"
-      class="w-full p-3 mb-3 rounded bg-gray-800 outline-none"/>
-
-    <input id="rEmail" type="email" placeholder="Email"
-      class="w-full p-3 mb-3 rounded bg-gray-800 outline-none"/>
-
-    <input id="rPassword" type="password" placeholder="Password"
-      class="w-full p-3 mb-4 rounded bg-gray-800 outline-none"/>
-
-    <button onclick="registerUser()"
-      class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded font-semibold">
-      Register
+    <button onclick="register()" 
+        class="w-full bg-green-600 p-3 rounded mb-2">
+        Register
     </button>
-  </div>
 
-  <!-- Login -->
-  <div id="loginBox" class="hidden">
-    <input id="lEmail" type="email" placeholder="Email"
-      class="w-full p-3 mb-3 rounded bg-gray-800 outline-none"/>
-
-    <input id="lPassword" type="password" placeholder="Password"
-      class="w-full p-3 mb-4 rounded bg-gray-800 outline-none"/>
-
-    <button onclick="loginUser()"
-      class="w-full bg-green-600 hover:bg-green-700 p-3 rounded font-semibold">
-      Login
+    <button onclick="login()" 
+        class="w-full bg-blue-600 p-3 rounded">
+        Login
     </button>
-  </div>
 
+    <p id="msg" class="text-center mt-4 text-sm text-gray-400"></p>
 </div>
 
 <script>
-  const client = new Appwrite.Client();
-
-  client
+// ---------------- APPWRITE CONFIG ----------------
+const client = new Appwrite.Client()
     .setEndpoint("https://fra.cloud.appwrite.io/v1")
     .setProject("6a01720e0005a5f59bb9");
 
-  const account = new Appwrite.Account(client);
+const account = new Appwrite.Account(client);
 
-  const ADMIN_EMAIL = "hankwane1@gmail.com";
-
-  function toast(msg, type="success") {
-    const t = document.createElement("div");
-    t.className = `toast ${type}`;
-    t.innerText = msg;
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 3000);
-  }
-
-  function showRegister() {
-    document.getElementById("registerBox").classList.remove("hidden");
-    document.getElementById("loginBox").classList.add("hidden");
-
-    document.getElementById("tabRegister").classList.add("tab-active");
-    document.getElementById("tabLogin").classList.remove("tab-active");
-  }
-
-  function showLogin() {
-    document.getElementById("registerBox").classList.add("hidden");
-    document.getElementById("loginBox").classList.remove("hidden");
-
-    document.getElementById("tabLogin").classList.add("tab-active");
-    document.getElementById("tabRegister").classList.remove("tab-active");
-  }
-
-  async function registerUser() {
-    const name = document.getElementById("rName").value;
-    const email = document.getElementById("rEmail").value;
-    const password = document.getElementById("rPassword").value;
-
-    if (!name || !email || !password) {
-      toast("All fields required", "error");
-      return;
+// ---------------- CHECK SESSION ON LOAD ----------------
+async function checkSession() {
+    try {
+        await account.get();
+        document.getElementById("msg").innerText = "Already logged in...";
+        window.location.href = "user-dashboard.html";
+    } catch (err) {
+        console.log("No active session");
     }
+}
+
+checkSession();
+
+// ---------------- REGISTER ----------------
+async function register() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
 
     try {
-      await account.create("unique()", email, password, name);
-      await account.createEmailPasswordSession(email, password);
-      await account.createVerification(window.location.href);
+        // Create user
+        await account.create("unique()", email, password);
 
-      toast("Verification email sent!", "success");
+        // Create session safely
+        await account.createEmailPasswordSession(email, password);
+
+        document.getElementById("msg").innerText = "Registration successful!";
+        window.location.href = "user-dashboard.html";
 
     } catch (err) {
-      toast(err.message, "error");
+        document.getElementById("msg").innerText = err.message;
     }
-  }
+}
 
-  async function loginUser() {
-    const email = document.getElementById("lEmail").value;
-    const password = document.getElementById("lPassword").value;
-
-    if (!email || !password) {
-      toast("Fill all fields", "error");
-      return;
-    }
+// ---------------- LOGIN (FIXED SESSION ISSUE) ----------------
+async function login() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
 
     try {
-      await account.createEmailPasswordSession(email, password);
-      const user = await account.get();
+        // Prevent duplicate session error
+        try {
+            await account.get();
+            window.location.href = "user-dashboard.html";
+            return;
+        } catch (e) {}
 
-      if (!user.emailVerification) {
-        toast("Please verify your email first", "error");
-        return;
-      }
+        await account.createEmailPasswordSession(email, password);
 
-      toast("Login successful!", "success");
-
-      setTimeout(() => {
-        if (user.email === ADMIN_EMAIL) {
-          window.location.href = "admin.html";
-        } else {
-          window.location.href = "user-dashboard.html";
-        }
-      }, 1200);
+        document.getElementById("msg").innerText = "Login successful!";
+        window.location.href = "user-dashboard.html";
 
     } catch (err) {
-      toast(err.message, "error");
+        document.getElementById("msg").innerText = err.message;
     }
-  }
+}
 </script>
 
 </body>
