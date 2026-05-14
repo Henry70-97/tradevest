@@ -1,34 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nexus AI Auth</title>
-
+<title>Nexus AI</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
-
 </head>
 
-<body class="bg-slate-950 text-white flex items-center justify-center min-h-screen">
+<body class="bg-slate-950 text-white flex justify-center items-center min-h-screen">
 
-<div class="bg-slate-900 p-8 rounded-2xl w-full max-w-md">
+<div class="bg-slate-900 p-6 rounded-xl w-full max-w-md">
 
-<h1 class="text-3xl font-bold mb-6 text-center">Nexus AI</h1>
+<h2 class="text-2xl mb-4">Nexus AI</h2>
 
-<input id="name" placeholder="Name" class="w-full p-3 mb-3 bg-slate-800 rounded">
-<input id="email" placeholder="Email" class="w-full p-3 mb-3 bg-slate-800 rounded">
-<input id="password" type="password" placeholder="Password" class="w-full p-3 mb-3 bg-slate-800 rounded">
+<input id="name" placeholder="Name" class="w-full p-2 mb-2 bg-slate-800">
+<input id="email" placeholder="Email" class="w-full p-2 mb-2 bg-slate-800">
+<input id="password" type="password" placeholder="Password" class="w-full p-2 mb-2 bg-slate-800">
 
-<select id="role" class="w-full p-3 mb-4 bg-slate-800 rounded">
+<select id="role" class="w-full p-2 mb-2 bg-slate-800">
 <option value="user">User</option>
 <option value="admin">Admin</option>
 </select>
 
-<button onclick="register()" class="w-full bg-green-600 p-3 rounded mb-2">Register</button>
-<button onclick="login()" class="w-full bg-blue-600 p-3 rounded">Login</button>
+<button onclick="register()" class="w-full bg-green-600 p-2 mb-2">Register</button>
+<button onclick="login()" class="w-full bg-blue-600 p-2">Login</button>
 
-<p id="msg" class="text-center mt-4 text-sm text-gray-400"></p>
+<p id="msg" class="text-sm mt-3 text-gray-400"></p>
 
 </div>
 
@@ -41,109 +37,59 @@ const client = new Appwrite.Client()
 const account = new Appwrite.Account(client);
 const databases = new Appwrite.Databases(client);
 
-const DATABASE_ID = "6a01723d0014a5c79b6f";
+const DB = "6a01723d0014a5c79b6f";
 const USERS = "users";
 
-/* ================= CHECK SESSION ================= */
-
+/* SESSION CHECK */
 async function getUser(){
-try{
-return await account.get();
-}catch{
-return null;
-}
+try{return await account.get();}catch{return null;}
 }
 
-async function autoRedirect(){
-const user = await getUser();
-if(!user) return;
-
-const profile = await databases.listDocuments(
-DATABASE_ID,
-USERS,
-[Appwrite.Query.equal("userId", user.$id)]
-);
-
-if(profile.documents.length === 0) return;
-
-const role = profile.documents[0].role;
-
-window.location.href =
-role === "admin" ? "admin.html" : "user-dashboard.html";
-}
-
-autoRedirect();
-
-/* ================= REGISTER ================= */
-
+/* REGISTER */
 async function register(){
 
-const name = nameInput.value;
-const email = emailInput.value;
-const password = passwordInput.value;
-const role = document.getElementById("role").value;
+const user = await getUser();
+if(user){
+msg.innerText = "Already logged in";
+return;
+}
 
-msg.innerText = "Creating account...";
-
-try{
+msg.innerText = "Creating...";
 
 const newUser = await account.create(
 Appwrite.ID.unique(),
-email,
-password,
-name
+email.value,
+password.value,
+name.value
 );
 
-await account.createEmailPasswordSession(email, password);
+await account.createEmailPasswordSession(email.value, password.value);
 
-await databases.createDocument(
-DATABASE_ID,
-USERS,
-Appwrite.ID.unique(),
-{
+await databases.createDocument(DB, USERS, Appwrite.ID.unique(), {
 userId: newUser.$id,
-name,
-email,
-role
-}
-);
+name: name.value,
+email: email.value,
+role: role.value
+});
 
-msg.innerText = "Success";
-
-setTimeout(()=>{
 window.location.href =
-role === "admin" ? "admin.html" : "user-dashboard.html";
-},800);
-
-}catch(e){
-msg.innerText = e.message;
-}
+role.value === "admin" ? "admin.html" : "user-dashboard.html";
 
 }
 
-/* ================= LOGIN ================= */
-
+/* LOGIN */
 async function login(){
 
-const email = emailInput.value;
-const password = passwordInput.value;
-
-msg.innerText = "Logging in...";
-
-try{
-
-await account.createEmailPasswordSession(email, password);
+await account.createEmailPasswordSession(email.value, password.value);
 
 const user = await account.get();
 
-const profile = await databases.listDocuments(
-DATABASE_ID,
-USERS,
-[Appwrite.Query.equal("userId", user.$id)]
-);
+const profile = await databases.listDocuments(DB, USERS, [
+Appwrite.Query.equal("userId", user.$id)
+]);
 
 if(profile.documents.length === 0){
-msg.innerText = "No profile found";
+msg.innerText = "No profile";
 return;
 }
 
@@ -151,10 +97,6 @@ const role = profile.documents[0].role;
 
 window.location.href =
 role === "admin" ? "admin.html" : "user-dashboard.html";
-
-}catch(e){
-msg.innerText = e.message;
-}
 
 }
 
