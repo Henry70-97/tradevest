@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>AI Marketplace | Smart Registration</title>
+    <title>AI Marketplace | Join the Future</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/appwrite@16.0.0/dist/umd/sdk.min.js"></script>
     <style>
@@ -55,38 +55,15 @@
             opacity: 0.6;
             cursor: not-allowed;
         }
+        .fade-toggle {
+            transition: all 0.2s ease;
+        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
     <div class="w-full max-w-md">
-        <!-- Tab Switcher -->
-        <div class="flex gap-2 mb-6">
-            <button id="loginTab" class="flex-1 py-2 rounded-lg bg-indigo-600 text-white font-semibold transition-all">Login</button>
-            <button id="registerTab" class="flex-1 py-2 rounded-lg bg-gray-700 text-gray-300 font-semibold transition-all">Register</button>
-        </div>
-
-        <!-- Login Panel -->
-        <div id="loginPanel" class="glass rounded-2xl p-6 backdrop-blur-md text-white">
-            <h2 class="text-2xl font-bold mb-2">Welcome back</h2>
-            <p class="text-gray-400 text-sm mb-6">Sign in to access AI marketplace</p>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium mb-1">Email</label>
-                    <input type="email" id="loginEmail" class="w-full p-3 rounded-lg bg-white/10 border border-white/20 focus:border-indigo-500 outline-none transition">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-1">Password</label>
-                    <input type="password" id="loginPassword" class="w-full p-3 rounded-lg bg-white/10 border border-white/20 focus:border-indigo-500 outline-none transition">
-                </div>
-                <button id="doLogin" class="w-full bg-indigo-600 hover:bg-indigo-700 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2">
-                    Sign In
-                </button>
-                <div id="loginFeedback" class="text-sm text-center hidden"></div>
-            </div>
-        </div>
-
-        <!-- Register Panel (Multi-step with progress) -->
-        <div id="registerPanel" class="glass rounded-2xl p-6 backdrop-blur-md text-white hidden">
+        <!-- Registration Panel (default visible) -->
+        <div id="registerPanel" class="glass rounded-2xl p-6 backdrop-blur-md text-white fade-toggle">
             <h2 class="text-2xl font-bold mb-2">Create account</h2>
             <p class="text-gray-400 text-sm mb-6">Join the AI revolution</p>
             
@@ -178,6 +155,34 @@
             </div>
 
             <div id="registerFeedback" class="mt-4 text-sm text-center hidden"></div>
+            
+            <!-- Toggle link to login -->
+            <div class="text-center mt-6">
+                <button id="showLoginLink" class="text-indigo-400 hover:text-indigo-300 text-sm underline">Already registered? Click here to login</button>
+            </div>
+        </div>
+
+        <!-- Login Panel (hidden initially) -->
+        <div id="loginPanel" class="glass rounded-2xl p-6 backdrop-blur-md text-white hidden fade-toggle">
+            <h2 class="text-2xl font-bold mb-2">Welcome back</h2>
+            <p class="text-gray-400 text-sm mb-6">Sign in to continue</p>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Email</label>
+                    <input type="email" id="loginEmail" class="w-full p-3 rounded-lg bg-white/10 border border-white/20 focus:border-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Password</label>
+                    <input type="password" id="loginPassword" class="w-full p-3 rounded-lg bg-white/10 border border-white/20 focus:border-indigo-500 outline-none">
+                </div>
+                <button id="doLogin" class="w-full bg-indigo-600 hover:bg-indigo-700 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2">
+                    Sign In
+                </button>
+                <div id="loginFeedback" class="text-sm text-center hidden"></div>
+            </div>
+            <div class="text-center mt-6">
+                <button id="showRegisterLink" class="text-indigo-400 hover:text-indigo-300 text-sm underline">Need an account? Register here</button>
+            </div>
         </div>
     </div>
 
@@ -194,14 +199,12 @@
         const databases = new Databases(client);
         const storage = new Storage(client);
 
-        // DOM elements
-        const loginTab = document.getElementById('loginTab');
-        const registerTab = document.getElementById('registerTab');
-        const loginPanel = document.getElementById('loginPanel');
+        // DOM elements for registration
         const registerPanel = document.getElementById('registerPanel');
-        const doLogin = document.getElementById('doLogin');
-        const loginFeedback = document.getElementById('loginFeedback');
-
+        const loginPanel = document.getElementById('loginPanel');
+        const showLoginLink = document.getElementById('showLoginLink');
+        const showRegisterLink = document.getElementById('showRegisterLink');
+        
         // Multi-step elements
         const step1Div = document.getElementById('step1');
         const step2Div = document.getElementById('step2');
@@ -211,7 +214,7 @@
         const step3Icon = document.getElementById('step3Icon');
         const progressFill = document.getElementById('progressFill');
         const stepPercent = document.getElementById('stepPercent');
-
+        
         // Form fields
         const regName = document.getElementById('regName');
         const regEmail = document.getElementById('regEmail');
@@ -224,11 +227,23 @@
         const previewImg = document.getElementById('previewImg');
         const picPreview = document.getElementById('picPreview');
         const registerFeedbackDiv = document.getElementById('registerFeedback');
-
+        
         let selectedSkills = [];
         let profileFile = null;
         let currentStep = 1;
         const totalSteps = 3;
+
+        // Toggle between register and login panels
+        showLoginLink.addEventListener('click', () => {
+            registerPanel.classList.add('hidden');
+            loginPanel.classList.remove('hidden');
+        });
+        showRegisterLink.addEventListener('click', () => {
+            loginPanel.classList.add('hidden');
+            registerPanel.classList.remove('hidden');
+            // reset registration steps when returning
+            if (currentStep !== 1) goToStep(1);
+        });
 
         // Update progress bar and step icons
         function updateProgress(step) {
@@ -254,7 +269,16 @@
             updateProgress(step);
         }
 
-        // Validate step 1
+        // Validation helpers
+        function showError(id, msg) {
+            const el = document.getElementById(id);
+            if (el) { el.innerText = msg; el.classList.remove('hidden'); }
+        }
+        function hideError(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('hidden');
+        }
+
         function validateStep1() {
             let valid = true;
             const name = regName.value.trim();
@@ -269,7 +293,6 @@
             return valid;
         }
 
-        // Validate step 2
         function validateStep2() {
             if (selectedSkills.length === 0) {
                 showError('skillsError', 'Add at least one skill');
@@ -277,15 +300,6 @@
             }
             hideError('skillsError');
             return true;
-        }
-
-        function showError(id, msg) {
-            const el = document.getElementById(id);
-            if (el) { el.innerText = msg; el.classList.remove('hidden'); }
-        }
-        function hideError(id) {
-            const el = document.getElementById(id);
-            if (el) el.classList.add('hidden');
         }
 
         // Skill management
@@ -341,7 +355,7 @@
         });
         document.getElementById('prevStep3').addEventListener('click', () => goToStep(2));
 
-        // Registration submission (FIXED: button now works)
+        // Registration submission
         const submitBtn = document.getElementById('submitRegister');
         submitBtn.addEventListener('click', async function(e) {
             e.preventDefault();
@@ -351,15 +365,12 @@
             const password = regPassword.value;
             const role = regRole.value;
 
-            // Double-check validation
             if (!validateStep1() || !validateStep2()) {
-                // Show which step has error
                 if (!validateStep1()) goToStep(1);
                 else if (!validateStep2()) goToStep(2);
                 return;
             }
 
-            // Disable button and show loading
             const originalText = submitBtn.innerHTML;
             submitBtn.innerHTML = '<div style="width:20px;height:20px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;"></div> Creating...';
             submitBtn.disabled = true;
@@ -369,15 +380,11 @@
             registerFeedbackDiv.innerText = 'Creating your account, please wait...';
 
             try {
-                // 1. Create Appwrite account
                 const userId = ID.unique();
                 await account.create(userId, email, password, name);
-                
-                // 2. Login to create session
                 await account.createEmailPasswordSession(email, password);
                 const user = await account.get();
                 
-                // 3. Upload profile picture if provided
                 let profilePicId = null;
                 if (profileFile) {
                     try {
@@ -386,7 +393,6 @@
                     } catch(err) { console.warn('Profile pic upload failed:', err); }
                 }
                 
-                // 4. Create user document
                 await databases.createDocument(DATABASE_ID, USERS_COLLECTION, ID.unique(), {
                     userId: user.$id,
                     name,
@@ -399,7 +405,6 @@
                     pendingBalance: 0
                 });
                 
-                // Success feedback
                 registerFeedbackDiv.className = 'mt-4 text-sm text-center text-green-400';
                 registerFeedbackDiv.innerText = '✅ Registration successful! Redirecting to dashboard...';
                 
@@ -419,14 +424,14 @@
                 
                 registerFeedbackDiv.className = 'mt-4 text-sm text-center text-red-400';
                 registerFeedbackDiv.innerText = '❌ ' + errorMsg;
-                
-                // Re-enable button
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
             }
         });
 
         // Login logic
+        const doLogin = document.getElementById('doLogin');
+        const loginFeedback = document.getElementById('loginFeedback');
         doLogin.addEventListener('click', async () => {
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
@@ -460,26 +465,7 @@
             }
         });
 
-        // Tab switching
-        loginTab.addEventListener('click', () => {
-            loginPanel.classList.remove('hidden');
-            registerPanel.classList.add('hidden');
-            loginTab.classList.add('bg-indigo-600', 'text-white');
-            loginTab.classList.remove('bg-gray-700', 'text-gray-300');
-            registerTab.classList.add('bg-gray-700', 'text-gray-300');
-            registerTab.classList.remove('bg-indigo-600', 'text-white');
-        });
-        registerTab.addEventListener('click', () => {
-            registerPanel.classList.remove('hidden');
-            loginPanel.classList.add('hidden');
-            registerTab.classList.add('bg-indigo-600', 'text-white');
-            registerTab.classList.remove('bg-gray-700', 'text-gray-300');
-            loginTab.classList.add('bg-gray-700', 'text-gray-300');
-            loginTab.classList.remove('bg-indigo-600', 'text-white');
-            if (currentStep !== 1) goToStep(1);
-        });
-
-        // Initialize
+        // Initialize registration step 1
         goToStep(1);
     </script>
 </body>
